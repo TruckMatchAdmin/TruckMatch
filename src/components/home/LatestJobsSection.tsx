@@ -21,7 +21,6 @@ export function LatestJobsSection() {
           .limit(6);
 
         if (error || !data) {
-          // Table non encore migrée ou vide => liste vide
           setJobs([]);
         } else {
           setJobs(data as JobOffer[]);
@@ -37,22 +36,18 @@ export function LatestJobsSection() {
   }, []);
 
   return (
-    <section className="jobs-section">
+    <section className="jobs-section-modern">
       <div className="container">
-        <div className="section-head-flex">
-          <div className="head-left">
-            <span className="badge badge-blue">Opportunités transport</span>
-            <h2 className="section-title">Les dernières offres d'emploi</h2>
-            <p className="section-subtitle">
-              Consultez les offres publiées en direct par des entreprises de transport vérifiées.
-            </p>
+        <div className="head-bar-modern">
+          <div>
+            <span className="badge badge-blue">Opportunités en direct</span>
+            <h2>Les dernières offres d'emploi dans le transport</h2>
+            <p>Postes vérifiés publiés directement par des transporteurs en France.</p>
           </div>
-          <div className="head-right">
-            <Link href="/offres-emploi" className="btn btn-outline btn-sm">
-              <span>Voir toutes les offres</span>
-              <ArrowRight size={16} />
-            </Link>
-          </div>
+          <Link href="/offres-emploi" className="btn btn-outline btn-sm">
+            <span>Voir toutes les offres</span>
+            <ArrowRight size={16} />
+          </Link>
         </div>
 
         {loading ? (
@@ -61,12 +56,11 @@ export function LatestJobsSection() {
             <p>Recherche des offres en cours...</p>
           </div>
         ) : jobs.length === 0 ? (
-          /* Respect strict de la règle : état vide propre si 0 offre réelle */
           <EmptyState
             icon={Briefcase}
             title="Aucune offre disponible pour le moment"
-            description="Les nouvelles opportunités de postes SPL, PL et VUL sont publiées régulièrement. Créez votre profil pour être contacté en priorité dès qu'une offre correspond à votre zone."
-            actionText="Créer mon profil"
+            description="Les transporteurs déposent régulièrement de nouvelles tournées régionales et nationales. Créez votre profil pour être contacté en priorité dès qu'un poste correspond à vos permis et à votre secteur."
+            actionText="Créer mon profil chauffeur"
             actionHref="/chauffeurs"
             secondaryActionText="Déposer une annonce recruteur"
             secondaryActionHref="/entreprises"

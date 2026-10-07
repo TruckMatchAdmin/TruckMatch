@@ -7,36 +7,37 @@ export function CategoryCards() {
   return (
     <section className="categories-section">
       <div className="container">
-        <div className="section-head">
-          <span className="badge badge-blue">Spécialisations transport</span>
-          <h2 className="section-title">Explorez par profil de conducteur</h2>
-          <p className="section-subtitle">
-            Chaque mission requiert des permis et des compétences spécifiques. Filtrez rapidement selon vos besoins.
+        <div className="section-head-modern">
+          <span className="badge badge-blue">Spécialités du transport routier</span>
+          <h2>Explorez nos viviers de conducteurs par catégorie</h2>
+          <p>
+            Chaque type de marchandise et de véhicule impose des compétences réglementaires précises.
+            Accédez directement aux spécialistes de votre secteur d'activité.
           </p>
         </div>
 
-        <div className="categories-grid">
+        <div className="categories-grid-modern">
           {Object.values(CATEGORIES).map((cat) => (
-            <div key={cat.id} className="cat-card">
-              <div className="cat-header">
-                <span className="cat-icon">{cat.icon}</span>
+            <div key={cat.id} className="cat-card-modern">
+              <div className="cat-card-top">
+                <span className="cat-icon-emoji">{cat.icon}</span>
                 <span className="badge badge-navy">{cat.permits[0]}</span>
               </div>
 
-              <h3 className="cat-title">{cat.title}</h3>
-              <p className="cat-desc">{cat.description}</p>
+              <h3 className="cat-title-modern">{cat.title}</h3>
+              <p className="cat-desc-modern">{cat.description}</p>
 
-              <div className="cat-permits">
+              <div className="cat-pills-wrap">
                 {cat.permits.map((permit, idx) => (
-                  <span key={idx} className="permit-pill">
-                    <Check size={12} className="check-icon" /> {permit}
+                  <span key={idx} className="permit-pill-modern">
+                    <Check size={12} color="#0080ff" /> {permit}
                   </span>
                 ))}
               </div>
 
-              <div className="cat-action">
-                <Link href={`/chauffeurs/${cat.slug}`} className="cat-link">
-                  <span>Découvrir les profils & missions</span>
+              <div className="mt-auto">
+                <Link href={`/chauffeurs/${cat.slug}`} className="btn btn-outline-primary btn-sm w-full">
+                  <span>Voir la fiche métier & profils</span>
                   <ArrowRight size={16} />
                 </Link>
               </div>

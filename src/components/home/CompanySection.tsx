@@ -6,74 +6,71 @@ export function CompanySection() {
   const steps = [
     {
       num: "01",
-      title: "Profils spécialisés",
-      desc: "Accédez à une communauté de chauffeurs qualifiés du VUL au SPL.",
+      title: "Profils qualifiés & vérifiés",
+      desc: "Accédez à un réseau exclusif de conducteurs SPL, PL, Porteurs et VUL prêts à rouler.",
       icon: Search,
     },
     {
       num: "02",
-      title: "Filtres précis",
-      desc: "Filtrez instantanément par permis (C, EC), FIMO/FCO, ADR, grue et expérience.",
+      title: "Filtres précis par habilitation",
+      desc: "Ciblez par permis (C, EC), FIMO/FCO, validité carte chrono, citerne ADR ou CACES grue.",
       icon: Filter,
     },
     {
       num: "03",
-      title: "Ciblage géographique",
-      desc: "Sélectionnez les candidats selon votre ville, département ou rayon logistique.",
+      title: "Ciblage géographique immédiat",
+      desc: "Localisez les chauffeurs résidant à proximité immédiate de vos dépôts et bases logistiques.",
       icon: MapPin,
     },
     {
       num: "04",
-      title: "Consultez les profils",
-      desc: "Accédez aux synthèses de compétences et aux disponibilités vérifiées.",
+      title: "Dossiers de compétences complets",
+      desc: "Consultez l'historique d'expérience, les types de matériels maîtrisés et les disponibilités.",
       icon: FileText,
     },
     {
       num: "05",
-      title: "Gain de temps maximal",
-      desc: "Fini les intermédiaires lents : trouvez votre conducteur en quelques clics.",
+      title: "Gain de temps décisif",
+      desc: "Remplacement urgent sous 24h ou renfort saisonnier sans délais d'agence d'intérim.",
       icon: Zap,
     },
     {
       num: "06",
-      title: "Contactez directement",
-      desc: "Échangez directement avec les candidats disponibles sans commissions indues.",
+      title: "Contact direct sans commission horaire",
+      desc: "Échangez directement avec vos futurs conducteurs selon vos propres modalités contractuelles.",
       icon: PhoneCall,
     },
   ];
 
   return (
-    <section className="company-section">
+    <section className="company-section-modern">
       <div className="container">
-        <div className="company-wrapper">
-          <div className="company-header">
-            <span className="badge badge-navy">Recruteurs & Transporteurs</span>
-            <h2 className="company-title">Vous recherchez un chauffeur ?</h2>
-            <p className="company-subtitle">
-              Sécurisez vos tournées et répondez immédiatement à vos surcroîts d'activité avec des conducteurs
-              rigoureusement référencés.
+        <div className="immersive-box">
+          <div className="section-header-centered">
+            <span className="badge badge-navy">Recruteurs & Entreprises de Transport</span>
+            <h2>Vous recherchez un chauffeur ? Sécurisez vos tournées</h2>
+            <p>
+              La pénurie de conducteurs ne doit plus bloquer vos camions au dépôt. Identifiez
+              immédiatement les professionnels disponibles sur vos bassins d'activité.
             </p>
           </div>
 
-          <div className="company-grid">
+          <div className="grid-3-modern">
             {steps.map((s, idx) => {
               const Icon = s.icon;
               return (
-                <div key={idx} className="company-step-card">
-                  <div className="step-card-top">
-                    <span className="step-num">{s.num}</span>
-                    <div className="step-icon-wrap">
-                      <Icon size={20} />
-                    </div>
+                <div key={idx} className="feature-card-modern">
+                  <div className="feature-icon-circle" style={{ color: "#0b192c" }}>
+                    <Icon size={24} />
                   </div>
-                  <h3 className="step-title">{s.title}</h3>
-                  <p className="step-desc">{s.desc}</p>
+                  <h3 className="feature-card-title">{s.title}</h3>
+                  <p className="feature-card-desc">{s.desc}</p>
                 </div>
               );
             })}
           </div>
 
-          <div className="company-cta-group">
+          <div className="text-center" style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/entreprises" className="btn btn-primary btn-lg">
               <span>Trouver un chauffeur</span>
               <ArrowRight size={18} />
