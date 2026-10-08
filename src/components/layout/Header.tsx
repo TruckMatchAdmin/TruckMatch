@@ -17,8 +17,8 @@ export function Header() {
           <Image
             src="/images/logo.png"
             alt="TruckMatch - Les entreprises trouvent leurs chauffeurs. Les chauffeurs trouvent leur route."
-            width={240}
-            height={62}
+            width={280}
+            height={70}
             priority
             className="logo-img"
           />
