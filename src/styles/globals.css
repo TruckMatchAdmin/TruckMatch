@@ -2797,11 +2797,11 @@ p {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .truck-map-pin:hover {
-  transform: scale(1.22) translateY(-4px);
+  transform: scale(1.25) translateY(-4px);
   z-index: 99999 !important;
 }
 
@@ -2810,49 +2810,60 @@ p {
   z-index: 99999 !important;
 }
 
-.truck-pin-badge {
-  padding: 0.3rem 0.7rem;
-  border-radius: 999px;
-  font-size: 0.74rem;
-  font-weight: 850;
-  color: #ffffff;
+.truck-pin-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  box-shadow: 0 6px 18px rgba(11, 25, 44, 0.3);
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 900;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(11, 25, 44, 0.35);
   border: 2px solid #ffffff;
-  white-space: nowrap;
+  position: relative;
+  letter-spacing: -0.02em;
 }
 
-.truck-pin-badge.spl {
+.truck-pin-circle.spl {
   background: #0080ff;
 }
 
-.truck-pin-badge.pl {
+.truck-pin-circle.pl {
   background: #0b192c;
 }
 
-.truck-pin-badge.special {
+.truck-pin-circle.special {
   background: #10b981;
 }
 
-.truck-pin-badge.vul {
+.truck-pin-circle.vul {
   background: #ea580c;
 }
 
-.truck-pin-stem {
-  width: 3px;
-  height: 8px;
-  background: #0b192c;
-  border-radius: 0 0 2px 2px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+.truck-pin-label {
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--color-navy);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 1px 6px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .truck-pin-pulse-dot {
-  width: 7px;
-  height: 7px;
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: #10b981;
+  border: 2px solid #ffffff;
   box-shadow: 0 0 8px #10b981;
   animation: pulse 1.8s infinite;
 }

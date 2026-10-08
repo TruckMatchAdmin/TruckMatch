@@ -692,12 +692,14 @@ export default function CarteChauffeursPage() {
         scrollWheelZoom: true,
       });
 
-      // Fond de carte CartoDB Voyager : moderne, épuré, fluide
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-        attribution: '&copy; <a href="https://carto.com/">CARTO</a> | TruckMatch France',
-        subdomains: "abcd",
-        maxZoom: 19,
-      }).addTo(map);
+      // Fond de carte ESRI World Street Map : réseau routier ultra-net, sans filigrane, sans clé d'API
+      L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+        {
+          attribution: '&copy; <a href="https://www.esri.com/">Esri</a> | TruckMatch France',
+          maxZoom: 18,
+        }
+      ).addTo(map);
 
       // Layer group pour les marqueurs
       const markersLayer = L.layerGroup().addTo(map);
@@ -733,8 +735,7 @@ export default function CarteChauffeursPage() {
     layer.clearLayers();
 
     candidates.forEach((candidate) => {
-      // Pin personnalisé
-      const pinClass = `truck-pin-badge ${candidate.colorType}`;
+      // Pin circulaire avec pulse dot et étiquette de commune
       const pulseHtml =
         candidate.availability === "immediat"
           ? `<span class="truck-pin-pulse-dot"></span>`
@@ -743,16 +744,15 @@ export default function CarteChauffeursPage() {
       const customIcon = L.divIcon({
         className: "truck-map-pin",
         html: `
-          <div class="${pinClass}">
+          <div class="truck-pin-circle ${candidate.colorType}">
             ${pulseHtml}
             <span>${candidate.permit}</span>
-            <span style="opacity:0.85; font-size:10px;">${candidate.city}</span>
           </div>
-          <div class="truck-pin-stem"></div>
+          <div class="truck-pin-label">${candidate.city}</div>
         `,
-        iconSize: [110, 38],
-        iconAnchor: [55, 38],
-        popupAnchor: [0, -36],
+        iconSize: [60, 54],
+        iconAnchor: [30, 24],
+        popupAnchor: [0, -26],
       });
 
       const marker = L.marker([candidate.lat, candidate.lng], { icon: customIcon });
@@ -919,25 +919,44 @@ export default function CarteChauffeursPage() {
 
           {/* Bandeau de réassurance Transport 4 métriques */}
           <div className="recruiter-metrics-strip">
-            <div className="metric-item">
-              <div className="metric-number">1 480</div>
-              <div className="metric-title">Chauffeurs géolocalisés</div>
-              <div className="metric-desc">Partout en France métropolitaine</div>
+            <div className="recruiter-metric-card">
+              <div className="visual-metric-icon">
+                <Truck size={24} />
+              </div>
+              <div>
+                <p className="visual-metric-val">1 480 Conducteurs</p>
+                <p className="visual-metric-label">Géolocalisés en France</p>
+              </div>
             </div>
-            <div className="metric-item">
-              <div className="metric-number">100%</div>
-              <div className="metric-title">Spécialisé Transport</div>
-              <div className="metric-desc">SPL, PL, Porteur & VUL</div>
+
+            <div className="recruiter-metric-card">
+              <div className="visual-metric-icon" style={{ backgroundColor: "#e6f9f0", color: "#10b981" }}>
+                <CheckCircle2 size={24} />
+              </div>
+              <div>
+                <p className="visual-metric-val">342 Disponibles</p>
+                <p className="visual-metric-label">Prêts à rouler immédiatement</p>
+              </div>
             </div>
-            <div className="metric-item">
-              <div className="metric-number">48h</div>
-              <div className="metric-title">Délai moyen d'embauche</div>
-              <div className="metric-desc">Contact direct sans commission</div>
+
+            <div className="recruiter-metric-card">
+              <div className="visual-metric-icon" style={{ backgroundColor: "#e8f3ff", color: "#0080ff" }}>
+                <ShieldCheck size={24} />
+              </div>
+              <div>
+                <p className="visual-metric-val">98,4% Validés</p>
+                <p className="visual-metric-label">Permis, FCO & Cartes Chrono</p>
+              </div>
             </div>
-            <div className="metric-item">
-              <div className="metric-number">0 €</div>
-              <div className="metric-title">Aucun frais d'intérim</div>
-              <div className="metric-desc">Économisez jusqu'à 35% par recrutement</div>
+
+            <div className="recruiter-metric-card">
+              <div className="visual-metric-icon" style={{ backgroundColor: "#fff7ed", color: "#ea580c" }}>
+                <MapPin size={24} />
+              </div>
+              <div>
+                <p className="visual-metric-val">95 Départements</p>
+                <p className="visual-metric-label">Couverture nationale intégrale</p>
+              </div>
             </div>
           </div>
         </div>
@@ -945,23 +964,36 @@ export default function CarteChauffeursPage() {
 
       {/* 2. Filtres & Moteur de Recherche Géographique */}
       <section id="carte-interactive" className="container" style={{ marginBottom: "2rem" }}>
-        <div className="filter-search-box">
-          <div className="filter-inputs-grid">
+        <div className="jobs-filter-box">
+          <div className="filter-header-wrap" style={{ marginBottom: "1.5rem" }}>
+            <h2 className="filter-title">Rechercher parmi les conducteurs géolocalisés</h2>
+            <p className="filter-subtitle">
+              Filtrez par commune ou village de résidence, type de permis, région ou disponibilité immédiate.
+            </p>
+          </div>
+
+          <div className="jobs-search-row" style={{ gridTemplateColumns: "1.8fr 1fr 1fr 1fr" }}>
             {/* Recherche textuelle par commune ou code postal */}
-            <div className="search-field-wrap">
-              <Search size={18} className="search-field-icon" />
+            <div className="jobs-search-input-wrap">
+              <Search size={18} className="jobs-search-ico" />
               <input
                 type="text"
                 placeholder="Ville, village ou département (ex: Lille, Saint-Priest, Fos-sur-Mer, 59, 69)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="search-input-modern"
+                className="jobs-text-input"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  style={{ background: "transparent", cursor: "pointer", color: "var(--color-text-muted)" }}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    background: "transparent",
+                    cursor: "pointer",
+                    color: "var(--color-text-muted)",
+                  }}
                 >
                   <X size={16} />
                 </button>
@@ -969,49 +1001,49 @@ export default function CarteChauffeursPage() {
             </div>
 
             {/* Sélecteur de Permis */}
-            <div className="select-field-wrap">
+            <div>
               <select
                 value={selectedPermit}
                 onChange={(e) => setSelectedPermit(e.target.value)}
-                className="select-modern"
+                className="jobs-select-field"
               >
                 <option value="all">Tous les permis</option>
                 <option value="CE">Permis CE (Super Lourd SPL)</option>
                 <option value="C">Permis C (Poids Lourd Distribution)</option>
-                <option value="Porteur">Porteur Spécialisé / Grue CACES</option>
+                <option value="Porteur">Porteur Spécialisé / Grue</option>
                 <option value="VUL">Permis B (Utilitaire VUL)</option>
               </select>
             </div>
 
             {/* Sélecteur de Région */}
-            <div className="select-field-wrap">
+            <div>
               <select
                 value={selectedRegion}
                 onChange={(e) => setSelectedRegion(e.target.value)}
-                className="select-modern"
+                className="jobs-select-field"
               >
                 <option value="all">Toutes les régions</option>
-                <option value="Hauts-de-France">Hauts-de-France (59, 62, 80...)</option>
-                <option value="Île-de-France">Île-de-France (75, 93, 95, 78...)</option>
-                <option value="Auvergne-Rhône-Alpes">Auvergne-Rhône-Alpes (69, 38, 01...)</option>
-                <option value="Provence-Alpes-Côte d'Azur">PACA (13, 06, 83...)</option>
-                <option value="Occitanie">Occitanie (31, 34, 30...)</option>
-                <option value="Nouvelle-Aquitaine">Nouvelle-Aquitaine (33, 64, 87...)</option>
-                <option value="Bretagne">Bretagne (35, 29, 22...)</option>
-                <option value="Pays de la Loire">Pays de la Loire (44, 49, 72...)</option>
-                <option value="Grand Est">Grand Est (67, 57, 54, 51...)</option>
-                <option value="Normandie">Normandie (76, 14, 27...)</option>
+                <option value="Hauts-de-France">Hauts-de-France (59, 62...)</option>
+                <option value="Île-de-France">Île-de-France (75, 93, 95...)</option>
+                <option value="Auvergne-Rhône-Alpes">Auvergne-Rhône-Alpes (69, 38...)</option>
+                <option value="Provence-Alpes-Côte d'Azur">PACA (13, 06...)</option>
+                <option value="Occitanie">Occitanie (31, 34...)</option>
+                <option value="Nouvelle-Aquitaine">Nouvelle-Aquitaine (33, 64...)</option>
+                <option value="Bretagne">Bretagne (35, 29...)</option>
+                <option value="Pays de la Loire">Pays de la Loire (44, 49...)</option>
+                <option value="Grand Est">Grand Est (67, 57...)</option>
+                <option value="Normandie">Normandie (76, 14...)</option>
                 <option value="Centre-Val de Loire">Centre-Val de Loire (45, 37...)</option>
                 <option value="Bourgogne-Franche-Comté">Bourgogne-Franche-Comté (21, 25...)</option>
               </select>
             </div>
 
             {/* Sélecteur de Disponibilité */}
-            <div className="select-field-wrap">
+            <div>
               <select
                 value={selectedAvailability}
                 onChange={(e) => setSelectedAvailability(e.target.value)}
-                className="select-modern"
+                className="jobs-select-field"
               >
                 <option value="all">Toutes disponibilités</option>
                 <option value="immediat">⚡ Immédiatement</option>
@@ -1020,28 +1052,50 @@ export default function CarteChauffeursPage() {
             </div>
           </div>
 
-          {/* Barre d'état des filtres & Réinitialisation */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: "1rem",
-              marginTop: "1rem",
-              paddingTop: "1rem",
-              borderTop: "1px solid #f1f5f9",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.92rem", fontWeight: 700, color: "var(--color-navy)" }}>
-              <span className="live-dot" />
-              <span>{filteredCandidates.length} conducteur(s) positionné(s) sur la carte</span>
-            </div>
+          {/* Filtres rapides en boutons pills */}
+          <div className="filter-tags-quick">
+            <span className="quick-tag-label">Filtres rapides :</span>
+            <button
+              type="button"
+              className={`quick-filter-btn ${selectedPermit === "all" ? "active" : ""}`}
+              onClick={() => setSelectedPermit("all")}
+            >
+              Tous ({filteredCandidates.length})
+            </button>
+            <button
+              type="button"
+              className={`quick-filter-btn ${selectedPermit === "CE" ? "active" : ""}`}
+              onClick={() => setSelectedPermit("CE")}
+            >
+              Conducteurs SPL
+            </button>
+            <button
+              type="button"
+              className={`quick-filter-btn ${selectedPermit === "C" ? "active" : ""}`}
+              onClick={() => setSelectedPermit("C")}
+            >
+              Chauffeurs PL
+            </button>
+            <button
+              type="button"
+              className={`quick-filter-btn ${selectedPermit === "Porteur" ? "active" : ""}`}
+              onClick={() => setSelectedPermit("Porteur")}
+            >
+              Porteurs & Grue TP
+            </button>
+            <button
+              type="button"
+              className={`quick-filter-btn ${selectedPermit === "VUL" ? "active" : ""}`}
+              onClick={() => setSelectedPermit("VUL")}
+            >
+              Livreurs VUL
+            </button>
 
             {(searchQuery || selectedPermit !== "all" || selectedRegion !== "all" || selectedAvailability !== "all") && (
               <button
                 type="button"
                 className="btn btn-outline btn-sm"
+                style={{ marginLeft: "auto" }}
                 onClick={() => {
                   setSearchQuery("");
                   setSelectedPermit("all");
@@ -1051,7 +1105,7 @@ export default function CarteChauffeursPage() {
                 }}
               >
                 <RotateCcw size={14} />
-                <span>Réinitialiser les filtres</span>
+                <span>Réinitialiser</span>
               </button>
             )}
           </div>
