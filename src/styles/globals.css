@@ -1,3 +1,5 @@
+@import "leaflet/dist/leaflet.css";
+
 /* ==========================================================================
    TruckMatch Design System 2.0 (Modern Full-Width Grey-Blue Edition)
    « Les entreprises trouvent leurs chauffeurs. Les chauffeurs trouvent leur route. »
@@ -2768,5 +2770,216 @@ p {
 .modal-close-btn:hover {
   background: #e2e8f0;
 }
+
+/* ==========================================================================
+   Styles Spécifiques Carte Leaflet TruckMatch
+   ========================================================================== */
+.leaflet-france-container {
+  width: 100%;
+  height: 720px;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+  position: relative;
+  z-index: 10;
+  background-color: #f8fafc;
+}
+
+@media (max-width: 900px) {
+  .leaflet-france-container {
+    height: 520px;
+  }
+}
+
+.truck-map-pin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.truck-map-pin:hover {
+  transform: scale(1.22) translateY(-4px);
+  z-index: 99999 !important;
+}
+
+.truck-map-pin.active {
+  transform: scale(1.3) translateY(-6px);
+  z-index: 99999 !important;
+}
+
+.truck-pin-badge {
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 850;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  box-shadow: 0 6px 18px rgba(11, 25, 44, 0.3);
+  border: 2px solid #ffffff;
+  white-space: nowrap;
+}
+
+.truck-pin-badge.spl {
+  background: #0080ff;
+}
+
+.truck-pin-badge.pl {
+  background: #0b192c;
+}
+
+.truck-pin-badge.special {
+  background: #10b981;
+}
+
+.truck-pin-badge.vul {
+  background: #ea580c;
+}
+
+.truck-pin-stem {
+  width: 3px;
+  height: 8px;
+  background: #0b192c;
+  border-radius: 0 0 2px 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.truck-pin-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulse 1.8s infinite;
+}
+
+.map-quick-actions {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 1000;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.map-action-pill {
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 0.55rem 1.15rem;
+  font-size: 0.82rem;
+  font-weight: 750;
+  color: var(--color-navy);
+  box-shadow: var(--shadow-md);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.map-action-pill:hover {
+  background: var(--color-primary);
+  color: #ffffff;
+  box-shadow: var(--shadow-primary);
+}
+
+.leaflet-bar {
+  border: none !important;
+  box-shadow: var(--shadow-md) !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  margin-top: 1.25rem !important;
+  margin-left: 1.25rem !important;
+}
+
+.leaflet-bar a {
+  background-color: #ffffff !important;
+  color: var(--color-navy) !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  width: 38px !important;
+  height: 38px !important;
+  line-height: 38px !important;
+  font-weight: 800 !important;
+  font-size: 16px !important;
+  transition: background-color 0.15s ease;
+}
+
+.leaflet-bar a:hover {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 16px !important;
+  box-shadow: 0 16px 36px -6px rgba(15, 23, 42, 0.2) !important;
+  padding: 0 !important;
+  border: none !important;
+  overflow: hidden;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  line-height: 1.4 !important;
+  width: 280px !important;
+}
+
+.leaflet-popup-tip {
+  background: #ffffff !important;
+}
+
+.map-popup-card {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.map-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.map-popup-title {
+  font-size: 1.02rem;
+  font-weight: 850;
+  color: var(--color-navy);
+}
+
+.map-popup-loc {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+.map-popup-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.map-popup-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background-color: var(--color-bg-body);
+  color: var(--color-navy);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+}
+
+.map-popup-btn {
+  margin-top: 0.4rem;
+  width: 100%;
+}
+
 
 

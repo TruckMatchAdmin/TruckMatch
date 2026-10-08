@@ -145,18 +145,6 @@ export default function EntreprisesPage() {
                   priority
                   className="recruiter-main-img"
                 />
-                <div className="recruiter-image-badge-floating">
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                    <div className="stat-icon-circle" style={{ width: "36px", height: "36px", backgroundColor: "#e6f9f0", color: "#10b981" }}>
-                      <ShieldCheck size={18} />
-                    </div>
-                    <div>
-                      <p style={{ fontSize: "0.7rem", fontWeight: "800", textTransform: "uppercase", color: "var(--color-text-light)", letterSpacing: "0.04em" }}>Flotte & Réseau Officiel</p>
-                      <p style={{ fontSize: "0.95rem", fontWeight: "850", color: "var(--color-navy)" }}>100% Conducteurs Qualifiés</p>
-                    </div>
-                  </div>
-                  <span className="badge badge-blue">Disponibilité 24/48h</span>
-                </div>
               </div>
             </div>
           </div>

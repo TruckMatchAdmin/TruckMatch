@@ -6,7 +6,7 @@ export interface NavItem {
 
 export const MAIN_NAV: NavItem[] = [
   { label: "Trouver un chauffeur", href: "/entreprises" },
-  { label: "Carte des Chauffeurs", href: "/carte-chauffeurs", badge: "Live" },
+  { label: "Carte des Chauffeurs", href: "/carte-chauffeurs" },
   { label: "Je suis chauffeur", href: "/chauffeurs" },
   { label: "Offres d'emploi", href: "/offres-emploi" },
   { label: "Conseils", href: "/conseils" },

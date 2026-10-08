@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import {
   MapPin,
@@ -23,21 +23,27 @@ import {
   Send,
   Eye,
   Check,
+  Maximize2,
+  RotateCcw,
+  Users,
+  Navigation,
 } from "lucide-react";
 
 // Types
 interface DriverCandidate {
   id: string;
-  name: string; // Prénom + Initiale (anonymisé pour conformité RGPD)
+  initials: string;
+  name: string; // Nom anonymisé RGPD
   role: string;
   permit: "CE" | "C" | "Porteur" | "VUL";
+  permitLabel: string;
   city: string;
   zip: string;
   department: string;
   region: string;
   lat: number;
   lng: number;
-  availability: "immediat" | "48h" | "15j" | "preavis";
+  availability: "immediat" | "48h" | "15j";
   availabilityLabel: string;
   mobilityRadius: string;
   experienceYears: number;
@@ -48,13 +54,15 @@ interface DriverCandidate {
   colorType: "spl" | "pl" | "special" | "vul";
 }
 
-// Données candidates enregistrées lors de l'inscription
+// 25 conducteurs répartis sur les bassins d'activité logistique en France
 const CANDIDATES_DATA: DriverCandidate[] = [
   {
     id: "CH-5901",
+    initials: "ML",
     name: "Michel L.",
     role: "Conducteur Routier SPL",
     permit: "CE",
+    permitLabel: "Permis CE (Super Lourd)",
     city: "Lille",
     zip: "59000",
     department: "59 - Nord",
@@ -73,9 +81,11 @@ const CANDIDATES_DATA: DriverCandidate[] = [
   },
   {
     id: "CH-5902",
+    initials: "YB",
     name: "Yassine B.",
     role: "Chauffeur Distribution PL",
     permit: "C",
+    permitLabel: "Permis C (Poids Lourd)",
     city: "Dunkerque",
     zip: "59140",
     department: "59 - Nord",
@@ -84,19 +94,21 @@ const CANDIDATES_DATA: DriverCandidate[] = [
     lng: 2.3768,
     availability: "immediat",
     availabilityLabel: "Disponible immédiatement",
-    mobilityRadius: "Rayon 45 km",
+    mobilityRadius: "Rayon 45 km Flandres",
     experienceYears: 7,
     specialties: ["Hayon élévateur", "Distribution urbaine", "Transpalette élec."],
-    bio: "Spécialiste messagerie et livraisons palettes sur Dunkerque et Flandres maritimes. Rigueur des émargements et bon contact client.",
+    bio: "Spécialiste messagerie et livraisons palettes sur Dunkerque et le littoral nord. Rigueur des émargements et excellent contact client.",
     verifiedFco: true,
     verifiedChrono: true,
     colorType: "pl",
   },
   {
     id: "CH-5903",
+    initials: "FD",
     name: "Frédéric D.",
     role: "Conducteur SPL Relais Nuit",
     permit: "CE",
+    permitLabel: "Permis CE (Super Lourd)",
     city: "Douai",
     zip: "59500",
     department: "59 - Nord",
@@ -115,9 +127,11 @@ const CANDIDATES_DATA: DriverCandidate[] = [
   },
   {
     id: "CH-7501",
+    initials: "KM",
     name: "Kevin M.",
     role: "Conducteur SPL Porte-Conteneur",
     permit: "CE",
+    permitLabel: "Permis CE (Super Lourd)",
     city: "Roissy-en-France",
     zip: "95700",
     department: "95 - Val-d'Oise",
@@ -128,17 +142,19 @@ const CANDIDATES_DATA: DriverCandidate[] = [
     availabilityLabel: "Disponible immédiatement",
     mobilityRadius: "Bassin francilien + Oise",
     experienceYears: 9,
-    specialties: ["Fret Aérien", "ADR Base", "Porte-conteneur", "Badge Aéroportuaire"],
-    bio: "Opère sur la plateforme cargo de Roissy CDG et liaison Le Havre. Connaissance approfondie des accès aéroportuaires et protocoles sûreté.",
+    specialties: ["Fret Aérien", "ADR Base", "Porte-conteneur", "Badge Cargo CDG"],
+    bio: "Opère sur la zone cargo de Roissy CDG et liaison Le Havre. Connaissance approfondie des accès aéroportuaires et protocoles sûreté.",
     verifiedFco: true,
     verifiedChrono: true,
     colorType: "spl",
   },
   {
-    id: "CH-7502",
+    id: "CH-9401",
+    initials: "DP",
     name: "Damien P.",
     role: "Chauffeur PL Frigo Rungis",
     permit: "C",
+    permitLabel: "Permis C (Poids Lourd)",
     city: "Rungis",
     zip: "94150",
     department: "94 - Val-de-Marne",
@@ -156,10 +172,12 @@ const CANDIDATES_DATA: DriverCandidate[] = [
     colorType: "special",
   },
   {
-    id: "CH-7803",
+    id: "CH-7801",
+    initials: "ST",
     name: "Sofiane T.",
-    role: "Conducteur Benne & TP",
-    permit: "C",
+    role: "Conducteur Porteur Benne TP",
+    permit: "Porteur",
+    permitLabel: "Permis C (Porteur TP)",
     city: "Trappes",
     zip: "78190",
     department: "78 - Yvelines",
@@ -168,7 +186,7 @@ const CANDIDATES_DATA: DriverCandidate[] = [
     lng: 2.0022,
     availability: "immediat",
     availabilityLabel: "Disponible immédiatement",
-    mobilityRadius: "Rayon 40 km",
+    mobilityRadius: "Rayon 40 km Grand Paris",
     experienceYears: 5,
     specialties: ["Benne Enrochée", "Chantiers BTP", "Carte BTP valide"],
     bio: "Expérience sur les grands chantiers franciliens du Grand Paris. Conduite sur terrains difficiles et respect absolu des règles de sécurité.",
@@ -178,9 +196,11 @@ const CANDIDATES_DATA: DriverCandidate[] = [
   },
   {
     id: "CH-6901",
+    initials: "KD",
     name: "Karim D.",
     role: "Conducteur Routier SPL",
     permit: "CE",
+    permitLabel: "Permis CE (Super Lourd)",
     city: "Saint-Priest",
     zip: "69800",
     department: "69 - Rhône",
@@ -199,9 +219,11 @@ const CANDIDATES_DATA: DriverCandidate[] = [
   },
   {
     id: "CH-6902",
+    initials: "AG",
     name: "Alexandre G.",
-    role: "Chauffeur PL Distribution",
+    role: "Chauffeur Distribution PL",
     permit: "C",
+    permitLabel: "Permis C (Poids Lourd)",
     city: "Lyon",
     zip: "69007",
     department: "69 - Rhône",
@@ -220,9 +242,11 @@ const CANDIDATES_DATA: DriverCandidate[] = [
   },
   {
     id: "CH-3801",
+    initials: "TR",
     name: "Thierry R.",
     role: "Conducteur Porteur Grue Auxiliaire",
-    permit: "C",
+    permit: "Porteur",
+    permitLabel: "Permis C (Grue CACES)",
     city: "Grenoble",
     zip: "38000",
     department: "38 - Isère",
@@ -241,9 +265,11 @@ const CANDIDATES_DATA: DriverCandidate[] = [
   },
   {
     id: "CH-1301",
+    initials: "RB",
     name: "Rachid B.",
     role: "Conducteur SPL Citerne Hydrocarbures",
     permit: "CE",
+    permitLabel: "Permis CE (Super Lourd)",
     city: "Fos-sur-Mer",
     zip: "13270",
     department: "13 - Bouches-du-Rhône",
@@ -262,9 +288,11 @@ const CANDIDATES_DATA: DriverCandidate[] = [
   },
   {
     id: "CH-1302",
+    initials: "LV",
     name: "Lucas V.",
     role: "Chauffeur SPL Frigo Quotidien",
     permit: "CE",
+    permitLabel: "Permis CE (Super Lourd)",
     city: "Marseille",
     zip: "13015",
     department: "13 - Bouches-du-Rhône",
@@ -282,10 +310,35 @@ const CANDIDATES_DATA: DriverCandidate[] = [
     colorType: "spl",
   },
   {
+    id: "CH-0601",
+    initials: "FR",
+    name: "Fabrice R.",
+    role: "Chauffeur PL Distribution Littoral",
+    permit: "C",
+    permitLabel: "Permis C (Poids Lourd)",
+    city: "Nice",
+    zip: "06000",
+    department: "06 - Alpes-Maritimes",
+    region: "Provence-Alpes-Côte d'Azur",
+    lat: 43.7102,
+    lng: 7.262,
+    availability: "immediat",
+    availabilityLabel: "Disponible immédiatement",
+    mobilityRadius: "Rayon 40 km Riviera",
+    experienceYears: 7,
+    specialties: ["Livraison Urbaine Délicate", "Hayon", "Transpalette"],
+    bio: "Habitué aux contraintes de circulation et accès complexes de la Côte d'Azur (accès pentes, voies étroites). Sérénité et politesse.",
+    verifiedFco: true,
+    verifiedChrono: true,
+    colorType: "pl",
+  },
+  {
     id: "CH-3101",
+    initials: "BF",
     name: "Bastien F.",
     role: "Conducteur Routier SPL Grand Sud",
     permit: "CE",
+    permitLabel: "Permis CE (Super Lourd)",
     city: "Toulouse",
     zip: "31200",
     department: "31 - Haute-Garonne",
@@ -304,9 +357,11 @@ const CANDIDATES_DATA: DriverCandidate[] = [
   },
   {
     id: "CH-3401",
+    initials: "NE",
     name: "Nicolas E.",
     role: "Chauffeur Distribution PL",
     permit: "C",
+    permitLabel: "Permis C (Poids Lourd)",
     city: "Montpellier",
     zip: "34000",
     department: "34 - Hérault",
@@ -325,9 +380,11 @@ const CANDIDATES_DATA: DriverCandidate[] = [
   },
   {
     id: "CH-3301",
+    initials: "GH",
     name: "Guillaume H.",
     role: "Conducteur SPL National & Régional",
     permit: "CE",
+    permitLabel: "Permis CE (Super Lourd)",
     city: "Bordeaux",
     zip: "33000",
     department: "33 - Gironde",
@@ -346,9 +403,11 @@ const CANDIDATES_DATA: DriverCandidate[] = [
   },
   {
     id: "CH-3302",
+    initials: "RS",
     name: "Romain S.",
     role: "Chauffeur Livreur VUL Messagerie",
     permit: "VUL",
+    permitLabel: "Permis B (Utilitaire)",
     city: "Mérignac",
     zip: "33700",
     department: "33 - Gironde",
@@ -359,17 +418,19 @@ const CANDIDATES_DATA: DriverCandidate[] = [
     availabilityLabel: "Disponible immédiatement",
     mobilityRadius: "Agglomération bordelaise",
     experienceYears: 5,
-    specialties: ["Messagerie Express", "Scan PDA", "Projet permis C en cours"],
-    bio: "Livreur expérimenté en tournée urbaine dense (60 à 80 points/jour). Rigueur horaire et connaissance des secteurs d'affaires.",
+    specialties: ["Messagerie Express", "Scan PDA", "Projet permis C"],
+    bio: "Livreur expérimenté en tournée urbaine dense (60 à 80 points/jour). Rigueur horaire et connaissance des parcs d'activités.",
     verifiedFco: false,
     verifiedChrono: false,
     colorType: "vul",
   },
   {
     id: "CH-3501",
+    initials: "YM",
     name: "Yannick M.",
     role: "Conducteur SPL Relais Bretagne",
     permit: "CE",
+    permitLabel: "Permis CE (Super Lourd)",
     city: "Rennes",
     zip: "35000",
     department: "35 - Ille-et-Vilaine",
@@ -388,9 +449,11 @@ const CANDIDATES_DATA: DriverCandidate[] = [
   },
   {
     id: "CH-2901",
+    initials: "EK",
     name: "Erwan K.",
     role: "Conducteur Routier SPL Finistère",
     permit: "CE",
+    permitLabel: "Permis CE (Super Lourd)",
     city: "Brest",
     zip: "29200",
     department: "29 - Finistère",
@@ -409,9 +472,11 @@ const CANDIDATES_DATA: DriverCandidate[] = [
   },
   {
     id: "CH-4401",
+    initials: "AC",
     name: "Anthony C.",
     role: "Conducteur SPL Distribution Régionale",
     permit: "CE",
+    permitLabel: "Permis CE (Super Lourd)",
     city: "Nantes",
     zip: "44000",
     department: "44 - Loire-Atlantique",
@@ -430,9 +495,11 @@ const CANDIDATES_DATA: DriverCandidate[] = [
   },
   {
     id: "CH-6701",
+    initials: "MW",
     name: "Markus W.",
     role: "Conducteur SPL Transfrontalier",
     permit: "CE",
+    permitLabel: "Permis CE (Super Lourd)",
     city: "Strasbourg",
     zip: "67000",
     department: "67 - Bas-Rhin",
@@ -441,7 +508,7 @@ const CANDIDATES_DATA: DriverCandidate[] = [
     lng: 7.7521,
     availability: "immediat",
     availabilityLabel: "Disponible immédiatement",
-    mobilityRadius: "Alsace, Lorraine & Allemagne (Bade-Wurtemberg)",
+    mobilityRadius: "Alsace, Lorraine & Allemagne",
     experienceYears: 17,
     specialties: ["Allemand Bilingue", "ADR Citerne", "Toll Collect", "Liaisons Rhin"],
     bio: "Habitué aux liaisons transfrontalières France-Allemagne. Gestion bilingue des bons de livraison et procédures douanières.",
@@ -451,9 +518,11 @@ const CANDIDATES_DATA: DriverCandidate[] = [
   },
   {
     id: "CH-5701",
+    initials: "JB",
     name: "Julien B.",
     role: "Chauffeur PL Porteur TP",
-    permit: "C",
+    permit: "Porteur",
+    permitLabel: "Permis C (Porteur Benne)",
     city: "Metz",
     zip: "57000",
     department: "57 - Moselle",
@@ -472,9 +541,11 @@ const CANDIDATES_DATA: DriverCandidate[] = [
   },
   {
     id: "CH-7601",
+    initials: "CN",
     name: "Christophe N.",
     role: "Conducteur SPL Conteneur Maritime",
     permit: "CE",
+    permitLabel: "Permis CE (Super Lourd)",
     city: "Rouen",
     zip: "76000",
     department: "76 - Seine-Maritime",
@@ -493,9 +564,11 @@ const CANDIDATES_DATA: DriverCandidate[] = [
   },
   {
     id: "CH-2101",
+    initials: "OP",
     name: "Olivier P.",
     role: "Conducteur SPL Frigo & Vin",
     permit: "CE",
+    permitLabel: "Permis CE (Super Lourd)",
     city: "Dijon",
     zip: "21000",
     department: "21 - Côte-d'Or",
@@ -514,9 +587,11 @@ const CANDIDATES_DATA: DriverCandidate[] = [
   },
   {
     id: "CH-4501",
+    initials: "SV",
     name: "Sébastien V.",
     role: "Conducteur SPL Logistique Centrale",
     permit: "CE",
+    permitLabel: "Permis CE (Super Lourd)",
     city: "Orléans",
     zip: "45000",
     department: "45 - Loiret",
@@ -527,80 +602,22 @@ const CANDIDATES_DATA: DriverCandidate[] = [
     availabilityLabel: "Disponible immédiatement",
     mobilityRadius: "Hub Centre & Île-de-France",
     experienceYears: 9,
-    specialties: ["Tautliner", "Relais Logistique", "Plateforme Saran / Artenay"],
+    specialties: ["Tautliner", "Relais Logistique", "Plateforme Saran"],
     bio: "Idéalement positionné sur le carrefour logistique orléanais (A10 / A71). Expérience confirmée sur tractions grande distribution.",
     verifiedFco: true,
     verifiedChrono: true,
     colorType: "spl",
   },
-  {
-    id: "CH-0601",
-    name: "Fabrice R.",
-    role: "Chauffeur PL Distribution Littoral",
-    permit: "C",
-    city: "Nice",
-    zip: "06000",
-    department: "06 - Alpes-Maritimes",
-    region: "Provence-Alpes-Côte d'Azur",
-    lat: 43.7102,
-    lng: 7.262,
-    availability: "immediat",
-    availabilityLabel: "Disponible immédiatement",
-    mobilityRadius: "Rayon 40 km Riviera",
-    experienceYears: 7,
-    specialties: ["Livraison Urbaine Délicate", "Hayon", "Transpalette"],
-    bio: "Habitué aux contraintes de circulation et accès complexes de la Côte d'Azur (accès pentes, voies étroites). Sérénité et politesse.",
-    verifiedFco: true,
-    verifiedChrono: true,
-    colorType: "pl",
-  },
-];
-
-// Projection mathématique des coordonnées GPS vers le canevas SVG 860x780
-function projectGpsToSvg(lat: number, lng: number): { x: number; y: number } {
-  // Bornes géographiques France métropolitaine
-  const minLng = -5.1;
-  const maxLng = 9.3;
-  const minLat = 42.1;
-  const maxLat = 51.3;
-
-  const width = 760;
-  const height = 680;
-  const offsetX = 50;
-  const offsetY = 50;
-
-  const x = ((lng - minLng) / (maxLng - minLng)) * width + offsetX;
-  const y = ((maxLat - lat) / (maxLat - minLat)) * height + offsetY;
-
-  return { x: Math.round(x), y: Math.round(y) };
-}
-
-// Régions avec chemins stylisés
-const FRANCE_REGIONS = [
-  { id: "hauts-de-france", name: "Hauts-de-France", d: "M 420,50 L 520,70 L 530,150 L 460,190 L 380,180 L 370,120 Z" },
-  { id: "ile-de-france", name: "Île-de-France", d: "M 390,190 L 460,195 L 450,260 L 385,255 Z" },
-  { id: "normandie", name: "Normandie", d: "M 230,120 L 370,130 L 385,220 L 260,230 L 210,180 Z" },
-  { id: "bretagne", name: "Bretagne", d: "M 50,210 L 210,185 L 230,280 L 130,290 L 60,250 Z" },
-  { id: "pays-de-la-loire", name: "Pays de la Loire", d: "M 230,240 L 340,240 L 330,360 L 210,340 Z" },
-  { id: "centre-val-de-loire", name: "Centre-Val de Loire", d: "M 340,240 L 440,260 L 420,400 L 330,370 Z" },
-  { id: "grand-est", name: "Grand Est", d: "M 470,120 L 710,140 L 730,270 L 580,310 L 470,240 Z" },
-  { id: "bourgogne-franche-comte", name: "Bourgogne-Franche-Comté", d: "M 460,270 L 600,290 L 660,370 L 570,440 L 440,390 Z" },
-  { id: "nouvelle-aquitaine", name: "Nouvelle-Aquitaine", d: "M 220,360 L 390,380 L 410,540 L 280,640 L 210,480 Z" },
-  { id: "auvergne-rhone-alpes", name: "Auvergne-Rhône-Alpes", d: "M 430,410 L 580,420 L 650,470 L 590,590 L 450,560 Z" },
-  { id: "occitanie", name: "Occitanie", d: "M 300,560 L 460,560 L 520,630 L 460,700 L 330,670 Z" },
-  { id: "provence-alpes-cote-d-azur", name: "Provence-Alpes-Côte d'Azur", d: "M 540,540 L 670,540 L 700,640 L 550,650 Z" },
-  { id: "corse", name: "Corse", d: "M 740,580 L 770,580 L 775,670 L 745,660 Z" },
 ];
 
 export default function CarteChauffeursPage() {
   const [selectedCandidate, setSelectedCandidate] = useState<DriverCandidate | null>(CANDIDATES_DATA[0]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPermit, setSelectedPermit] = useState<string>("all");
+  const [selectedRegion, setSelectedRegion] = useState<string>("all");
   const [selectedAvailability, setSelectedAvailability] = useState<string>("all");
-  const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
-  const [hoveredCandidate, setHoveredCandidate] = useState<DriverCandidate | null>(null);
 
-  // Modale contact / recrutement direct
+  // Modale de contact
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [contactSuccess, setContactSuccess] = useState(false);
   const [modalForm, setModalForm] = useState({
@@ -612,10 +629,14 @@ export default function CarteChauffeursPage() {
     message: "",
   });
 
-  // Filtrage réactif des candidats
+  // Référence DOM pour la carte Leaflet
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const markersLayerRef = useRef<any>(null);
+
+  // Filtrage réactif
   const filteredCandidates = useMemo(() => {
     return CANDIDATES_DATA.filter((c) => {
-      // Recherche textuelle (ville, nom, département, région)
       if (searchQuery.trim() !== "") {
         const q = searchQuery.toLowerCase().trim();
         const matchesQuery =
@@ -628,30 +649,167 @@ export default function CarteChauffeursPage() {
         if (!matchesQuery) return false;
       }
 
-      // Filtre Permis
-      if (selectedPermit !== "all") {
-        if (selectedPermit === "CE" && c.permit !== "CE") return false;
-        if (selectedPermit === "C" && c.permit !== "C") return false;
-        if (selectedPermit === "Porteur" && c.permit !== "Porteur") return false;
-        if (selectedPermit === "VUL" && c.permit !== "VUL") return false;
+      if (selectedPermit !== "all" && c.permit !== selectedPermit) {
+        return false;
       }
 
-      // Filtre Disponibilité
-      if (selectedAvailability !== "all") {
-        if (c.availability !== selectedAvailability) return false;
+      if (selectedRegion !== "all" && c.region !== selectedRegion) {
+        return false;
       }
 
-      // Filtre Spécialité
-      if (selectedSpecialty !== "all") {
-        const hasSpec = c.specialties.some((s) =>
-          s.toLowerCase().includes(selectedSpecialty.toLowerCase())
-        );
-        if (!hasSpec) return false;
+      if (selectedAvailability !== "all" && c.availability !== selectedAvailability) {
+        return false;
       }
 
       return true;
     });
-  }, [searchQuery, selectedPermit, selectedAvailability, selectedSpecialty]);
+  }, [searchQuery, selectedPermit, selectedRegion, selectedAvailability]);
+
+  // Initialisation et cycle de vie de Leaflet
+  useEffect(() => {
+    let isMounted = true;
+
+    async function initLeafletMap() {
+      if (!mapContainerRef.current || typeof window === "undefined") return;
+
+      const L = (await import("leaflet")).default;
+
+      if (!isMounted) return;
+
+      // Nettoyer si déjà initialisé
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+
+      // Initialiser la carte centrée sur la France
+      const map = L.map(mapContainerRef.current, {
+        center: [46.603354, 2.352222], // Centre géographique de la France
+        zoom: 6,
+        minZoom: 5,
+        maxZoom: 14,
+        zoomControl: true,
+        scrollWheelZoom: true,
+      });
+
+      // Fond de carte CartoDB Voyager : moderne, épuré, fluide
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+        attribution: '&copy; <a href="https://carto.com/">CARTO</a> | TruckMatch France',
+        subdomains: "abcd",
+        maxZoom: 19,
+      }).addTo(map);
+
+      // Layer group pour les marqueurs
+      const markersLayer = L.layerGroup().addTo(map);
+      markersLayerRef.current = markersLayer;
+      mapInstanceRef.current = map;
+
+      renderMarkers(L, map, markersLayer, filteredCandidates);
+    }
+
+    initLeafletMap();
+
+    return () => {
+      isMounted = false;
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []);
+
+  // Mise à jour des marqueurs quand le filtre change
+  useEffect(() => {
+    async function updateMarkers() {
+      if (!mapInstanceRef.current || !markersLayerRef.current) return;
+      const L = (await import("leaflet")).default;
+      renderMarkers(L, mapInstanceRef.current, markersLayerRef.current, filteredCandidates);
+    }
+    updateMarkers();
+  }, [filteredCandidates]);
+
+  // Fonction de rendu des marqueurs Leaflet
+  const renderMarkers = (L: any, map: any, layer: any, candidates: DriverCandidate[]) => {
+    layer.clearLayers();
+
+    candidates.forEach((candidate) => {
+      // Pin personnalisé
+      const pinClass = `truck-pin-badge ${candidate.colorType}`;
+      const pulseHtml =
+        candidate.availability === "immediat"
+          ? `<span class="truck-pin-pulse-dot"></span>`
+          : "";
+
+      const customIcon = L.divIcon({
+        className: "truck-map-pin",
+        html: `
+          <div class="${pinClass}">
+            ${pulseHtml}
+            <span>${candidate.permit}</span>
+            <span style="opacity:0.85; font-size:10px;">${candidate.city}</span>
+          </div>
+          <div class="truck-pin-stem"></div>
+        `,
+        iconSize: [110, 38],
+        iconAnchor: [55, 38],
+        popupAnchor: [0, -36],
+      });
+
+      const marker = L.marker([candidate.lat, candidate.lng], { icon: customIcon });
+
+      // Popup moderne au clic
+      const popupHtml = `
+        <div class="map-popup-card">
+          <div class="map-popup-header">
+            <div>
+              <div class="map-popup-title">${candidate.name}</div>
+              <div style="font-size:12px; font-weight:700; color:#0080ff;">${candidate.role}</div>
+            </div>
+            <span class="badge ${candidate.availability === "immediat" ? "badge-green" : "badge-blue"}" style="font-size:10px;">
+              ${candidate.availability === "immediat" ? "🟢 Immédiat" : "🔵 Sous 48h"}
+            </span>
+          </div>
+          <div class="map-popup-loc">
+            <span>📍</span>
+            <span><strong>${candidate.city}</strong> (${candidate.zip}) • ${candidate.mobilityRadius}</span>
+          </div>
+          <div class="map-popup-tags">
+            ${candidate.specialties.map((s) => `<span class="map-popup-tag">${s}</span>`).join("")}
+          </div>
+          <div style="font-size:12px; color:#475569; margin-top:2px;">
+            Expérience : <strong>${candidate.experienceYears} ans</strong>
+          </div>
+        </div>
+      `;
+
+      marker.bindPopup(popupHtml);
+
+      marker.on("click", () => {
+        setSelectedCandidate(candidate);
+      });
+
+      marker.addTo(layer);
+    });
+  };
+
+  // Zoom direct sur un candidat au clic depuis le volet latéral
+  const handleFlyToCandidate = async (candidate: DriverCandidate) => {
+    setSelectedCandidate(candidate);
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo([candidate.lat, candidate.lng], 10, {
+        duration: 1.2,
+      });
+    }
+  };
+
+  // Réinitialiser la vue France entière
+  const handleResetMapView = () => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo([46.603354, 2.352222], 6, {
+        duration: 1,
+      });
+    }
+  };
 
   const handleOpenContact = (candidate: DriverCandidate) => {
     setSelectedCandidate(candidate);
@@ -665,85 +823,139 @@ export default function CarteChauffeursPage() {
     setTimeout(() => {
       setIsModalOpen(false);
       setContactSuccess(false);
-    }, 2500);
+    }, 2400);
   };
 
   return (
-    <div className="carte-page-wrapper">
-      {/* 1. Hero En-tête Moderne Pleine Largeur */}
-      <section className="chauffeur-hero-section" style={{ paddingBottom: "2rem" }}>
+    <div className="trouver-chauffeur-page">
+      {/* 1. Hero Recrutement Géolocalisé (Identique aux pages précédentes) */}
+      <section className="recruiter-hero-section">
         <div className="container">
-          <div className="hero-tag">
-            <span className="live-dot" />
-            <span>Radar Recrutement France • Données Inscriptions en Temps Réel</span>
+          <div className="recruiter-hero-grid">
+            <div className="recruiter-hero-content">
+              <div className="hero-tag">
+                <span className="hero-tag-dot" />
+                <span>Radar Recrutement France • Données Inscriptions en Temps Réel</span>
+              </div>
+
+              <h1 className="hero-title">
+                Carte interactive des
+                <span className="hero-title-highlight">chauffeurs disponibles</span>
+              </h1>
+
+              <p className="hero-subtitle">
+                Localisez immédiatement les conducteurs routiers qualifiés (SPL, PL, Porteur, VUL)
+                inscrits sur TruckMatch. Filtrez par commune de résidence, permis et habilitations pour
+                engager vos recrutements en circuit court et sans intermédiaire.
+              </p>
+
+              <div className="hero-cta-group">
+                <a href="#carte-interactive" className="btn btn-primary btn-lg">
+                  <MapPin size={17} />
+                  <span>Explorer la carte de France</span>
+                </a>
+                <Link href="/entreprises" className="btn btn-outline btn-lg">
+                  <Building2 size={17} />
+                  <span>Déposer une offre d'emploi</span>
+                </Link>
+              </div>
+
+              {/* Mots-clés SEO interactifs */}
+              <div className="hero-seo-pills">
+                <span className="seo-pill-label">Bassins recherchés :</span>
+                <span className="seo-pill" onClick={() => setSearchQuery("Lille")} style={{ cursor: "pointer" }}>
+                  Chauffeur SPL Lille (59)
+                </span>
+                <span className="seo-pill" onClick={() => setSearchQuery("Lyon")} style={{ cursor: "pointer" }}>
+                  Conducteur PL Lyon (69)
+                </span>
+                <span className="seo-pill" onClick={() => setSearchQuery("Fos-sur-Mer")} style={{ cursor: "pointer" }}>
+                  ADR Citerne PACA
+                </span>
+                <span className="seo-pill" onClick={() => setSearchQuery("Roissy")} style={{ cursor: "pointer" }}>
+                  Traction Roissy CDG
+                </span>
+                <span className="seo-pill" onClick={() => setSearchQuery("Rennes")} style={{ cursor: "pointer" }}>
+                  Frigo Bretagne
+                </span>
+              </div>
+            </div>
+
+            {/* Carte métrique & statut en temps réel */}
+            <div className="recruiter-hero-visual">
+              <div className="recruiter-visual-card">
+                <div className="visual-metric-row">
+                  <div className="visual-metric-icon">
+                    <Truck size={26} />
+                  </div>
+                  <div>
+                    <p className="visual-metric-val">1 480 Conducteurs</p>
+                    <p className="visual-metric-label">Inscrits avec ville ou village certifié</p>
+                  </div>
+                </div>
+
+                <div className="visual-metric-row">
+                  <div className="visual-metric-icon" style={{ backgroundColor: "#e6f9f0", color: "#10b981" }}>
+                    <CheckCircle2 size={26} />
+                  </div>
+                  <div>
+                    <p className="visual-metric-val">342 Disponibles</p>
+                    <p className="visual-metric-label">Prêts à prendre le volant immédiatement</p>
+                  </div>
+                </div>
+
+                <div className="visual-metric-row">
+                  <div className="visual-metric-icon" style={{ backgroundColor: "#e8f3ff", color: "#0080ff" }}>
+                    <ShieldCheck size={26} />
+                  </div>
+                  <div>
+                    <p className="visual-metric-val">98,4% Validés</p>
+                    <p className="visual-metric-label">Permis, FCO Marchandises & Cartes Chrono vérifiés</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <h1 className="hero-title">
-            Carte interactive des <span className="hero-title-highlight">Chauffeurs Disponibles</span>
-          </h1>
-
-          <p className="hero-subtitle">
-            Localisez instantanément les conducteurs routiers (SPL, PL, Porteur, VUL) inscrits sur TruckMatch.
-            Filtrez par ville ou village, habilitation ADR, FIMO ou CACES et entrez directement en contact sans intermédiaire.
-          </p>
-
-          {/* Bandeau Statistiques Réseau */}
-          <div className="map-stats-strip" style={{ marginTop: "2rem" }}>
-            <div className="map-stat-card">
-              <div className="map-stat-icon-wrap">
-                <Truck size={24} />
-              </div>
-              <div>
-                <div className="map-stat-value">1 480</div>
-                <div className="map-stat-label">Chauffeurs Inscrits</div>
-              </div>
+          {/* Bandeau de réassurance Transport 4 métriques */}
+          <div className="recruiter-metrics-strip">
+            <div className="metric-item">
+              <div className="metric-number">1 480</div>
+              <div className="metric-title">Chauffeurs géolocalisés</div>
+              <div className="metric-desc">Partout en France métropolitaine</div>
             </div>
-
-            <div className="map-stat-card">
-              <div className="map-stat-icon-wrap green">
-                <CheckCircle2 size={24} />
-              </div>
-              <div>
-                <div className="map-stat-value">342</div>
-                <div className="map-stat-label">Disponibles Immédiatement</div>
-              </div>
+            <div className="metric-item">
+              <div className="metric-number">100%</div>
+              <div className="metric-title">Spécialisé Transport</div>
+              <div className="metric-desc">SPL, PL, Porteur & VUL</div>
             </div>
-
-            <div className="map-stat-card">
-              <div className="map-stat-icon-wrap navy">
-                <ShieldCheck size={24} />
-              </div>
-              <div>
-                <div className="map-stat-value">98,4%</div>
-                <div className="map-stat-label">FCO & Cartes Validées</div>
-              </div>
+            <div className="metric-item">
+              <div className="metric-number">48h</div>
+              <div className="metric-title">Délai moyen d'embauche</div>
+              <div className="metric-desc">Contact direct sans commission</div>
             </div>
-
-            <div className="map-stat-card">
-              <div className="map-stat-icon-wrap orange">
-                <MapPin size={24} />
-              </div>
-              <div>
-                <div className="map-stat-value">95 Dép.</div>
-                <div className="map-stat-label">Couverture Nationale</div>
-              </div>
+            <div className="metric-item">
+              <div className="metric-number">0 €</div>
+              <div className="metric-title">Aucun frais d'intérim</div>
+              <div className="metric-desc">Économisez jusqu'à 35% par recrutement</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 2. Filtres Interactifs & Recherche */}
-      <div className="container">
-        <div className="map-filter-card">
-          <div className="map-filter-top-row">
-            {/* Barre de recherche par ville / code postal */}
-            <div className="map-search-box">
-              <Search size={18} color="var(--color-primary)" />
+      {/* 2. Filtres & Moteur de Recherche Géographique */}
+      <section id="carte-interactive" className="container" style={{ marginBottom: "2rem" }}>
+        <div className="filter-search-box">
+          <div className="filter-inputs-grid">
+            {/* Recherche textuelle par commune ou code postal */}
+            <div className="search-field-wrap">
+              <Search size={18} className="search-field-icon" />
               <input
                 type="text"
-                placeholder="Rechercher une ville, un village (ex: Lille, Saint-Priest, Fos-sur-Mer, 59, 69)..."
+                placeholder="Ville, village ou département (ex: Lille, Saint-Priest, Fos-sur-Mer, 59, 69)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input-modern"
               />
               {searchQuery && (
                 <button
@@ -756,123 +968,131 @@ export default function CarteChauffeursPage() {
               )}
             </div>
 
-            {/* Compteur de candidats trouvés */}
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.9rem", fontWeight: 700, color: "var(--color-navy)" }}>
-              <span className="live-dot" />
-              <span>{filteredCandidates.length} chauffeur(s) géolocalisé(s)</span>
+            {/* Sélecteur de Permis */}
+            <div className="select-field-wrap">
+              <select
+                value={selectedPermit}
+                onChange={(e) => setSelectedPermit(e.target.value)}
+                className="select-modern"
+              >
+                <option value="all">Tous les permis</option>
+                <option value="CE">Permis CE (Super Lourd SPL)</option>
+                <option value="C">Permis C (Poids Lourd Distribution)</option>
+                <option value="Porteur">Porteur Spécialisé / Grue CACES</option>
+                <option value="VUL">Permis B (Utilitaire VUL)</option>
+              </select>
+            </div>
+
+            {/* Sélecteur de Région */}
+            <div className="select-field-wrap">
+              <select
+                value={selectedRegion}
+                onChange={(e) => setSelectedRegion(e.target.value)}
+                className="select-modern"
+              >
+                <option value="all">Toutes les régions</option>
+                <option value="Hauts-de-France">Hauts-de-France (59, 62, 80...)</option>
+                <option value="Île-de-France">Île-de-France (75, 93, 95, 78...)</option>
+                <option value="Auvergne-Rhône-Alpes">Auvergne-Rhône-Alpes (69, 38, 01...)</option>
+                <option value="Provence-Alpes-Côte d'Azur">PACA (13, 06, 83...)</option>
+                <option value="Occitanie">Occitanie (31, 34, 30...)</option>
+                <option value="Nouvelle-Aquitaine">Nouvelle-Aquitaine (33, 64, 87...)</option>
+                <option value="Bretagne">Bretagne (35, 29, 22...)</option>
+                <option value="Pays de la Loire">Pays de la Loire (44, 49, 72...)</option>
+                <option value="Grand Est">Grand Est (67, 57, 54, 51...)</option>
+                <option value="Normandie">Normandie (76, 14, 27...)</option>
+                <option value="Centre-Val de Loire">Centre-Val de Loire (45, 37...)</option>
+                <option value="Bourgogne-Franche-Comté">Bourgogne-Franche-Comté (21, 25...)</option>
+              </select>
+            </div>
+
+            {/* Sélecteur de Disponibilité */}
+            <div className="select-field-wrap">
+              <select
+                value={selectedAvailability}
+                onChange={(e) => setSelectedAvailability(e.target.value)}
+                className="select-modern"
+              >
+                <option value="all">Toutes disponibilités</option>
+                <option value="immediat">⚡ Immédiatement</option>
+                <option value="48h">Sous 48 heures</option>
+              </select>
             </div>
           </div>
 
-          {/* Filtres par boutons Chips */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
-            {/* Permis */}
-            <div className="filter-chips-group">
-              <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--color-text-muted)", textTransform: "uppercase" }}>Permis :</span>
-              <button
-                type="button"
-                className={`filter-chip-btn ${selectedPermit === "all" ? "active" : ""}`}
-                onClick={() => setSelectedPermit("all")}
-              >
-                Tous
-              </button>
-              <button
-                type="button"
-                className={`filter-chip-btn ${selectedPermit === "CE" ? "active" : ""}`}
-                onClick={() => setSelectedPermit("CE")}
-              >
-                Permis CE (SPL)
-              </button>
-              <button
-                type="button"
-                className={`filter-chip-btn ${selectedPermit === "C" ? "active" : ""}`}
-                onClick={() => setSelectedPermit("C")}
-              >
-                Permis C (Poids Lourd)
-              </button>
-              <button
-                type="button"
-                className={`filter-chip-btn ${selectedPermit === "VUL" ? "active" : ""}`}
-                onClick={() => setSelectedPermit("VUL")}
-              >
-                VUL (Messagerie)
-              </button>
+          {/* Barre d'état des filtres & Réinitialisation */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "1rem",
+              marginTop: "1rem",
+              paddingTop: "1rem",
+              borderTop: "1px solid #f1f5f9",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.92rem", fontWeight: 700, color: "var(--color-navy)" }}>
+              <span className="live-dot" />
+              <span>{filteredCandidates.length} conducteur(s) positionné(s) sur la carte</span>
             </div>
 
-            {/* Disponibilité */}
-            <div className="filter-chips-group">
-              <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--color-text-muted)", textTransform: "uppercase" }}>Disponibilité :</span>
+            {(searchQuery || selectedPermit !== "all" || selectedRegion !== "all" || selectedAvailability !== "all") && (
               <button
                 type="button"
-                className={`filter-chip-btn ${selectedAvailability === "all" ? "active" : ""}`}
-                onClick={() => setSelectedAvailability("all")}
+                className="btn btn-outline btn-sm"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedPermit("all");
+                  setSelectedRegion("all");
+                  setSelectedAvailability("all");
+                  handleResetMapView();
+                }}
               >
-                Toutes
+                <RotateCcw size={14} />
+                <span>Réinitialiser les filtres</span>
               </button>
-              <button
-                type="button"
-                className={`filter-chip-btn ${selectedAvailability === "immediat" ? "active" : ""}`}
-                onClick={() => setSelectedAvailability("immediat")}
-              >
-                ⚡ Immédiate
-              </button>
-              <button
-                type="button"
-                className={`filter-chip-btn ${selectedAvailability === "48h" ? "active" : ""}`}
-                onClick={() => setSelectedAvailability("48h")}
-              >
-                Sous 48h
-              </button>
-            </div>
-
-            {/* Spécialité */}
-            <div className="filter-chips-group">
-              <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--color-text-muted)", textTransform: "uppercase" }}>Spécialité :</span>
-              <button
-                type="button"
-                className={`filter-chip-btn ${selectedSpecialty === "all" ? "active" : ""}`}
-                onClick={() => setSelectedSpecialty("all")}
-              >
-                Toutes
-              </button>
-              <button
-                type="button"
-                className={`filter-chip-btn ${selectedSpecialty === "ADR" ? "active" : ""}`}
-                onClick={() => setSelectedSpecialty("ADR")}
-              >
-                ADR (Matières Dangereuses)
-              </button>
-              <button
-                type="button"
-                className={`filter-chip-btn ${selectedSpecialty === "Frigo" ? "active" : ""}`}
-                onClick={() => setSelectedSpecialty("Frigo")}
-              >
-                Frigo / Temp. Dirigée
-              </button>
-              <button
-                type="button"
-                className={`filter-chip-btn ${selectedSpecialty === "Grue" ? "active" : ""}`}
-                onClick={() => setSelectedSpecialty("Grue")}
-              >
-                CACES Grue R490
-              </button>
-            </div>
+            )}
           </div>
         </div>
+      </section>
 
-        {/* 3. Carte de France Interactive & Volet des Candidats */}
+      {/* 3. Section Carte Interactive Pleine Fonctionnalité + Volet Candidats */}
+      <section className="container" style={{ marginBottom: "5rem" }}>
         <div className="map-container-grid">
-          {/* Bloc Carte SVG */}
-          <div className="map-view-card">
-            <div className="map-card-head">
-              <div className="map-head-title-wrap">
-                <h2 className="map-head-title">Carte Interactive de France</h2>
-                <p className="map-head-subtitle">
-                  Cliquez sur un marqueur de ville ou village pour voir le profil du chauffeur.
-                </p>
-              </div>
+          {/* Colonne Gauche : Carte Leaflet Interactive */}
+          <div style={{ position: "relative" }}>
+            {/* Boutons d'action rapides au-dessus de la carte */}
+            <div className="map-quick-actions">
+              <button
+                type="button"
+                className="map-action-pill"
+                onClick={handleResetMapView}
+                title="Recentrer la carte sur la France entière"
+              >
+                <RotateCcw size={14} />
+                <span>Vue France entière</span>
+              </button>
+            </div>
 
-              {/* Légende */}
-              <div className="map-legend-pills">
+            {/* Conteneur Leaflet Réel */}
+            <div ref={mapContainerRef} className="leaflet-france-container" />
+
+            {/* Légende interactive sous la carte */}
+            <div
+              style={{
+                marginTop: "1rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "1rem",
+                fontSize: "0.85rem",
+                color: "var(--color-text-muted)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
                 <span className="legend-item">
                   <span className="legend-dot-spl" />
                   <span>Permis CE (SPL)</span>
@@ -883,152 +1103,36 @@ export default function CarteChauffeursPage() {
                 </span>
                 <span className="legend-item">
                   <span className="legend-dot-special" />
-                  <span>Spécialité ADR / Frigo / Grue</span>
+                  <span>Spécialités ADR / Frigo / CACES</span>
+                </span>
+                <span className="legend-item">
+                  <span style={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: "#ea580c" }} />
+                  <span>Permis B (VUL)</span>
                 </span>
               </div>
-            </div>
-
-            {/* Canevas SVG de la Carte de France */}
-            <div className="france-svg-wrapper">
-              <svg
-                viewBox="0 0 860 780"
-                className="france-svg-map"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <defs>
-                  {/* Ombre portée subtile pour les marqueurs */}
-                  <filter id="marker-shadow" x="-30%" y="-30%" width="160%" height="160%">
-                    <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#0b192c" floodOpacity="0.25" />
-                  </filter>
-                  <linearGradient id="regionGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#ffffff" />
-                    <stop offset="100%" stopColor="#f1f5f9" />
-                  </linearGradient>
-                </defs>
-
-                {/* Régions de France (Fonds Vectoriels) */}
-                <g className="regions-layer">
-                  {FRANCE_REGIONS.map((region) => (
-                    <path
-                      key={region.id}
-                      d={region.d}
-                      className="region-path"
-                      id={`region-${region.id}`}
-                    >
-                      <title>{region.name}</title>
-                    </path>
-                  ))}
-                </g>
-
-                {/* Marqueurs Villes / Candidats avec Coordonnées GPS Projetées */}
-                <g className="pins-layer">
-                  {filteredCandidates.map((candidate) => {
-                    const { x, y } = projectGpsToSvg(candidate.lat, candidate.lng);
-                    const isSelected = selectedCandidate?.id === candidate.id;
-                    const isHovered = hoveredCandidate?.id === candidate.id;
-
-                    // Couleur du marqueur selon type de permis
-                    let pinColor = "#0080ff"; // SPL Bleu
-                    if (candidate.colorType === "pl") pinColor = "#0b192c"; // PL Navy
-                    if (candidate.colorType === "special") pinColor = "#10b981"; // Spécial Vert
-                    if (candidate.colorType === "vul") pinColor = "#ea580c"; // VUL Orange
-
-                    return (
-                      <g
-                        key={candidate.id}
-                        className="city-marker-group"
-                        transform={`translate(${x}, ${y})`}
-                        onClick={() => setSelectedCandidate(candidate)}
-                        onMouseEnter={() => setHoveredCandidate(candidate)}
-                        onMouseLeave={() => setHoveredCandidate(null)}
-                      >
-                        {/* Radar Ping Animation si disponible immédiatement */}
-                        {candidate.availability === "immediat" && (
-                          <circle
-                            r="18"
-                            fill={pinColor}
-                            opacity="0.3"
-                            className="city-pin-outer"
-                          />
-                        )}
-
-                        {/* Cercle principal de la ville */}
-                        <circle
-                          r={isSelected ? "14" : isHovered ? "12" : "9"}
-                          fill={pinColor}
-                          stroke="#ffffff"
-                          strokeWidth="2.5"
-                          filter="url(#marker-shadow)"
-                          style={{
-                            transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                            cursor: "pointer",
-                          }}
-                        />
-
-                        {/* Point central blanc */}
-                        <circle
-                          r={isSelected ? "5" : "3.5"}
-                          fill="#ffffff"
-                          style={{ pointerEvents: "none" }}
-                        />
-
-                        {/* Nom de la Ville / Village en étiquette */}
-                        <g transform="translate(0, -18)">
-                          <rect
-                            x={-candidate.city.length * 3.8 - 8}
-                            y="-11"
-                            width={candidate.city.length * 7.6 + 16}
-                            height="18"
-                            rx="9"
-                            fill="#ffffff"
-                            filter="url(#marker-shadow)"
-                          />
-                          <text
-                            x="0"
-                            y="2"
-                            textAnchor="middle"
-                            fontSize="9.5"
-                            fontWeight="800"
-                            fill="#0b192c"
-                            style={{ pointerEvents: "none", letterSpacing: "-0.01em" }}
-                          >
-                            {candidate.city}
-                          </text>
-                        </g>
-                      </g>
-                    );
-                  })}
-                </g>
-              </svg>
-            </div>
-
-            {/* Conseils d'utilisation rapides sous la carte */}
-            <div style={{ marginTop: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem", fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
-              <span>📍 Les marqueurs représentent des chauffeurs actifs enregistrés dans leur commune de résidence.</span>
-              <span style={{ fontWeight: 700, color: "var(--color-primary)" }}>Mise à jour en continu</span>
+              <span>💡 Zoomez avec la molette ou cliquez sur un marqueur</span>
             </div>
           </div>
 
-          {/* Volet Latéral : Liste & Fiche Détaillée des Candidats */}
+          {/* Colonne Droite : Volet Latéral des Profils Disponibles */}
           <aside className="candidate-drawer-card">
             <div className="drawer-header">
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <h3 className="drawer-title">Profils disponibles ({filteredCandidates.length})</h3>
-                <span className="drawer-count-badge">Direct Recruteur</span>
+                <span className="drawer-count-badge">Sourcing direct</span>
               </div>
               <p style={{ fontSize: "0.84rem", color: "var(--color-text-muted)" }}>
-                Sélectionnez un candidat pour examiner son dossier et demander un contact.
+                Cliquez sur « Localiser » pour centrer la carte sur la commune du chauffeur.
               </p>
             </div>
 
-            {/* Liste défilante des candidats filtrés */}
             <div className="drawer-scrollable-list">
               {filteredCandidates.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "3rem 1rem", color: "var(--color-text-muted)" }}>
                   <Search size={36} style={{ margin: "0 auto 1rem", opacity: 0.4 }} />
                   <p style={{ fontWeight: 700 }}>Aucun chauffeur ne correspond à vos filtres.</p>
                   <p style={{ fontSize: "0.85rem", marginTop: "0.5rem" }}>
-                    Essayez d'élargir votre recherche ou de réinitialiser les filtres.
+                    Élargissez vos critères ou réinitialisez la recherche.
                   </p>
                   <button
                     type="button"
@@ -1037,11 +1141,12 @@ export default function CarteChauffeursPage() {
                     onClick={() => {
                       setSearchQuery("");
                       setSelectedPermit("all");
+                      setSelectedRegion("all");
                       setSelectedAvailability("all");
-                      setSelectedSpecialty("all");
+                      handleResetMapView();
                     }}
                   >
-                    Réinitialiser les filtres
+                    Réinitialiser
                   </button>
                 </div>
               ) : (
@@ -1051,13 +1156,31 @@ export default function CarteChauffeursPage() {
                     <div
                       key={c.id}
                       className={`candidate-compact-item ${isSelected ? "selected" : ""}`}
-                      onClick={() => setSelectedCandidate(c)}
+                      onClick={() => handleFlyToCandidate(c)}
                     >
                       <div className="candidate-compact-top">
-                        <div>
-                          <div className="candidate-compact-name">{c.name}</div>
-                          <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--color-primary)" }}>
-                            {c.role} ({c.permit})
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          <div
+                            style={{
+                              width: 38,
+                              height: 38,
+                              borderRadius: "50%",
+                              backgroundColor: "var(--color-primary-light)",
+                              color: "var(--color-primary)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontWeight: 800,
+                              fontSize: "0.95rem",
+                            }}
+                          >
+                            {c.initials}
+                          </div>
+                          <div>
+                            <div className="candidate-compact-name">{c.name}</div>
+                            <div style={{ fontSize: "0.86rem", fontWeight: 700, color: "var(--color-primary)" }}>
+                              {c.role} ({c.permit})
+                            </div>
                           </div>
                         </div>
 
@@ -1101,9 +1224,18 @@ export default function CarteChauffeursPage() {
                       </p>
 
                       <div className="candidate-compact-footer">
-                        <span style={{ fontSize: "0.78rem", color: "var(--color-text-light)" }}>
-                          Expérience : <strong>{c.experienceYears} ans</strong>
-                        </span>
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-sm"
+                          style={{ fontSize: "0.78rem" }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFlyToCandidate(c);
+                          }}
+                        >
+                          <Navigation size={13} />
+                          <span>Localiser</span>
+                        </button>
 
                         <button
                           type="button"
@@ -1113,7 +1245,7 @@ export default function CarteChauffeursPage() {
                             handleOpenContact(c);
                           }}
                         >
-                          <Send size={14} />
+                          <Send size={13} />
                           <span>Contacter</span>
                         </button>
                       </div>
@@ -1124,18 +1256,18 @@ export default function CarteChauffeursPage() {
             </div>
           </aside>
         </div>
-      </div>
+      </section>
 
-      {/* 4. Pourquoi Recruter Localement sur TruckMatch ? (Section SEO Forte) */}
-      <section className="recruiter-seo-section" style={{ marginTop: "4rem" }}>
+      {/* 4. Section SEO Recrutement Local (Identique à la charte) */}
+      <section className="recruiter-seo-section">
         <div className="container">
           <div className="seo-card-container">
             <div className="section-head-modern" style={{ marginBottom: "2rem" }}>
-              <span className="badge badge-blue">Recrutement Géolocalisé Chauffeur</span>
+              <span className="badge badge-blue">Recrutement Géolocalisé Transport</span>
               <h2>Pourquoi cartographier vos recrutements de conducteurs routiers ?</h2>
               <p>
-                Dans le transport et la logistique, la proximité géographique entre le domicile du chauffeur
-                et votre dépôt d'exploitation est le critère n°1 de fidélisation et de sécurité routière.
+                Dans le transport de marchandises, la proximité géographique entre le domicile du chauffeur
+                et votre base d'exploitation est le premier facteur de fidélisation et de sécurité routière.
               </p>
             </div>
 
@@ -1146,8 +1278,8 @@ export default function CarteChauffeursPage() {
                 </div>
                 <h3>Zéro fatigue de trajet domicile-travail</h3>
                 <p>
-                  Un chauffeur qui habite à moins de 25 minutes de sa base logistique commence sa tournée
-                  frais et disponible. Vous réduisez le risque d'accidents de trajet et préservez son capital vigilance.
+                  Un conducteur qui réside à proximité immédiate de son dépôt commence sa tournée
+                  en pleine possession de ses moyens. Vous réduisez les risques d'accident de trajet et préservez sa vigilance.
                 </p>
               </div>
 
@@ -1155,10 +1287,10 @@ export default function CarteChauffeursPage() {
                 <div className="feature-icon-circle">
                   <Clock size={24} />
                 </div>
-                <h3>Respect optimal de la RSE</h3>
+                <h3>Respect strict de la RSE</h3>
                 <p>
-                  Grâce à un rayon d'action maîtrisé, vos conducteurs respectent scrupuleusement les amplitudes
-                  journalières et temps de repos de 11h consécutives sans être pénalisés par de longs retours au domicile.
+                  Avec un temps de navette réduit, vos chauffeurs respectent scrupuleusement les temps de repos
+                  de 11h consécutives et les amplitudes journalières sans stress d'horaires.
                 </p>
               </div>
 
@@ -1166,31 +1298,30 @@ export default function CarteChauffeursPage() {
                 <div className="feature-icon-circle">
                   <ShieldCheck size={24} />
                 </div>
-                <h3>Fidélisation durable des équipes</h3>
+                <h3>Stabilité et baisse du turn-over</h3>
                 <p>
-                  Les chauffeurs locaux restent en moyenne 3 fois plus longtemps en poste dans la même entreprise
-                  de transport. Vous stabilisez vos plannings de traction et supprimez le turn-over récurrent.
+                  Les conducteurs embauchés sur leur bassin de vie restent 3 fois plus longtemps en poste dans la même entreprise.
+                  Vous pérennisez vos tournées régionales et évitez les remplacements d'urgence coûteux.
                 </p>
               </div>
             </div>
 
-            {/* FAQ Locale */}
+            {/* FAQ Géolocalisation */}
             <div className="seo-faq-grid" style={{ marginTop: "2.5rem" }}>
               <div className="seo-faq-card">
-                <h3 className="seo-faq-q">Comment sont vérifiées les coordonnées des chauffeurs ?</h3>
+                <h3 className="seo-faq-q">Comment sont validées les communes des conducteurs ?</h3>
                 <p className="seo-faq-a">
                   Lors de son inscription sur TruckMatch, chaque conducteur renseigne sa commune de résidence
-                  et son code postal. Ces informations sont confrontées aux justificatifs de domicile et permis
-                  de conduire lors de la vérification de la Carte Chrono et de la FCO pour garantir une localisation authentique.
+                  et son code postal. Ces éléments sont vérifiés lors du contrôle des justificatifs officiels
+                  (Carte de Qualification Conducteur FCO et Carte Chronotachygraphe) pour garantir une géolocalisation fiable.
                 </p>
               </div>
 
               <div className="seo-faq-card">
-                <h3 className="seo-faq-q">Puis-je recruter un conducteur pour du découché ou du grand routier ?</h3>
+                <h3 className="seo-faq-q">Puis-je recruter pour des tractions nationales avec découchés ?</h3>
                 <p className="seo-faq-a">
-                  Oui. Sur chaque fiche de conducteur, le rayon de mobilité est explicitement précisé (ex : retour
-                  chaque soir, national avec découchés hebdomadaires, ou tractions inter-régionales). Vous filtrez selon
-                  vos exigences d'exploitation.
+                  Tout à fait. Sur chaque profil, le rayon de mobilité est clairement affiché (ex : retour chaque soir,
+                  liaisons régionales ou grand routier national). Vous ciblez exactement le mode de vie recherché par le chauffeur.
                 </p>
               </div>
             </div>
@@ -1198,7 +1329,7 @@ export default function CarteChauffeursPage() {
         </div>
       </section>
 
-      {/* 5. Modale de Contact Direct Chauffeur */}
+      {/* 5. Modale de Contact / Recrutement Direct */}
       {isModalOpen && selectedCandidate && (
         <div className="map-modal-backdrop" onClick={() => setIsModalOpen(false)}>
           <div className="map-modal-card" onClick={(e) => e.stopPropagation()}>
@@ -1211,11 +1342,11 @@ export default function CarteChauffeursPage() {
               <X size={18} />
             </button>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.85rem" }}>
               <div
                 style={{
-                  width: 44,
-                  height: 44,
+                  width: 46,
+                  height: 46,
                   borderRadius: "50%",
                   background: "var(--color-primary-light)",
                   color: "var(--color-primary)",
@@ -1226,11 +1357,11 @@ export default function CarteChauffeursPage() {
                   fontSize: "1.1rem",
                 }}
               >
-                {selectedCandidate.name.charAt(0)}
+                {selectedCandidate.initials}
               </div>
               <div>
                 <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--color-navy)" }}>
-                  Contacter {selectedCandidate.name}
+                  Proposer un poste à {selectedCandidate.name}
                 </h3>
                 <p style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
                   {selectedCandidate.role} ({selectedCandidate.permit}) à {selectedCandidate.city} ({selectedCandidate.zip})
@@ -1266,32 +1397,32 @@ export default function CarteChauffeursPage() {
                   <Check size={28} />
                 </div>
                 <h4 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#065f46" }}>
-                  Demande de contact transmise !
+                  Proposition envoyée avec succès !
                 </h4>
                 <p style={{ fontSize: "0.88rem", color: "#047857" }}>
-                  Votre proposition d'embauche a été notifiée à {selectedCandidate.name}. Le candidat vous
-                  recontactera par téléphone ou email dans un délai moyen de 2 heures.
+                  Votre prise de contact a été notifiée à {selectedCandidate.name}. Le candidat prendra directement
+                  contact avec vous par téléphone ou email dans un délai moyen de 2 heures.
                 </p>
               </div>
             ) : (
               <form onSubmit={handleModalSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                 <div className="form-grid-2">
                   <div className="form-field-modern">
-                    <label>Nom de votre entreprise *</label>
+                    <label>Entreprise de transport *</label>
                     <input
                       type="text"
                       required
-                      placeholder="Ex: Transports Dubois"
+                      placeholder="Ex: Transports Express Ouest"
                       value={modalForm.companyName}
                       onChange={(e) => setModalForm({ ...modalForm, companyName: e.target.value })}
                     />
                   </div>
                   <div className="form-field-modern">
-                    <label>Votre Nom & Fonction *</label>
+                    <label>Responsable recrutement *</label>
                     <input
                       type="text"
                       required
-                      placeholder="Ex: Marc L., Exploitant"
+                      placeholder="Ex: David M., Responsable Exploitation"
                       value={modalForm.contactName}
                       onChange={(e) => setModalForm({ ...modalForm, contactName: e.target.value })}
                     />
@@ -1314,7 +1445,7 @@ export default function CarteChauffeursPage() {
                     <input
                       type="email"
                       required
-                      placeholder="Ex: recrutement@transports-dubois.fr"
+                      placeholder="Ex: exploitation@transports.fr"
                       value={modalForm.email}
                       onChange={(e) => setModalForm({ ...modalForm, email: e.target.value })}
                     />
@@ -1323,28 +1454,27 @@ export default function CarteChauffeursPage() {
 
                 <div className="form-grid-2">
                   <div className="form-field-modern">
-                    <label>Type de contrat proposé</label>
+                    <label>Type de contrat</label>
                     <select
                       value={modalForm.contractType}
                       onChange={(e) => setModalForm({ ...modalForm, contractType: e.target.value })}
                     >
-                      <option value="CDI">Contrat à Durée Indéterminée (CDI)</option>
-                      <option value="CDD">Contrat à Durée Déterminée (CDD)</option>
-                      <option value="Saisonnier">Mission Saisonnière / Renfort</option>
+                      <option value="CDI">CDI (Temps plein)</option>
+                      <option value="CDD">CDD (Saisonnier / Remplacement)</option>
                       <option value="Relais">Traction ponctuelle / Relais</option>
                     </select>
                   </div>
                   <div className="form-field-modern">
-                    <label>Démarrage souhaité</label>
-                    <input type="text" placeholder="Ex: Dès que possible ou sous 15 jours" />
+                    <label>Prise de poste</label>
+                    <input type="text" placeholder="Ex: Immédiate ou sous 15 jours" />
                   </div>
                 </div>
 
                 <div className="form-field-modern">
-                  <label>Message ou détails du poste (facultatif)</label>
+                  <label>Précisions sur la tournée ou le matériel (facultatif)</label>
                   <textarea
                     rows={3}
-                    placeholder="Ex: Nous cherchons un conducteur SPL pour liaison régionale de nuit au départ de notre agence..."
+                    placeholder="Ex: Recherche chauffeur pour liaison régulière de nuit en tautliner au départ de notre agence..."
                     value={modalForm.message}
                     onChange={(e) => setModalForm({ ...modalForm, message: e.target.value })}
                   />
@@ -1353,12 +1483,12 @@ export default function CarteChauffeursPage() {
                 <div className="btn-group" style={{ marginTop: "0.5rem" }}>
                   <button type="submit" className="btn btn-primary btn-lg w-full">
                     <Send size={18} />
-                    <span>Envoyer ma proposition de recrutement</span>
+                    <span>Envoyer la proposition au conducteur</span>
                   </button>
                 </div>
 
                 <p style={{ fontSize: "0.76rem", color: "var(--color-text-light)", textAlign: "center" }}>
-                  🔒 Contact direct et confidentiel. Vos coordonnées ne sont transmises qu'au candidat ciblé.
+                  🔒 Contact 100% direct et confidentiel. Aucun intermédiaire ni commission d'agence.
                 </p>
               </form>
             )}

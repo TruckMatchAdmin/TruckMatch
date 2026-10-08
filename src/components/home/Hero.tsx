@@ -69,7 +69,7 @@ export function Hero() {
           </div>
         </div>
 
-        {/* Colonne Droite : Visuel Photoréaliste Camion + Carte Flottante */}
+        {/* Colonne Droite : Visuel Photoréaliste Camion */}
         <div className="hero-visual">
           <div className="hero-image-wrapper">
             <Image
@@ -80,27 +80,6 @@ export function Hero() {
               priority
               className="hero-main-img"
             />
-            {/* Badge flottant avec statistiques de confiance */}
-            <div className="hero-floating-stat">
-              <div className="floating-stat-item">
-                <div className="stat-icon-circle">
-                  <Truck size={22} />
-                </div>
-                <div>
-                  <p className="floating-stat-title">Spécialisation</p>
-                  <p className="floating-stat-val">100% Transport</p>
-                </div>
-              </div>
-              <div className="floating-stat-item">
-                <div className="stat-icon-circle" style={{ backgroundColor: "#e6f9f0", color: "#10b981" }}>
-                  <ShieldCheck size={22} />
-                </div>
-                <div>
-                  <p className="floating-stat-title">Certifications</p>
-                  <p className="floating-stat-val">FIMO / FCO / ADR</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
