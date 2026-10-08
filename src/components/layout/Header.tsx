@@ -35,7 +35,7 @@ export function Header() {
           />
         </Link>
 
-        {/* Navigation Desktop Pro */}
+        {/* Navigation Desktop Pro - Zero Layout Shift */}
         <nav className="desktop-nav" aria-label="Navigation principale">
           <ul className="nav-list">
             {MAIN_NAV.map((item) => {
@@ -46,8 +46,7 @@ export function Header() {
                     href={item.href}
                     className={`nav-link ${isActive ? "nav-link-active" : ""}`}
                   >
-                    <span>{item.label}</span>
-                    {isActive && <span className="nav-link-indicator" />}
+                    {item.label}
                   </Link>
                 </li>
               );

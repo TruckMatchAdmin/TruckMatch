@@ -384,39 +384,27 @@ p {
 }
 
 .nav-link {
-  position: relative;
-  font-weight: 700;
+  font-weight: 650;
   font-size: 0.91rem;
   color: var(--color-navy);
   padding: 0.5rem 0.95rem;
   border-radius: var(--radius-full);
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  transition: all var(--transition-fast);
+  justify-content: center;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
   white-space: nowrap;
 }
 
 .nav-link:hover {
   color: var(--color-primary);
-  background-color: #ffffff;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
 }
 
 .nav-link-active {
   color: var(--color-primary);
   background-color: #ffffff;
-  font-weight: 800;
-  box-shadow: 0 2px 10px rgba(0, 128, 255, 0.12);
-}
-
-.nav-link-indicator {
-  width: 5px;
-  height: 5px;
-  background-color: var(--color-primary);
-  border-radius: 50%;
-  display: inline-block;
-  margin-left: 2px;
+  font-weight: 650;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
 
 .header-actions {
@@ -433,12 +421,12 @@ p {
   padding: 0.55rem 1.15rem;
   border-radius: var(--radius-full);
   font-size: 0.88rem;
-  font-weight: 700;
+  font-weight: 650;
   color: var(--color-navy);
   background-color: #ffffff;
   border: 1px solid rgba(203, 213, 225, 0.9);
   box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
   white-space: nowrap;
 }
 
@@ -446,7 +434,6 @@ p {
   background-color: var(--color-bg-subtle);
   border-color: rgba(148, 163, 184, 0.8);
   color: var(--color-navy);
-  transform: translateY(-1px);
 }
 
 .header-btn-driver-pro {
@@ -457,11 +444,11 @@ p {
   padding: 0.55rem 1.25rem;
   border-radius: var(--radius-full);
   font-size: 0.88rem;
-  font-weight: 700;
+  font-weight: 650;
   color: #ffffff;
   background: linear-gradient(135deg, var(--color-primary) 0%, #006be0 100%);
   box-shadow: 0 4px 14px rgba(0, 128, 255, 0.3);
-  transition: all var(--transition-fast);
+  transition: background var(--transition-fast), box-shadow var(--transition-fast);
   white-space: nowrap;
 }
 
@@ -469,7 +456,6 @@ p {
   background: linear-gradient(135deg, #006be0 0%, #0059b8 100%);
   box-shadow: 0 6px 18px rgba(0, 128, 255, 0.4);
   color: #ffffff;
-  transform: translateY(-1px);
 }
 
 .mobile-menu-btn {

@@ -190,48 +190,17 @@ export default function ChauffeursHubPage() {
               </div>
             </div>
 
-            {/* Carte métrique & réassurance Chauffeur */}
+            {/* Colonne droite : Visuel Rencontre Chauffeur & Transporteur */}
             <div className="recruiter-hero-visual">
-              <div className="recruiter-visual-card">
-                <div className="visual-metric-row">
-                  <div className="visual-metric-icon">
-                    <Shield size={26} />
-                  </div>
-                  <div>
-                    <p className="visual-metric-val">100% Gratuit & Confidentiel</p>
-                    <p className="visual-metric-label">Vos coordonnées ne sont transmises qu'avec votre accord</p>
-                  </div>
-                </div>
-
-                <div className="visual-metric-row">
-                  <div className="visual-metric-icon" style={{ backgroundColor: "#e6f9f0", color: "#10b981" }}>
-                    <MapPin size={26} />
-                  </div>
-                  <div>
-                    <p className="visual-metric-val">Respect de vos Secteurs</p>
-                    <p className="visual-metric-label">Régional, retour chaque soir, national ou tractions de nuit</p>
-                  </div>
-                </div>
-
-                <div className="visual-metric-row">
-                  <div className="visual-metric-icon" style={{ backgroundColor: "#e4edf6", color: "#0b192c" }}>
-                    <Award size={26} />
-                  </div>
-                  <div>
-                    <p className="visual-metric-val">Vos Qualifications Valorisées</p>
-                    <p className="visual-metric-label">Permis CE, C, ADR citerne, FIMO/FCO et CACES reconnus</p>
-                  </div>
-                </div>
-
-                <div className="visual-metric-row">
-                  <div className="visual-metric-icon" style={{ backgroundColor: "#fef7e6", color: "#f59e0b" }}>
-                    <Truck size={26} />
-                  </div>
-                  <div>
-                    <p className="visual-metric-val">Contact Direct avec les Patrons</p>
-                    <p className="visual-metric-label">Échangez sans intermédiaire avec les exploitants transport</p>
-                  </div>
-                </div>
+              <div className="recruiter-image-card">
+                <Image
+                  src="/images/hero-chauffeurs.png"
+                  alt="Rencontre directe entre chauffeurs routiers et transporteurs - TruckMatch"
+                  width={1024}
+                  height={369}
+                  priority
+                  className="recruiter-main-img"
+                />
               </div>
             </div>
           </div>
