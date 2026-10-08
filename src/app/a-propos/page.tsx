@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "À propos de TruckMatch — Notre mission au service du transport routier",
   description:
     "Découvrez TruckMatch : la plateforme française indépendante dédiée au recrutement direct entre conducteurs et entreprises de transport routier de marchandises.",
+  alternates: {
+    canonical: "https://truckmatch.fr/a-propos",
+  },
 };
 
 export default function AProposPage() {

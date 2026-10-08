@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Chauffeur PL (Poids Lourd) — Recrutement & Profils Distribution",
   description:
     "Trouvez un chauffeur PL qualifié (Permis C, FIMO/FCO) ou créez votre profil conducteur poids lourd. Distribution régionale, livraisons urbaines, chantiers.",
+  alternates: {
+    canonical: "https://truckmatch.fr/chauffeurs/pl",
+  },
 };
 
 export default function ChauffeurPlPage() {

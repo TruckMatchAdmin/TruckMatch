@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Chauffeur Porteur — Recrutement & Profils Camion Porteur",
   description:
     "Recrutez un chauffeur sur camion porteur rigide ou proposez vos compétences : benne, plateau, grue auxiliaire, frigo. Plateforme spécialisée transport.",
+  alternates: {
+    canonical: "https://truckmatch.fr/chauffeurs/porteur",
+  },
 };
 
 export default function ChauffeurPorteurPage() {

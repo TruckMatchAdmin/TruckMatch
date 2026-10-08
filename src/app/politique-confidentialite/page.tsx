@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Politique de Confidentialité & RGPD — TruckMatch",
   description:
     "Engagement de TruckMatch pour la protection des données personnelles des conducteurs et des recruteurs conformément au RGPD.",
+  alternates: {
+    canonical: "https://truckmatch.fr/politique-confidentialite",
+  },
 };
 
 export default function PolitiqueConfidentialitePage() {

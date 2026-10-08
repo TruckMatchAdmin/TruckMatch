@@ -25,6 +25,16 @@ export const metadata: Metadata = {
   title: "Je suis Chauffeur — Emploi & Recrutement Direct SPL, PL, Porteur et VUL",
   description:
     "Créez votre profil de conducteur routier gratuitement sur TruckMatch. Accédez aux meilleures opportunités de transport en CDI/CDD, valorisez vos permis C/CE, ADR et FIMO sans intermédiaire.",
+  alternates: {
+    canonical: "https://truckmatch.fr/chauffeurs",
+  },
+  openGraph: {
+    title: "Emploi Chauffeur Routier SPL, PL, Porteur & VUL | TruckMatch",
+    description:
+      "Trouvez votre route : opportunités en direct avec les transporteurs partout en France sans agence d'intérim.",
+    url: "https://truckmatch.fr/chauffeurs",
+    images: ["/images/hero-chauffeurs.png"],
+  },
 };
 
 export default function ChauffeursHubPage() {

@@ -24,6 +24,16 @@ export const metadata: Metadata = {
   title: "Trouver un Chauffeur Routier — Recrutement Direct SPL, PL, Porteur & VUL",
   description:
     "Trouvez et recrutez des conducteurs routiers qualifiés SPL, PL, Porteurs et VUL sans commissions d'intérim exorbitantes. Profils vérifiés avec permis C/CE, FIMO/FCO et ADR.",
+  alternates: {
+    canonical: "https://truckmatch.fr/entreprises",
+  },
+  openGraph: {
+    title: "Recrutez vos Chauffeurs Routiers sans intermédiaire | TruckMatch",
+    description:
+      "Accédez aux profils de conducteurs disponibles immédiatement en France. Permis CE, C, ADR, FIMO vérifiés.",
+    url: "https://truckmatch.fr/entreprises",
+    images: ["/images/hero-trouver-chauffeur.png"],
+  },
 };
 
 export default function EntreprisesPage() {

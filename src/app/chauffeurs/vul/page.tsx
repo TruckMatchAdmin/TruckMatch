@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Chauffeur VUL / Camionnette — Dernier Kilomètre & Livraison Rapide",
   description:
     "Recrutez un chauffeur livreur VUL (Permis B) ou trouvez vos missions de distribution urbaine, courses express et messagerie du dernier kilomètre.",
+  alternates: {
+    canonical: "https://truckmatch.fr/chauffeurs/vul",
+  },
 };
 
 export default function ChauffeurVulPage() {

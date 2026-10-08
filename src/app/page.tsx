@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Hero } from "@/components/home/Hero";
 import { PartnerMarquee } from "@/components/ui/PartnerMarquee";
 import { SearchDriverBar } from "@/components/home/SearchDriverBar";
@@ -9,6 +10,15 @@ import { CompanySection } from "@/components/home/CompanySection";
 import { LatestJobsSection } from "@/components/home/LatestJobsSection";
 import { ARTICLES } from "@/lib/constants/articles";
 import { ArrowRight, BookOpen, Clock } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "TruckMatch — Plateforme n°1 de Recrutement Chauffeurs Routiers",
+  description:
+    "Mise en relation directe entre transporteurs et chauffeurs routiers (SPL, PL, Porteur, VUL). Recrutez sans intermédiaire superflu et trouvez des conducteurs vérifiés en CDI, CDD et relais.",
+  alternates: {
+    canonical: "https://truckmatch.fr",
+  },
+};
 
 export default function HomePage() {
   const featuredArticles = ARTICLES.slice(0, 3);

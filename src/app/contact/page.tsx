@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: "Contactez l'équipe TruckMatch — Assistance Chauffeurs & Transporteurs",
   description:
     "Une question sur votre inscription, vos recrutements de conducteurs ou l'utilisation de la plateforme TruckMatch ? Contactez notre équipe spécialisée transport.",
+  alternates: {
+    canonical: "https://truckmatch.fr/contact",
+  },
 };
 
 export default function ContactPage() {

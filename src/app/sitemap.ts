@@ -14,6 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/chauffeurs/vul",
     "/entreprises",
     "/offres-emploi",
+    "/carte-chauffeurs",
     "/conseils",
     "/contact",
     "/a-propos",
@@ -23,8 +24,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: now,
-    changeFrequency: route === "" ? ("daily" as const) : ("weekly" as const),
-    priority: route === "" ? 1.0 : route.startsWith("/chauffeurs") || route === "/entreprises" ? 0.9 : 0.7,
+    changeFrequency:
+      route === ""
+        ? ("daily" as const)
+        : route === "/offres-emploi" || route === "/carte-chauffeurs"
+        ? ("daily" as const)
+        : ("weekly" as const),
+    priority:
+      route === ""
+        ? 1.0
+        : route === "/offres-emploi" ||
+          route === "/carte-chauffeurs" ||
+          route === "/entreprises" ||
+          route === "/chauffeurs"
+        ? 0.9
+        : route.startsWith("/chauffeurs/")
+        ? 0.85
+        : route === "/conseils"
+        ? 0.8
+        : 0.5,
   }));
 
   const articlePages = ARTICLES.map((art) => ({

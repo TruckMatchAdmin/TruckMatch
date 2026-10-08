@@ -4,6 +4,9 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Conditions Générales d'Utilisation (CGU) — TruckMatch",
   description: "Conditions d'utilisation de la plateforme de mise en relation TruckMatch.",
+  alternates: {
+    canonical: "https://truckmatch.fr/cgu",
+  },
 };
 
 export default function CGUPage() {

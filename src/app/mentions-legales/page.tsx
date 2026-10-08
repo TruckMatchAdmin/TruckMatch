@@ -4,6 +4,9 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Mentions Légales — TruckMatch",
   description: "Mentions légales, informations sur l'éditeur et l'hébergeur de la plateforme TruckMatch.",
+  alternates: {
+    canonical: "https://truckmatch.fr/mentions-legales",
+  },
 };
 
 export default function MentionsLegalesPage() {

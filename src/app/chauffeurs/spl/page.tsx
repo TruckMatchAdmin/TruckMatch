@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Chauffeur SPL (Super Lourd) — Recrutement & Profils Qualifiés",
   description:
     "Trouvez un chauffeur SPL (Permis EC, FIMO/FCO, carte conducteur) ou déposez votre profil de conducteur super lourd. Missions régionales, nationales et tractions.",
+  alternates: {
+    canonical: "https://truckmatch.fr/chauffeurs/spl",
+  },
 };
 
 export default function ChauffeurSplPage() {

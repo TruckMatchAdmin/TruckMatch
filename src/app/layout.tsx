@@ -26,9 +26,9 @@ export const metadata: Metadata = {
   creator: "TruckMatch",
   publisher: "TruckMatch",
   icons: {
-    icon: "/images/logo.png",
-    shortcut: "/images/logo.png",
-    apple: "/images/logo.png",
+    icon: "/icon.png",
+    shortcut: "/favicon.ico",
+    apple: "/icon.png",
   },
   openGraph: {
     type: "website",
@@ -40,16 +40,33 @@ export const metadata: Metadata = {
       "Les entreprises trouvent leurs chauffeurs. Les chauffeurs trouvent leur route. Mise en relation directe pour chauffeurs SPL, PL, Porteur et VUL.",
     images: [
       {
-        url: "/images/logo.png",
+        url: "/images/hero-home.png",
         width: 1200,
         height: 630,
-        alt: "TruckMatch Logo",
+        alt: "TruckMatch Plateforme Recrutement Transport Routier",
       },
     ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TruckMatch — Recrutement & Emploi Transport Routier",
+    description:
+      "Les entreprises trouvent leurs chauffeurs. Les chauffeurs trouvent leur route. Mise en relation directe pour chauffeurs SPL, PL, Porteur et VUL.",
+    images: ["/images/hero-home.png"],
+  },
+  alternates: {
+    canonical: "https://truckmatch.fr",
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
@@ -60,15 +77,38 @@ export default function RootLayout({
 }) {
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "TruckMatch",
-    url: "https://truckmatch.fr",
-    description: "Les entreprises trouvent leurs chauffeurs. Les chauffeurs trouvent leur route.",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: "https://truckmatch.fr/offres-emploi?q={search_term_string}",
-      "query-input": "required name=search_term_string",
-    },
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://truckmatch.fr/#organization",
+        name: "TruckMatch",
+        url: "https://truckmatch.fr",
+        logo: "https://truckmatch.fr/images/logo.png",
+        description:
+          "Plateforme spécialisée dans le recrutement et la mise en relation entre transporteurs et conducteurs routiers.",
+        contactPoint: {
+          "@type": "ContactPoint",
+          contactType: "customer service",
+          url: "https://truckmatch.fr/contact",
+          availableLanguage: ["French"],
+        },
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://truckmatch.fr/#website",
+        name: "TruckMatch",
+        url: "https://truckmatch.fr",
+        description:
+          "Les entreprises trouvent leurs chauffeurs. Les chauffeurs trouvent leur route.",
+        publisher: { "@id": "https://truckmatch.fr/#organization" },
+        inLanguage: "fr-FR",
+        potentialAction: {
+          "@type": "SearchAction",
+          target: "https://truckmatch.fr/offres-emploi?q={search_term_string}",
+          "query-input": "required name=search_term_string",
+        },
+      },
+    ],
   };
 
   return (
