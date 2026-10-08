@@ -24,7 +24,7 @@ export function Footer() {
             </p>
           </div>
           <div className="footer-cta-actions">
-            <Link href="/chauffeurs" className="btn btn-primary btn-lg footer-cta-btn">
+            <Link href="/inscription?type=candidat" className="btn btn-primary btn-lg footer-cta-btn">
               <span>Créer mon profil Chauffeur</span>
               <ArrowRight size={18} />
             </Link>

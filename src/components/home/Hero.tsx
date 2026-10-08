@@ -66,7 +66,7 @@ export function Hero() {
                 <span>Soyez contacté directement par les patrons sans intermédiaire</span>
               </li>
             </ul>
-            <Link href="/chauffeurs" className="btn btn-primary btn-lg hero-card-btn">
+            <Link href="/inscription?type=candidat" className="btn btn-primary btn-lg hero-card-btn">
               <span>Créer mon profil Chauffeur</span>
               <ArrowRight size={18} />
             </Link>

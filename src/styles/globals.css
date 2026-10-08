@@ -4304,6 +4304,534 @@ p {
   color: var(--color-primary);
 }
 
+/* ==========================================================================
+   Page Inscription 2.0 (Candidat & Entreprise avec APIs Gouvernementales)
+   ========================================================================== */
+.registration-page {
+  background-color: var(--color-bg);
+  min-height: calc(100vh - 160px);
+  padding-bottom: 5rem;
+}
+
+.registration-hero {
+  padding: 3.5rem 0 2rem;
+  background: radial-gradient(circle at 50% 0%, rgba(0, 128, 255, 0.08) 0%, transparent 70%);
+}
+
+.registration-hero-title {
+  font-size: clamp(2rem, 3.8vw, 2.75rem);
+  font-weight: 850;
+  line-height: 1.15;
+  color: var(--color-navy);
+  margin: 1rem 0 0.85rem;
+}
+
+.registration-hero-subtitle {
+  font-size: 1.05rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  max-width: 620px;
+  margin: 0 auto 2rem;
+}
+
+/* Role Switcher */
+.role-switch-container {
+  display: flex;
+  gap: 1rem;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0.4rem;
+  background-color: #ffffff;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+}
+
+.role-switch-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 1.25rem;
+  border-radius: var(--radius-lg);
+  border: 2px solid transparent;
+  background-color: transparent;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  color: var(--color-text);
+}
+
+.role-switch-btn:hover {
+  background-color: #f8fafc;
+}
+
+.role-switch-btn-active {
+  background-color: #0080ff !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(0, 128, 255, 0.25);
+}
+
+.role-btn-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 128, 255, 0.1);
+  color: var(--color-primary);
+  flex-shrink: 0;
+  transition: var(--transition-fast);
+}
+
+.role-switch-btn-active .role-btn-icon {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.role-btn-title {
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.role-btn-subtitle {
+  font-size: 0.78rem;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+/* Card Wrapper & Form */
+.registration-card-wrapper {
+  max-width: 780px;
+  margin: 0 auto;
+  background-color: #ffffff;
+  border-radius: var(--radius-2xl);
+  padding: 2.5rem;
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.registration-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--color-navy);
+  padding-bottom: 0.5rem;
+}
+
+.form-section-divider {
+  height: 1px;
+  background-color: #e2e8f0;
+  margin: 0.75rem 0;
+}
+
+.grid-2-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.grid-3-cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .registration-card-wrapper {
+    padding: 1.5rem;
+  }
+  .grid-2-cols,
+  .grid-3-cols {
+    grid-template-columns: 1fr;
+  }
+  .role-switch-container {
+    flex-direction: column;
+  }
+}
+
+/* Inputs & Decorators */
+.form-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  margin-bottom: 0.45rem;
+}
+
+.badge-gouv-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #0284c7;
+  background-color: #e0f2fe;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+}
+
+.input-with-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-icon-wrap .form-input {
+  width: 100%;
+  padding-right: 2.75rem;
+}
+
+.input-right-indicator {
+  position: absolute;
+  right: 0.9rem;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.input-valid-state {
+  border-color: #10b981 !important;
+  background-color: #f0fdf4 !important;
+}
+
+.form-helper-text {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+  margin-top: 0.35rem;
+}
+
+/* Dropdown Autocomplete (BAN & SIRET) */
+.address-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+  z-index: 100;
+  max-height: 280px;
+  overflow-y: auto;
+  list-style: none;
+  padding: 0.35rem;
+  margin: 0;
+}
+
+.address-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.address-dropdown-item:hover {
+  background-color: #f1f5f9;
+}
+
+.address-item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background-color: #e0f2fe;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.address-item-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.address-item-title {
+  font-size: 0.9rem;
+  font-weight: 750;
+  color: var(--color-navy);
+  line-height: 1.3;
+}
+
+.address-item-subtitle {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.address-item-arrow {
+  color: #94a3b8;
+}
+
+.location-confirmed-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.9rem;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  color: #166534;
+}
+
+/* Verified Company Card */
+.company-verified-card {
+  margin-top: 0.75rem;
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+}
+
+.verified-header {
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.verified-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.85rem;
+}
+
+.badge-status-active {
+  font-size: 0.68rem;
+  font-weight: 750;
+  color: #15803d;
+  background-color: #dcfce7;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+}
+
+.badge-status-closed {
+  font-size: 0.68rem;
+  font-weight: 750;
+  color: #b91c1c;
+  background-color: #fee2e2;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+}
+
+/* Pills Selection (Permis) */
+.pills-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.pill-select-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid #e2e8f0;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-align: left;
+}
+
+.pill-select-card:hover {
+  border-color: #94a3b8;
+  background-color: #f8fafc;
+}
+
+.pill-select-card-active {
+  border-color: #0080ff !important;
+  background-color: #eff6ff !important;
+  color: var(--color-navy);
+}
+
+.pill-check-indicator {
+  color: #0080ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pill-circle-empty {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid #cbd5e1;
+}
+
+/* Checkbox Card (FIMO, FCO) */
+.checkbox-custom-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border-radius: var(--radius-md);
+  border: 1.5px solid #e2e8f0;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.checkbox-custom-card:hover {
+  background-color: #f8fafc;
+}
+
+.checkbox-custom-card input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #0080ff;
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+/* Tags Multi-Select */
+.tags-multi-select-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag-toggle-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.95rem;
+  font-size: 0.83rem;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  border: 1.5px solid #e2e8f0;
+  background-color: #ffffff;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.tag-toggle-pill:hover {
+  border-color: #94a3b8;
+}
+
+.tag-toggle-pill-active {
+  border-color: #0080ff !important;
+  background-color: #0080ff !important;
+  color: #ffffff !important;
+}
+
+/* Form Footer & CGU */
+.cgu-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+.cgu-checkbox-label input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: #0080ff;
+  margin-top: 2px;
+}
+
+.submit-btn-modern {
+  margin-top: 1rem;
+  padding: 1.05rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.form-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-lg);
+  color: #b91c1c;
+  font-size: 0.9rem;
+  font-weight: 650;
+  margin-bottom: 1.5rem;
+}
+
+/* Success Card */
+.registration-success-card {
+  max-width: 640px;
+  margin: 2rem auto;
+  background-color: #ffffff;
+  border-radius: var(--radius-2xl);
+  padding: 3rem 2.5rem;
+  text-align: center;
+  box-shadow: 0 12px 45px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+.success-icon-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #dcfce7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+}
+
+.success-title {
+  font-size: 1.85rem;
+  font-weight: 850;
+  color: var(--color-navy);
+  margin: 0.85rem 0;
+}
+
+.success-desc {
+  font-size: 0.98rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.success-summary-box {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.success-actions-row {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+
 
 
 

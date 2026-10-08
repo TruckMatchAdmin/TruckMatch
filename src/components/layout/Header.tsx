@@ -60,7 +60,7 @@ export function Header() {
             <Building2 size={15} />
             <span>Espace Entreprise</span>
           </Link>
-          <Link href="/chauffeurs" className="header-btn-driver-pro">
+          <Link href="/inscription?type=candidat" className="header-btn-driver-pro">
             <UserPlus size={15} />
             <span>Créer mon profil</span>
           </Link>
@@ -110,7 +110,7 @@ export function Header() {
                 <span>Espace Entreprise / Recruter</span>
               </Link>
               <Link
-                href="/chauffeurs"
+                href="/inscription?type=candidat"
                 className="header-btn-driver-pro w-full"
                 onClick={() => setMobileMenuOpen(false)}
               >

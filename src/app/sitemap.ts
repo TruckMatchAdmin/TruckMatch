@@ -15,6 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/entreprises",
     "/offres-emploi",
     "/carte-chauffeurs",
+    "/inscription",
     "/conseils",
     "/contact",
     "/a-propos",

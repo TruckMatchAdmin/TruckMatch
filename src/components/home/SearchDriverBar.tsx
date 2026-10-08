@@ -94,7 +94,7 @@ export function SearchDriverBar() {
                 De nouveaux conducteurs qualifiés rejoignent TruckMatch chaque jour. Vous êtes chauffeur dans cette zone ?
               </p>
               <div className="mt-3">
-                <Link href="/chauffeurs" className="btn btn-primary">
+                <Link href="/inscription?type=candidat" className="btn btn-primary">
                   <UserPlus size={16} />
                   <span>Créer mon profil chauffeur gratuitement</span>
                 </Link>

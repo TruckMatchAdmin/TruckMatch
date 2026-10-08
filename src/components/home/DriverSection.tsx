@@ -65,7 +65,7 @@ export function DriverSection() {
           </div>
 
           <div className="text-center">
-            <Link href="/chauffeurs" className="btn btn-primary btn-lg">
+            <Link href="/inscription?type=candidat" className="btn btn-primary btn-lg">
               <span>Créer mon profil chauffeur gratuitement</span>
               <ArrowRight size={18} />
             </Link>
