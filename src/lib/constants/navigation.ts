@@ -6,6 +6,7 @@ export interface NavItem {
 
 export const MAIN_NAV: NavItem[] = [
   { label: "Trouver un chauffeur", href: "/entreprises" },
+  { label: "Carte des Chauffeurs", href: "/carte-chauffeurs", badge: "Live" },
   { label: "Je suis chauffeur", href: "/chauffeurs" },
   { label: "Offres d'emploi", href: "/offres-emploi" },
   { label: "Conseils", href: "/conseils" },
@@ -29,6 +30,7 @@ export const FOOTER_LINKS = {
   ],
   entreprises: [
     { label: "Espace Entreprise", href: "/entreprises" },
+    { label: "Carte des Chauffeurs", href: "/carte-chauffeurs" },
     { label: "Recruter un chauffeur", href: "/entreprises" },
     { label: "Guide de recrutement", href: "/conseils/comment-recruter-un-chauffeur-spl" },
     { label: "Tarifs & solutions", href: "/entreprises#solutions" },

@@ -30,7 +30,13 @@ export function Header() {
             {MAIN_NAV.map((item) => (
               <li key={item.href}>
                 <Link href={item.href} className="nav-link">
-                  {item.label}
+                  <span>{item.label}</span>
+                  {item.badge && (
+                    <span className="nav-badge-live">
+                      <span className="live-dot" />
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               </li>
             ))}
@@ -73,7 +79,15 @@ export function Header() {
                     className="mobile-nav-link"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    <span>{item.label}</span>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
+                      <span>{item.label}</span>
+                      {item.badge && (
+                        <span className="nav-badge-live">
+                          <span className="live-dot" />
+                          {item.badge}
+                        </span>
+                      )}
+                    </span>
                     <ArrowRight size={16} />
                   </Link>
                 </li>
