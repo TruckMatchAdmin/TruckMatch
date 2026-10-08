@@ -1016,7 +1016,28 @@ p {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.cat-icon-visual-wrapper {
+  position: relative;
+  width: 100px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  transition: transform var(--transition-normal);
+}
+
+.cat-card-modern:hover .cat-icon-visual-wrapper {
+  transform: scale(1.08) translateY(-2px);
+}
+
+.cat-icon-visual-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .cat-icon-emoji {

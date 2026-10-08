@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { CATEGORIES } from "@/lib/constants/categories";
 import {
@@ -334,7 +335,19 @@ export default function ChauffeursHubPage() {
             {Object.values(CATEGORIES).map((cat) => (
               <div key={cat.id} className="cat-card-modern">
                 <div className="cat-card-top">
-                  <span className="cat-icon-emoji">{cat.icon}</span>
+                  <div className="cat-icon-visual-wrapper">
+                    {cat.image ? (
+                      <Image
+                        src={cat.image}
+                        alt={cat.title}
+                        width={120}
+                        height={65}
+                        className="cat-icon-visual-img"
+                      />
+                    ) : (
+                      <span className="cat-icon-emoji">{cat.icon}</span>
+                    )}
+                  </div>
                   <span className="badge badge-blue">{cat.slug.toUpperCase()}</span>
                 </div>
                 <h3 className="cat-title-modern">{cat.title}</h3>

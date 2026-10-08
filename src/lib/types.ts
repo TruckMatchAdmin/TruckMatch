@@ -6,6 +6,7 @@ export interface CategoryInfo {
   title: string;
   shortTitle: string;
   icon: string;
+  image?: string;
   permits: string[];
   description: string;
   longDescription: string;

@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { CATEGORIES } from "@/lib/constants/categories";
 import { ArrowRight, Check } from "lucide-react";
 
@@ -20,7 +21,19 @@ export function CategoryCards() {
           {Object.values(CATEGORIES).map((cat) => (
             <div key={cat.id} className="cat-card-modern">
               <div className="cat-card-top">
-                <span className="cat-icon-emoji">{cat.icon}</span>
+                <div className="cat-icon-visual-wrapper">
+                  {cat.image ? (
+                    <Image
+                      src={cat.image}
+                      alt={cat.title}
+                      width={120}
+                      height={65}
+                      className="cat-icon-visual-img"
+                    />
+                  ) : (
+                    <span className="cat-icon-emoji">{cat.icon}</span>
+                  )}
+                </div>
                 <span className="badge badge-navy">{cat.permits[0]}</span>
               </div>
 
