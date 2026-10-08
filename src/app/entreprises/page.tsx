@@ -1,6 +1,7 @@
 import React from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Search,
   Building2,
@@ -133,48 +134,72 @@ export default function EntreprisesPage() {
               </div>
             </div>
 
-            {/* Carte métrique & réassurance Transport */}
+            {/* Colonne droite : Visuel Photoréaliste Flotte TruckMatch */}
             <div className="recruiter-hero-visual">
-              <div className="recruiter-visual-card">
-                <div className="visual-metric-row">
-                  <div className="visual-metric-icon">
-                    <ShieldCheck size={26} />
+              <div className="recruiter-image-card">
+                <Image
+                  src="/images/hero-trouver-chauffeur.png"
+                  alt="Flotte de camions professionnels TruckMatch - Les entreprises trouvent leurs chauffeurs"
+                  width={1024}
+                  height={381}
+                  priority
+                  className="recruiter-main-img"
+                />
+                <div className="recruiter-image-badge-floating">
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                    <div className="stat-icon-circle" style={{ width: "36px", height: "36px", backgroundColor: "#e6f9f0", color: "#10b981" }}>
+                      <ShieldCheck size={18} />
+                    </div>
+                    <div>
+                      <p style={{ fontSize: "0.7rem", fontWeight: "800", textTransform: "uppercase", color: "var(--color-text-light)", letterSpacing: "0.04em" }}>Flotte & Réseau Officiel</p>
+                      <p style={{ fontSize: "0.95rem", fontWeight: "850", color: "var(--color-navy)" }}>100% Conducteurs Qualifiés</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="visual-metric-val">100% Titres Contrôlés</p>
-                    <p className="visual-metric-label">Permis C/CE, FIMO/FCO et validité carte chrono vérifiés</p>
-                  </div>
+                  <span className="badge badge-blue">Disponibilité 24/48h</span>
                 </div>
+              </div>
+            </div>
+          </div>
 
-                <div className="visual-metric-row">
-                  <div className="visual-metric-icon" style={{ backgroundColor: "#e6f9f0", color: "#10b981" }}>
-                    <Clock size={26} />
-                  </div>
-                  <div>
-                    <p className="visual-metric-val">Réactivité sous 24h</p>
-                    <p className="visual-metric-label">Remplacement d'urgence ou renfort de flotte sans délai</p>
-                  </div>
-                </div>
+          {/* Bandeau de réassurance Transport 4 métriques */}
+          <div className="recruiter-metrics-strip">
+            <div className="recruiter-metric-card">
+              <div className="visual-metric-icon">
+                <ShieldCheck size={24} />
+              </div>
+              <div>
+                <p className="visual-metric-val">100% Titres Contrôlés</p>
+                <p className="visual-metric-label">Permis C/CE, FIMO/FCO et carte chrono</p>
+              </div>
+            </div>
 
-                <div className="visual-metric-row">
-                  <div className="visual-metric-icon" style={{ backgroundColor: "#e4edf6", color: "#0b192c" }}>
-                    <Zap size={26} />
-                  </div>
-                  <div>
-                    <p className="visual-metric-val">0% Marge d'intérim</p>
-                    <p className="visual-metric-label">Recrutez en CDI, CDD ou contrat direct selon vos conditions</p>
-                  </div>
-                </div>
+            <div className="recruiter-metric-card">
+              <div className="visual-metric-icon" style={{ backgroundColor: "#e6f9f0", color: "#10b981" }}>
+                <Clock size={24} />
+              </div>
+              <div>
+                <p className="visual-metric-val">Réactivité sous 24h</p>
+                <p className="visual-metric-label">Remplacement urgent ou renfort de flotte</p>
+              </div>
+            </div>
 
-                <div className="visual-metric-row">
-                  <div className="visual-metric-icon" style={{ backgroundColor: "#fef7e6", color: "#f59e0b" }}>
-                    <MapPin size={26} />
-                  </div>
-                  <div>
-                    <p className="visual-metric-val">Ciblage de Proximité</p>
-                    <p className="visual-metric-label">Chauffeurs résidant au plus près de vos dépôts logistiques</p>
-                  </div>
-                </div>
+            <div className="recruiter-metric-card">
+              <div className="visual-metric-icon" style={{ backgroundColor: "#e4edf6", color: "#0b192c" }}>
+                <Zap size={24} />
+              </div>
+              <div>
+                <p className="visual-metric-val">0% Marge d'Intérim</p>
+                <p className="visual-metric-label">Recrutement direct en CDI ou CDD</p>
+              </div>
+            </div>
+
+            <div className="recruiter-metric-card">
+              <div className="visual-metric-icon" style={{ backgroundColor: "#fef7e6", color: "#f59e0b" }}>
+                <MapPin size={24} />
+              </div>
+              <div>
+                <p className="visual-metric-val">Ciblage de Proximité</p>
+                <p className="visual-metric-label">Chauffeurs proches de vos dépôts</p>
               </div>
             </div>
           </div>
