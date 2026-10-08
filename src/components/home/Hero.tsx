@@ -73,10 +73,10 @@ export function Hero() {
         <div className="hero-visual">
           <div className="hero-image-wrapper">
             <Image
-              src="/images/hero-truck.jpg"
-              alt="Camion de transport routier moderne TruckMatch"
-              width={720}
-              height={480}
+              src="/images/hero-home.png"
+              alt="Camion Scania TruckMatch moderne sur autoroute au lever du soleil"
+              width={1024}
+              height={381}
               priority
               className="hero-main-img"
             />
