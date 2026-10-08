@@ -2992,5 +2992,616 @@ p {
   width: 100%;
 }
 
+/* ==========================================================================
+   Composants Spécifiques : Espace Conseils & Guides Transport 2.0
+   ========================================================================== */
+.conseils-page-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  padding-bottom: 5rem;
+}
+
+/* En-tête Hero Conseils */
+.conseils-hero-section {
+  padding: 3.5rem 0 2.5rem;
+  position: relative;
+}
+
+/* Carte Article à la Une (Featured) */
+.featured-guide-card {
+  background-color: #ffffff;
+  border-radius: var(--radius-xl);
+  padding: 2.75rem;
+  box-shadow: var(--shadow-xl);
+  display: grid;
+  grid-template-columns: 1.3fr 0.9fr;
+  gap: 3rem;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 2.5rem;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.featured-guide-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 24px 50px -10px rgba(15, 23, 42, 0.12);
+}
+
+.featured-guide-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.featured-guide-title {
+  font-size: 1.85rem;
+  font-weight: 850;
+  color: var(--color-navy);
+  line-height: 1.25;
+}
+
+.featured-guide-title a {
+  color: inherit;
+}
+
+.featured-guide-title a:hover {
+  color: var(--color-primary);
+}
+
+.featured-guide-summary {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.featured-takeaways-box {
+  background-color: var(--color-bg-body);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.featured-takeaways-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-navy);
+}
+
+.featured-takeaway-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.88rem;
+  color: var(--color-text-main);
+  line-height: 1.45;
+}
+
+@media (max-width: 960px) {
+  .featured-guide-card {
+    grid-template-columns: 1fr;
+    padding: 2rem;
+    gap: 1.75rem;
+  }
+}
+
+/* Grille des Articles de Conseils */
+.advice-grid-modern {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.75rem;
+}
+
+@media (max-width: 1024px) {
+  .advice-grid-modern {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .advice-grid-modern {
+    grid-template-columns: 1fr;
+  }
+}
+
+.advice-card-modern {
+  background-color: #ffffff;
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+  position: relative;
+}
+
+.advice-card-modern:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}
+
+.advice-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.advice-card-title {
+  font-size: 1.25rem;
+  font-weight: 850;
+  color: var(--color-navy);
+  line-height: 1.35;
+}
+
+.advice-card-title a {
+  color: inherit;
+}
+
+.advice-card-title a:hover {
+  color: var(--color-primary);
+}
+
+.advice-card-excerpt {
+  font-size: 0.92rem;
+  color: var(--color-text-muted);
+  line-height: 1.55;
+  flex: 1;
+}
+
+.advice-card-footer {
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+/* Mémentos Réglementaires / Fiches Pratiques 3 Colonnes */
+.regulatory-strip-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .regulatory-strip-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.regulatory-card {
+  background-color: #ffffff;
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.regulatory-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.regulatory-card-head h3 {
+  font-size: 1.18rem;
+  font-weight: 850;
+  color: var(--color-navy);
+}
+
+.regulatory-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  list-style: none;
+}
+
+.regulatory-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.88rem;
+  color: var(--color-text-main);
+  line-height: 1.45;
+}
+
+.regulatory-list-item strong {
+  color: var(--color-navy);
+}
+
+/* Page Détail Article (/conseils/[slug]) */
+.article-page-modern {
+  padding-bottom: 5rem;
+}
+
+.article-hero-modern {
+  padding: 3rem 0 2rem;
+}
+
+.article-hero-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.article-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.84rem;
+  color: var(--color-text-light);
+  flex-wrap: wrap;
+}
+
+.article-breadcrumbs a {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.article-breadcrumbs a:hover {
+  color: var(--color-primary);
+}
+
+.article-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.article-main-title {
+  font-size: 2.35rem;
+  font-weight: 900;
+  color: var(--color-navy);
+  line-height: 1.22;
+}
+
+@media (max-width: 768px) {
+  .article-main-title {
+    font-size: 1.85rem;
+  }
+}
+
+.article-lead-text {
+  font-size: 1.15rem;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+  font-weight: 500;
+}
+
+.article-body-container {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.article-section-card {
+  background-color: #ffffff;
+  border-radius: var(--radius-xl);
+  padding: 2.5rem;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.article-section-card h2 {
+  font-size: 1.45rem;
+  font-weight: 850;
+  color: var(--color-navy);
+}
+
+.article-section-card p {
+  font-size: 1.02rem;
+  color: var(--color-text-main);
+  line-height: 1.7;
+}
+
+/* Bloc Auteur / Expertise TruckMatch */
+.article-author-card {
+  background-color: #ffffff;
+  border-radius: var(--radius-xl);
+  padding: 2rem 2.5rem;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.author-avatar-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-weight: 900;
+  font-size: 1.25rem;
+}
+
+/* Page Détail Article (/conseils/[slug]) Layout Complet */
+.article-hero {
+  padding: 3.5rem 0 2rem;
+  background-color: transparent;
+}
+
+.article-hero-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 900px;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+  flex-wrap: wrap;
+}
+
+.breadcrumbs a {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.breadcrumbs a:hover {
+  color: var(--color-primary);
+}
+
+.article-badges {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.read-time, .date-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.84rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.article-h1 {
+  font-size: 2.35rem;
+  font-weight: 900;
+  color: var(--color-navy);
+  line-height: 1.22;
+}
+
+@media (max-width: 768px) {
+  .article-h1 {
+    font-size: 1.85rem;
+  }
+}
+
+.article-lead {
+  font-size: 1.15rem;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+  font-weight: 500;
+}
+
+.article-content-section {
+  padding-bottom: 5rem;
+}
+
+.article-layout {
+  display: grid;
+  grid-template-columns: 2.2fr 1fr;
+  gap: 2.5rem;
+  align-items: flex-start;
+}
+
+@media (max-width: 1024px) {
+  .article-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.article-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.content-block {
+  background-color: #ffffff;
+  border-radius: var(--radius-xl);
+  padding: 2.25rem;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.section-h2 {
+  font-size: 1.35rem;
+  font-weight: 850;
+  color: var(--color-navy);
+}
+
+.section-p {
+  font-size: 1.02rem;
+  color: var(--color-text-main);
+  line-height: 1.7;
+}
+
+/* Bloc FAQ Article */
+.article-faq {
+  background-color: #ffffff;
+  border-radius: var(--radius-xl);
+  padding: 2.25rem;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.faq-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.faq-ico {
+  color: var(--color-primary);
+}
+
+.faq-title {
+  font-size: 1.35rem;
+  font-weight: 850;
+  color: var(--color-navy);
+}
+
+.faq-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.faq-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background-color: var(--color-bg-body);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+}
+
+.faq-question {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--color-navy);
+}
+
+.faq-answer {
+  font-size: 0.94rem;
+  color: var(--color-text-muted);
+  line-height: 1.55;
+}
+
+/* CTA Box Article */
+.article-cta-box {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .article-cta-box {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cta-col {
+  background-color: #ffffff;
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.cta-col h4 {
+  font-size: 1.15rem;
+  font-weight: 850;
+  color: var(--color-navy);
+}
+
+.cta-col p {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* Sidebar Article */
+.article-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: sticky;
+  top: calc(var(--header-height) + 1.5rem);
+}
+
+.sidebar-card {
+  background-color: #ffffff;
+  border-radius: var(--radius-xl);
+  padding: 1.75rem;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sidebar-title {
+  font-size: 1.12rem;
+  font-weight: 850;
+  color: var(--color-navy);
+}
+
+.sidebar-links {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sidebar-links li a {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  transition: color var(--transition-fast);
+}
+
+.sidebar-links li a:hover {
+  color: var(--color-primary);
+}
+
+.other-articles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.other-article-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.other-title {
+  font-size: 0.95rem;
+  font-weight: 750;
+  line-height: 1.35;
+  color: var(--color-navy);
+}
+
+.other-title a:hover {
+  color: var(--color-primary);
+}
+
+
+
 
 
