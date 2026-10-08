@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   MapPin,
   Search,
@@ -881,38 +882,17 @@ export default function CarteChauffeursPage() {
               </div>
             </div>
 
-            {/* Carte métrique & statut en temps réel */}
+            {/* Colonne droite : Visuel Photoréaliste Radar & Carte Chauffeurs */}
             <div className="recruiter-hero-visual">
-              <div className="recruiter-visual-card">
-                <div className="visual-metric-row">
-                  <div className="visual-metric-icon">
-                    <Truck size={26} />
-                  </div>
-                  <div>
-                    <p className="visual-metric-val">1 480 Conducteurs</p>
-                    <p className="visual-metric-label">Inscrits avec ville ou village certifié</p>
-                  </div>
-                </div>
-
-                <div className="visual-metric-row">
-                  <div className="visual-metric-icon" style={{ backgroundColor: "#e6f9f0", color: "#10b981" }}>
-                    <CheckCircle2 size={26} />
-                  </div>
-                  <div>
-                    <p className="visual-metric-val">342 Disponibles</p>
-                    <p className="visual-metric-label">Prêts à prendre le volant immédiatement</p>
-                  </div>
-                </div>
-
-                <div className="visual-metric-row">
-                  <div className="visual-metric-icon" style={{ backgroundColor: "#e8f3ff", color: "#0080ff" }}>
-                    <ShieldCheck size={26} />
-                  </div>
-                  <div>
-                    <p className="visual-metric-val">98,4% Validés</p>
-                    <p className="visual-metric-label">Permis, FCO Marchandises & Cartes Chrono vérifiés</p>
-                  </div>
-                </div>
+              <div className="recruiter-image-card">
+                <Image
+                  src="/images/hero-carte-chauffeurs.png"
+                  alt="Carte interactive des chauffeurs géolocalisés en France - Radar de recrutement TruckMatch"
+                  width={1024}
+                  height={369}
+                  priority
+                  className="recruiter-main-img"
+                />
               </div>
             </div>
           </div>
