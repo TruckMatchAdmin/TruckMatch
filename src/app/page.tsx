@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Hero } from "@/components/home/Hero";
+import { PartnerMarquee } from "@/components/ui/PartnerMarquee";
 import { SearchDriverBar } from "@/components/home/SearchDriverBar";
 import { CategoryCards } from "@/components/home/CategoryCards";
 import { DriverSection } from "@/components/home/DriverSection";
@@ -15,6 +16,7 @@ export default function HomePage() {
   return (
     <div>
       <Hero />
+      <PartnerMarquee />
       <SearchDriverBar />
       <CategoryCards />
       <DriverSection />
