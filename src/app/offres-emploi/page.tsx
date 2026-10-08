@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { JobOffer } from "@/lib/types";
+import { PartnerMarquee } from "@/components/ui/PartnerMarquee";
 import {
   Briefcase,
   MapPin,
@@ -269,6 +270,9 @@ export default function OffresEmploiPage() {
           </div>
         </div>
       </section>
+
+      {/* Bannière Défilante Partenaires (Ils nous font déjà confiance) */}
+      <PartnerMarquee />
 
       {/* 2. Moteur de Recherche & Filtres Rapides */}
       <section className="jobs-filter-section">
