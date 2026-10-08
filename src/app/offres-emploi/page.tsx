@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
 import { JobOffer } from "@/lib/types";
 import { PartnerMarquee } from "@/components/ui/PartnerMarquee";
@@ -223,48 +224,17 @@ export default function OffresEmploiPage() {
               </div>
             </div>
 
-            {/* Carte métrique Offres */}
+            {/* Colonne droite : Visuel Bourse d'Emploi & Recrutement Routier */}
             <div className="recruiter-hero-visual">
-              <div className="recruiter-visual-card">
-                <div className="visual-metric-row">
-                  <div className="visual-metric-icon">
-                    <ShieldCheck size={26} />
-                  </div>
-                  <div>
-                    <p className="visual-metric-val">100% Embauche Directe</p>
-                    <p className="visual-metric-label">Échangez sans intermédiaire avec les exploitants et patrons</p>
-                  </div>
-                </div>
-
-                <div className="visual-metric-row">
-                  <div className="visual-metric-icon" style={{ backgroundColor: "#e6f9f0", color: "#10b981" }}>
-                    <DollarSign size={26} />
-                  </div>
-                  <div>
-                    <p className="visual-metric-val">Salaires & Frais Transparents</p>
-                    <p className="visual-metric-label">Indication des indemnités repas et découchés conventionnels</p>
-                  </div>
-                </div>
-
-                <div className="visual-metric-row">
-                  <div className="visual-metric-icon" style={{ backgroundColor: "#e4edf6", color: "#0b192c" }}>
-                    <Clock size={26} />
-                  </div>
-                  <div>
-                    <p className="visual-metric-val">Réponse sous 48h</p>
-                    <p className="visual-metric-label">Candidatures transmises immédiatement aux recruteurs</p>
-                  </div>
-                </div>
-
-                <div className="visual-metric-row">
-                  <div className="visual-metric-icon" style={{ backgroundColor: "#fef7e6", color: "#f59e0b" }}>
-                    <MapPin size={26} />
-                  </div>
-                  <div>
-                    <p className="visual-metric-val">Couverture Nationale</p>
-                    <p className="visual-metric-label">Missions sur tous les bassins logistiques de France</p>
-                  </div>
-                </div>
+              <div className="recruiter-image-card">
+                <Image
+                  src="/images/hero-offres-emploi.png"
+                  alt="Bourse d'emploi conducteurs et chauffeurs routiers qualifiés - TruckMatch"
+                  width={1024}
+                  height={369}
+                  priority
+                  className="recruiter-main-img"
+                />
               </div>
             </div>
           </div>

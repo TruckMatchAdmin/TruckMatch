@@ -1,16 +1,27 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { MAIN_NAV } from "@/lib/constants/navigation";
 import { Menu, X, ArrowRight, UserPlus, Building2 } from "lucide-react";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 15);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <header className="site-header">
+    <header className={`site-header ${scrolled ? "header-scrolled" : ""}`}>
       <div className="container header-container">
         {/* Logo */}
         <Link href="/" className="logo-link" aria-label="TruckMatch Accueil">
@@ -24,27 +35,34 @@ export function Header() {
           />
         </Link>
 
-        {/* Navigation Desktop */}
+        {/* Navigation Desktop Pro */}
         <nav className="desktop-nav" aria-label="Navigation principale">
           <ul className="nav-list">
-            {MAIN_NAV.map((item) => (
-              <li key={item.href}>
-                <Link href={item.href} className="nav-link">
-                  {item.label}
-                </Link>
-              </li>
-            ))}
+            {MAIN_NAV.map((item) => {
+              const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className={`nav-link ${isActive ? "nav-link-active" : ""}`}
+                  >
+                    <span>{item.label}</span>
+                    {isActive && <span className="nav-link-indicator" />}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </nav>
 
-        {/* Actions Desktop */}
+        {/* Actions Desktop Pro */}
         <div className="header-actions">
-          <Link href="/entreprises" className="btn btn-outline btn-sm header-btn-company">
-            <Building2 size={16} />
-            <span>Je suis une entreprise</span>
+          <Link href="/entreprises" className="header-btn-company-pro">
+            <Building2 size={15} />
+            <span>Espace Entreprise</span>
           </Link>
-          <Link href="/chauffeurs" className="btn btn-primary btn-sm">
-            <UserPlus size={16} />
+          <Link href="/chauffeurs" className="header-btn-driver-pro">
+            <UserPlus size={15} />
             <span>Créer mon profil</span>
           </Link>
         </div>
@@ -57,45 +75,48 @@ export function Header() {
           aria-expanded={mobileMenuOpen}
           aria-label={mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
         >
-          {mobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      {/* Menu Mobile Déroulant */}
+      {/* Menu Mobile Déroulant Pro */}
       {mobileMenuOpen && (
         <div className="mobile-menu-overlay">
           <nav className="mobile-nav" aria-label="Navigation mobile">
             <ul className="mobile-nav-list">
-              {MAIN_NAV.map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className="mobile-nav-link"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <span>{item.label}</span>
-                    <ArrowRight size={16} />
-                  </Link>
-                </li>
-              ))}
+              {MAIN_NAV.map((item) => {
+                const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={`mobile-nav-link ${isActive ? "mobile-nav-link-active" : ""}`}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span>{item.label}</span>
+                      <ArrowRight size={16} />
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
 
             <div className="mobile-menu-cta">
               <Link
                 href="/entreprises"
-                className="btn btn-outline btn-lg w-full"
+                className="header-btn-company-pro w-full"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <Building2 size={18} />
-                <span>Je suis une entreprise</span>
+                <Building2 size={16} />
+                <span>Espace Entreprise / Recruter</span>
               </Link>
               <Link
                 href="/chauffeurs"
-                className="btn btn-primary btn-lg w-full"
+                className="header-btn-driver-pro w-full"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <UserPlus size={18} />
-                <span>Créer mon profil chauffeur</span>
+                <UserPlus size={16} />
+                <span>Créer mon profil Chauffeur (Gratuit)</span>
               </Link>
             </div>
           </nav>
