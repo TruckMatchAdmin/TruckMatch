@@ -659,7 +659,7 @@ export default function AdminDashboardPage() {
                     type="button"
                     onClick={handleSeedSupabase}
                     disabled={actionLoading}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-sky-300 bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 transition disabled:opacity-50"
+                    className="cockpit-btn cockpit-btn-sky"
                     title="Insérer 3 chauffeurs qualifiés et 2 entreprises tests réelles dans Supabase"
                   >
                     <Sparkles size={13} className="text-sky-400" />
@@ -670,7 +670,7 @@ export default function AdminDashboardPage() {
                     type="button"
                     onClick={loadData}
                     disabled={loading}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 hover:text-white border border-slate-700 transition"
+                    className="cockpit-btn cockpit-btn-secondary"
                     title="Actualiser les données depuis Supabase"
                   >
                     <RefreshCw size={13} className={loading ? "animate-spin text-sky-400" : "text-emerald-400"} />
@@ -680,7 +680,7 @@ export default function AdminDashboardPage() {
                   <button
                     type="button"
                     onClick={handleExportData}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 hover:text-white border border-slate-700 transition"
+                    className="cockpit-btn cockpit-btn-secondary"
                     title="Exporter les tables en fichier JSON"
                   >
                     <Download size={13} className="text-sky-400" />
@@ -2572,7 +2572,7 @@ export default function AdminDashboardPage() {
                   <button
                     type="button"
                     onClick={handleExportFinancialReport}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 hover:text-white border border-slate-700 transition"
+                    className="cockpit-btn cockpit-btn-secondary"
                   >
                     <Download size={13} className="text-sky-400" />
                     <span>Exporter Rapport (.JSON)</span>
@@ -2581,7 +2581,7 @@ export default function AdminDashboardPage() {
                   <button
                     type="button"
                     onClick={() => loadData()}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 hover:text-white border border-slate-700 transition"
+                    className="cockpit-btn cockpit-btn-secondary"
                   >
                     <RefreshCw size={13} className={loading ? "animate-spin text-sky-400" : "text-emerald-400"} />
                     <span>Actualiser</span>
@@ -2915,7 +2915,7 @@ export default function AdminDashboardPage() {
                                 <button
                                   type="button"
                                   onClick={() => setSelectedBillingCompany(c)}
-                                  className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded text-[11px] font-semibold border border-slate-700 transition"
+                                  className="cockpit-btn-sm"
                                   title="Consulter détails facturation"
                                 >
                                   Détails
@@ -3133,7 +3133,7 @@ export default function AdminDashboardPage() {
                     type="button"
                     onClick={handleExportCurrentChat}
                     disabled={!activeRecipient}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 hover:text-white border border-slate-700 transition disabled:opacity-50"
+                    className="cockpit-btn cockpit-btn-secondary"
                   >
                     <Download size={13} className="text-sky-400" />
                     <span>Exporter Échanges (.TXT)</span>
@@ -3142,7 +3142,7 @@ export default function AdminDashboardPage() {
                   <button
                     type="button"
                     onClick={() => loadData()}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 hover:text-white border border-slate-700 transition"
+                    className="cockpit-btn cockpit-btn-secondary"
                   >
                     <RefreshCw size={13} className={loading ? "animate-spin text-sky-400" : "text-emerald-400"} />
                     <span>Actualiser Contacts</span>
@@ -3289,7 +3289,7 @@ export default function AdminDashboardPage() {
 
                         <div>
                           <div className="flex items-center gap-2">
-                            <h2 className="text-sm font-extrabold text-white">{activeRecipient.name}</h2>
+                            <h2 className="text-base font-extrabold text-white" style={{ color: "#ffffff", margin: 0 }}>{activeRecipient.name}</h2>
                             <span
                               className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                               style={{
@@ -3337,7 +3337,7 @@ export default function AdminDashboardPage() {
                         {activeRecipient.phone && (
                           <a
                             href={`tel:${activeRecipient.phone}`}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700 hover:text-white border border-slate-700 transition"
+                            className="cockpit-btn-sm"
                           >
                             <Phone size={12} className="text-emerald-400" />
                             <span>Appeler</span>
@@ -3347,7 +3347,7 @@ export default function AdminDashboardPage() {
                         {activeRecipient.email && (
                           <a
                             href={`mailto:${activeRecipient.email}`}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700 hover:text-white border border-slate-700 transition"
+                            className="cockpit-btn-sm"
                           >
                             <Mail size={12} className="text-sky-400" />
                             <span>Email</span>
@@ -3357,7 +3357,7 @@ export default function AdminDashboardPage() {
                         <button
                           type="button"
                           onClick={() => setSelectedContactModal(activeRecipient)}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700 hover:text-white border border-slate-700 transition"
+                          className="cockpit-btn-sm"
                           title="Voir la fiche détaillée Supabase"
                         >
                           <Eye size={12} className="text-amber-400" />
@@ -3367,10 +3367,11 @@ export default function AdminDashboardPage() {
                         <button
                           type="button"
                           onClick={handleClearCurrentChat}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-slate-700/60 transition"
-                          title="Vider la conversation"
+                          className="cockpit-btn-sm"
+                          style={{ color: "#f87171", borderColor: "rgba(239, 68, 68, 0.3)" }}
+                          title="Effacer l'historique"
                         >
-                          <Trash2 size={13} />
+                          <Trash2 size={12} />
                         </button>
                       </div>
                     </div>
