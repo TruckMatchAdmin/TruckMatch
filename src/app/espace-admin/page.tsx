@@ -1058,139 +1058,149 @@ export default function AdminDashboardPage() {
       {/* ============================================================== */}
       {activeTab === "candidats" && (
         <div className="candidates-cockpit-view">
-          {/* A. Toolbar Supérieure avec Actions */}
-          <div className="candidates-top-toolbar">
-            <div className="flex items-center gap-2 flex-1">
-              <div className="admin-search-box" style={{ minWidth: "240px", padding: "0.25rem 0.65rem" }}>
+          {/* A. Bloc Contrôle Haut : Titre + Recherche + Filtres + Actions */}
+          <div className="candidates-header-block">
+            {/* Ligne 1 : Titre + Actions */}
+            <div className="candidates-header-row-1">
+              <div className="candidates-title-wrap">
+                <h1 className="candidates-page-title">
+                  <Users size={18} className="text-primary" />
+                  <span>Vivier Conducteurs Routiers</span>
+                </h1>
+                <span className="cockpit-panel-badge">{drivers.length} conducteurs certifiés</span>
+              </div>
+
+              <div className="candidates-header-actions">
+                <button
+                  type="button"
+                  onClick={() => setIsAddDriverModalOpen(true)}
+                  className="btn-cockpit-action btn-cockpit-action-primary"
+                  title="Ajouter un candidat directement dans Supabase"
+                >
+                  <Plus size={13} />
+                  <span>Nouveau Candidat</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={loadData}
+                  disabled={loading}
+                  className="btn-cockpit-action"
+                  title="Actualiser Supabase"
+                >
+                  <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
+                  <span>Actualiser</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Ligne 2 : Recherche sombre + Pilules filtres claires */}
+            <div className="candidates-header-row-2">
+              <div className="candidates-search-dark">
                 <Search size={14} className="text-muted" />
                 <input
                   type="text"
-                  placeholder="Chercher nom, prénom, ville, tél..."
+                  placeholder="Chercher nom, prénom, ville, département, tél..."
                   value={driverSearch}
                   onChange={(e) => setDriverSearch(e.target.value)}
-                  style={{ fontSize: "0.78rem", color: "#fff" }}
                 />
               </div>
 
-              {/* Filtres Pills */}
-              <div className="flex items-center gap-1">
+              <div className="candidates-pills-bar">
                 <button
                   type="button"
                   onClick={() => setDriverFilter("all")}
-                  className={`admin-filter-pill-btn ${driverFilter === "all" ? "active" : ""}`}
+                  className={`candidates-filter-pill ${driverFilter === "all" ? "active" : ""}`}
                 >
                   Tous ({drivers.length})
                 </button>
                 <button
                   type="button"
                   onClick={() => setDriverFilter("ce")}
-                  className={`admin-filter-pill-btn ${driverFilter === "ce" ? "active" : ""}`}
+                  className={`candidates-filter-pill ${driverFilter === "ce" ? "active" : ""}`}
                 >
                   Permis CE (SPL)
                 </button>
                 <button
                   type="button"
                   onClick={() => setDriverFilter("c")}
-                  className={`admin-filter-pill-btn ${driverFilter === "c" ? "active" : ""}`}
+                  className={`candidates-filter-pill ${driverFilter === "c" ? "active" : ""}`}
                 >
-                  Permis C (PL)
+                  Permis C (Porteur)
                 </button>
                 <button
                   type="button"
                   onClick={() => setDriverFilter("resume")}
-                  className={`admin-filter-pill-btn ${driverFilter === "resume" ? "active" : ""}`}
+                  className={`candidates-filter-pill ${driverFilter === "resume" ? "active" : ""}`}
                 >
                   Avec CV ({drivers.filter((d) => d.resume_url).length})
                 </button>
                 <button
                   type="button"
                   onClick={() => setDriverFilter("immediate")}
-                  className={`admin-filter-pill-btn ${driverFilter === "immediate" ? "active" : ""}`}
+                  className={`candidates-filter-pill ${driverFilter === "immediate" ? "active" : ""}`}
                 >
                   Immédiat ({drivers.filter((d) => d.availability === "immediate").length})
                 </button>
                 <button
                   type="button"
                   onClick={() => setDriverFilter("adr")}
-                  className={`admin-filter-pill-btn ${driverFilter === "adr" ? "active" : ""}`}
+                  className={`candidates-filter-pill ${driverFilter === "adr" ? "active" : ""}`}
                 >
                   ADR
                 </button>
               </div>
             </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsAddDriverModalOpen(true)}
-                className="btn-cockpit-action btn-cockpit-action-primary"
-                title="Ajouter un candidat directement dans Supabase"
-              >
-                <Plus size={13} />
-                <span>Nouveau Candidat</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={loadData}
-                disabled={loading}
-                className="btn-cockpit-action"
-                title="Actualiser Supabase"
-              >
-                <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
-                <span>Actualiser</span>
-              </button>
-            </div>
           </div>
 
-          {/* B. Bandeau KPI Condensé (52px) */}
+          {/* B. Bandeau KPI Aéré (64px) */}
           <div className="candidates-kpis-strip">
             <div className="candidates-kpi-item">
               <div>
-                <div className="text-xs text-muted font-bold">Total Candidats</div>
-                <div className="text-base font-black text-white">{drivers.length}</div>
+                <div className="candidates-kpi-lbl">Total Candidats</div>
+                <div className="candidates-kpi-val">{drivers.length}</div>
               </div>
-              <Users size={16} className="text-primary" />
+              <Users size={18} className="text-primary" />
             </div>
 
             <div className="candidates-kpi-item">
               <div>
-                <div className="text-xs text-muted font-bold">Permis CE (SPL)</div>
-                <div className="text-base font-black text-white">
+                <div className="candidates-kpi-lbl">Permis CE (SPL)</div>
+                <div className="candidates-kpi-val">
                   {drivers.filter((d) => d.permits?.includes("CE")).length}
                 </div>
               </div>
-              <Truck size={16} className="text-sky-400" />
+              <Truck size={18} className="text-sky-400" />
             </div>
 
             <div className="candidates-kpi-item">
               <div>
-                <div className="text-xs text-muted font-bold">Permis C (Porteur)</div>
-                <div className="text-base font-black text-white">
+                <div className="candidates-kpi-lbl">Permis C (Porteur)</div>
+                <div className="candidates-kpi-val">
                   {drivers.filter((d) => d.permits?.includes("C")).length}
                 </div>
               </div>
-              <Truck size={16} className="text-emerald-400" />
+              <Truck size={18} className="text-emerald-400" />
             </div>
 
             <div className="candidates-kpi-item">
               <div>
-                <div className="text-xs text-muted font-bold">CVs Déposés</div>
-                <div className="text-base font-black text-white">
+                <div className="candidates-kpi-lbl">CVs Déposés</div>
+                <div className="candidates-kpi-val">
                   {drivers.filter((d) => d.resume_url).length}
                 </div>
               </div>
-              <FileText size={16} className="text-amber-400" />
+              <FileText size={18} className="text-amber-400" />
             </div>
 
             <div className="candidates-kpi-item">
               <div>
-                <div className="text-xs text-muted font-bold">Dispo Immédiate</div>
-                <div className="text-base font-black text-white">
+                <div className="candidates-kpi-lbl">Dispo Immédiate</div>
+                <div className="candidates-kpi-val">
                   {drivers.filter((d) => d.availability === "immediate").length}
                 </div>
               </div>
-              <Clock size={16} className="text-purple-400" />
+              <Clock size={18} className="text-purple-400" />
             </div>
           </div>
 
@@ -1226,51 +1236,51 @@ export default function AdminDashboardPage() {
                   {filteredCandidates.map((d) => (
                     <tr key={d.id}>
                       <td>
-                        <div className="font-bold text-white text-sm">
+                        <div className="font-bold text-white text-sm tracking-tight mb-1">
                           {d.first_name} {d.last_name}
                         </div>
-                        <div className="text-xs text-muted">
+                        <div className="text-xs text-slate-400">
                           {d.birth_date
                             ? `Né(e) le ${new Date(d.birth_date).toLocaleDateString("fr-FR")}`
                             : "Conducteur Routier"}
                         </div>
                       </td>
                       <td>
-                        <div className="flex items-center gap-1.5 text-xs">
-                          <Phone size={12} className="text-primary" />
+                        <div className="flex items-center gap-1.5 text-xs mb-1">
+                          <Phone size={12} className="text-sky-400 shrink-0" />
                           <a href={`tel:${d.phone}`} className="hover:underline font-semibold text-white">
                             {d.phone || "-"}
                           </a>
                         </div>
-                        <div className="flex items-center gap-1.5 text-xs text-muted mt-0.5">
-                          <Mail size={12} />
-                          <a href={`mailto:${d.email}`} className="hover:underline">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                          <Mail size={12} className="text-slate-400 shrink-0" />
+                          <a href={`mailto:${d.email}`} className="hover:underline hover:text-white truncate max-w-[170px]">
                             {d.email || "-"}
                           </a>
                         </div>
                       </td>
                       <td>
-                        <div className="flex items-center gap-1 text-xs font-semibold text-white">
-                          <MapPin size={12} className="text-muted" />
+                        <div className="flex items-center gap-1 text-xs font-semibold text-white mb-1">
+                          <MapPin size={12} className="text-sky-400 shrink-0" />
                           <span>{d.postal_code} {d.city}</span>
                         </div>
-                        <div className="text-xs text-muted truncate max-w-[160px]">{d.address}</div>
+                        <div className="text-xs text-slate-400 truncate max-w-[170px]">{d.address || "Adresse non renseignée"}</div>
                       </td>
                       <td>
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex flex-wrap gap-1.5 mb-1.5">
                           {Array.isArray(d.permits) &&
                             d.permits.map((p: string) => (
-                              <span key={p} className="cockpit-badge-pill" style={{ background: "#0284c7", color: "#fff" }}>
+                              <span key={p} className="cockpit-badge-pill" style={{ background: "#0284c7", color: "#fff", fontWeight: 800 }}>
                                 {p}
                               </span>
                             ))}
                         </div>
-                        <div className="flex gap-1 mt-1">
-                          {d.fimo && <span className="cockpit-badge-pill" style={{ background: "#1e293b", color: "#34d399" }}>FIMO</span>}
-                          {d.fco && <span className="cockpit-badge-pill" style={{ background: "#1e293b", color: "#38bdf8" }}>FCO</span>}
-                          {d.chrono_card && <span className="cockpit-badge-pill" style={{ background: "#1e293b", color: "#fbbf24" }}>Chrono</span>}
+                        <div className="flex flex-wrap gap-1.5">
+                          {d.fimo && <span className="cockpit-badge-pill" style={{ background: "#064e3b", color: "#34d399", border: "1px solid #059669" }}>FIMO</span>}
+                          {d.fco && <span className="cockpit-badge-pill" style={{ background: "#0c4a6e", color: "#38bdf8", border: "1px solid #0284c7" }}>FCO</span>}
+                          {d.chrono_card && <span className="cockpit-badge-pill" style={{ background: "#451a03", color: "#fbbf24", border: "1px solid #d97706" }}>Chrono</span>}
                           {Array.isArray(d.adr) && d.adr.length > 0 && (
-                            <span className="cockpit-badge-pill" style={{ background: "#b45309", color: "#fff" }}>ADR</span>
+                            <span className="cockpit-badge-pill" style={{ background: "#7c2d12", color: "#fdba74", border: "1px solid #ea580c" }}>ADR</span>
                           )}
                         </div>
                       </td>
@@ -1281,15 +1291,15 @@ export default function AdminDashboardPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn-cockpit-action"
-                            style={{ fontSize: "0.72rem", padding: "0.2rem 0.5rem" }}
-                            title="Télécharger / Consulter CV"
+                            style={{ fontSize: "0.74rem", padding: "0.3rem 0.65rem", borderRadius: "7px" }}
+                            title="Consulter le CV PDF"
                           >
                             <FileText size={12} className="text-primary" />
                             <span>Voir CV</span>
                             <ExternalLink size={10} />
                           </a>
                         ) : (
-                          <span className="text-xs text-muted">Aucun CV</span>
+                          <span className="text-xs text-slate-500 italic">Aucun CV</span>
                         )}
                       </td>
                       <td>
@@ -1299,23 +1309,24 @@ export default function AdminDashboardPage() {
                           className={`cockpit-badge-pill ${
                             d.availability === "immediate" ? "badge-imm-on" : "badge-imm-off"
                           }`}
+                          style={{ padding: "0.35rem 0.75rem", borderRadius: "8px", cursor: "pointer" }}
                           title="Cliquer pour basculer la disponibilité dans Supabase"
                         >
                           {d.availability === "immediate" ? "● Immédiat" : "○ Flexible"}
                         </button>
                       </td>
-                      <td className="text-xs text-muted">
+                      <td className="text-xs text-slate-400">
                         {d.created_at ? new Date(d.created_at).toLocaleDateString("fr-FR") : "-"}
                       </td>
                       <td>
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-2">
                           <button
                             type="button"
                             onClick={() => setSelectedDriverDetail(d)}
                             className="btn-cockpit-mini"
                             title="Voir le dossier complet"
                           >
-                            <EyeIcon size={12} />
+                            <EyeIcon size={13} />
                           </button>
                           <button
                             type="button"
@@ -1323,7 +1334,7 @@ export default function AdminDashboardPage() {
                             className="btn-cockpit-mini"
                             title="Ouvrir le tchat direct"
                           >
-                            <MessageSquareText size={12} />
+                            <MessageSquareText size={13} />
                           </button>
                           <button
                             type="button"
@@ -1331,7 +1342,7 @@ export default function AdminDashboardPage() {
                             className="btn-cockpit-mini btn-cockpit-mini-danger"
                             title="Supprimer définitivement de Supabase"
                           >
-                            <Trash2 size={12} />
+                            <Trash2 size={13} />
                           </button>
                         </div>
                       </td>
