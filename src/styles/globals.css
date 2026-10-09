@@ -5024,13 +5024,68 @@ p {
 /* ==========================================================================
    Dépôt de CV (Curriculum Vitae)
    ========================================================================== */
+.resume-upload-section {
+  margin-top: 2.25rem;
+  padding-top: 2rem;
+  border-top: 1.5px dashed #cbd5e1;
+}
+
 .resume-upload-wrapper {
   display: flex;
   flex-direction: column;
 }
 
 .resume-upload-header {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.resume-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.resume-label-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.98rem;
+  font-weight: 750;
+  color: var(--color-navy);
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.resume-label-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-primary);
+}
+
+.badge-required-pill {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #b91c1c;
+  background-color: #fee2e2;
+  border: 1px solid #fca5a5;
+  padding: 0.22rem 0.75rem;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.resume-upload-header .helper-text-pro {
+  margin-top: 0.25rem;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+  color: #64748b;
+  font-size: 0.86rem;
 }
 
 .badge-option-pill {
@@ -5193,6 +5248,18 @@ p {
   background-color: #fee2e2;
   border-color: #fca5a5;
   color: #b91c1c;
+}
+
+.resume-file-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.resume-dropzone-error {
+  border-color: #ef4444 !important;
+  background-color: #fff5f5 !important;
 }
 
 .resume-error-pill {

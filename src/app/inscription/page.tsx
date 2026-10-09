@@ -149,6 +149,15 @@ function InscriptionContent() {
       return;
     }
 
+    if (!driverForm.resumeUrl) {
+      setErrorMsg("Le dépôt de votre CV est obligatoire pour valider votre inscription.");
+      const resumeEl = document.getElementById("resume-upload-section");
+      if (resumeEl) {
+        resumeEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+
     if (!driverForm.password || driverForm.password.length < 6) {
       setErrorMsg("Veuillez choisir un mot de passe d'au moins 6 caractères pour votre espace.");
       return;
@@ -878,11 +887,16 @@ function InscriptionContent() {
                     </div>
                   </div>
 
-                  {/* Dépôt de CV (Curriculum Vitae) */}
-                  <div className="form-group mt-6 pt-5" style={{ borderTop: "1px solid #e2e8f0" }}>
+                  {/* Dépôt de CV (Curriculum Vitae) - Obligatoire */}
+                  <div className="resume-upload-section" id="resume-upload-section">
                     <ResumeUpload
+                      required
+                      hasError={Boolean(errorMsg && !driverForm.resumeUrl && errorMsg.includes("CV"))}
                       onUploadSuccess={(url, name) => {
                         setDriverForm({ ...driverForm, resumeUrl: url, resumeName: name });
+                        if (errorMsg && errorMsg.includes("CV")) {
+                          setErrorMsg(null);
+                        }
                       }}
                       onRemove={() => {
                         setDriverForm({ ...driverForm, resumeUrl: "", resumeName: "" });

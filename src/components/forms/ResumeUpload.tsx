@@ -8,6 +8,8 @@ interface ResumeUploadProps {
   onRemove: () => void;
   currentFileName?: string;
   currentUrl?: string;
+  required?: boolean;
+  hasError?: boolean;
 }
 
 export function ResumeUpload({
@@ -15,6 +17,8 @@ export function ResumeUpload({
   onRemove,
   currentFileName,
   currentUrl,
+  required = true,
+  hasError = false,
 }: ResumeUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -139,24 +143,29 @@ export function ResumeUpload({
   return (
     <div className="resume-upload-wrapper">
       <div className="resume-upload-header">
-        <label className="form-label-pro">
-          <span className="flex items-center gap-1.5">
-            <FileText size={16} className="text-primary" />
+        <div className="resume-label-row">
+          <label className="resume-label-title" htmlFor="resume-file-input">
+            <span className="resume-label-icon">
+              <FileText size={18} />
+            </span>
             <span>Déposer mon CV (Curriculum Vitae)</span>
+            {required && <span className="required-star">*</span>}
+          </label>
+          <span className="badge-required-pill">
+            Obligatoire
           </span>
-          <span className="badge-option-pill">Recommandé • 4x plus de contacts</span>
-        </label>
+        </div>
         <p className="helper-text-pro">
-          Téléchargez votre CV pour permettre aux patrons de consulter vos expériences, vos tournées et vos habilitations en un coup d'œil.
+          Le dépôt de votre CV est obligatoire pour permettre aux recruteurs de consulter vos expériences, vos tournées et vos habilitations.
         </p>
       </div>
 
       <input
+        id="resume-file-input"
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
         accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-        className="hidden"
         style={{ display: "none" }}
       />
 
@@ -168,8 +177,8 @@ export function ResumeUpload({
               <FileText size={24} />
             </div>
             <div className="resume-file-info">
-              <div className="resume-file-name flex items-center gap-2">
-                <span>{uploadedFile.name}</span>
+              <div className="resume-file-name-row">
+                <span className="resume-file-name">{uploadedFile.name}</span>
                 <span className="resume-file-size">{formatSize(uploadedFile.size)}</span>
               </div>
               <div className="resume-file-status">
@@ -196,7 +205,7 @@ export function ResumeUpload({
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
-          className={`resume-dropzone ${isDragging ? "resume-dropzone-dragging" : ""} ${uploading ? "resume-dropzone-uploading" : ""}`}
+          className={`resume-dropzone ${isDragging ? "resume-dropzone-dragging" : ""} ${uploading ? "resume-dropzone-uploading" : ""} ${hasError ? "resume-dropzone-error" : ""}`}
         >
           {uploading ? (
             <div className="dropzone-loading">

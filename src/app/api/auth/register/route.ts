@@ -102,6 +102,13 @@ export async function POST(request: Request) {
         );
       }
 
+      if (!resumeUrl) {
+        return NextResponse.json(
+          { error: "Le dépôt de votre CV est obligatoire pour valider votre inscription de candidat." },
+          { status: 400 }
+        );
+      }
+
       const { data, error } = await supabase.from("drivers").insert([
         {
           first_name: firstName.trim(),
