@@ -130,7 +130,9 @@ export default function AdminDashboardPage() {
     phone?: string;
     email?: string;
     city?: string;
+    raw?: any;
   } | null>(null);
+  const [selectedContactModal, setSelectedContactModal] = useState<any | null>(null);
 
   const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>({});
   const [messageInput, setMessageInput] = useState("");
@@ -179,6 +181,7 @@ export default function AdminDashboardPage() {
             phone: first.phone,
             email: first.email,
             city: `${first.postal_code || ""} ${first.city || ""}`.trim(),
+            raw: first,
           });
         } else if (loadedCompanies.length > 0) {
           const first = loadedCompanies[0];
@@ -189,6 +192,7 @@ export default function AdminDashboardPage() {
             phone: first.phone,
             email: first.email,
             city: `${first.postal_code || ""} ${first.city || ""}`.trim(),
+            raw: first,
           });
         }
       }
@@ -466,6 +470,7 @@ export default function AdminDashboardPage() {
       phone: d.phone,
       email: d.email,
       city: `${d.postal_code || ""} ${d.city || ""}`.trim(),
+      raw: d,
       lastMsg:
         chatMessages[`cand-${d.id}`]?.slice(-1)[0]?.text ||
         "Profil chauffeur enregistré dans Supabase",
@@ -478,6 +483,7 @@ export default function AdminDashboardPage() {
       phone: c.phone,
       email: c.email,
       city: `${c.postal_code || ""} ${c.city || ""}`.trim(),
+      raw: c,
       lastMsg:
         chatMessages[`comp-${c.id}`]?.slice(-1)[0]?.text ||
         "Compte transporteur vérifié (SIRET)",
@@ -486,9 +492,14 @@ export default function AdminDashboardPage() {
   ].filter((t) => {
     if (chatRecipientFilter === "candidats" && t.type !== "candidat") return false;
     if (chatRecipientFilter === "entreprises" && t.type !== "entreprise") return false;
-    if (!chatSearch) return true;
+    if (!chatSearch.trim()) return true;
     const q = chatSearch.toLowerCase();
-    return t.name.toLowerCase().includes(q) || t.city.toLowerCase().includes(q);
+    return (
+      t.name.toLowerCase().includes(q) ||
+      t.city.toLowerCase().includes(q) ||
+      (t.phone || "").toLowerCase().includes(q) ||
+      (t.email || "").toLowerCase().includes(q)
+    );
   });
 
   const activeConversationMessages = activeRecipient
@@ -3035,310 +3046,614 @@ export default function AdminDashboardPage() {
         );
       })()}
 
-      {activeTab === "support" && (
-        <main className="admin-main-body">
-          <div className="admin-page-heading mb-3">
-            <div>
-              <h1 className="admin-heading-title">Support & Messagerie Directe</h1>
-              <p className="admin-heading-sub">
-                Échangez en direct avec les chauffeurs candidats et les entreprises de transport inscrites.
-              </p>
-            </div>
-          </div>
+      {activeTab === "support" && (() => {
+        // Fonctions d'export et de gestion du tchat
+        const handleExportCurrentChat = () => {
+          if (!activeRecipient) return;
+          const messages = activeConversationMessages;
+          const textContent = [
+            `=============================================================`,
+            `TruckMatch - Journal d'Échanges Support & Messagerie Directe`,
+            `Destinataire : ${activeRecipient.name} (${activeRecipient.type === "candidat" ? "Chauffeur Candidat" : "Entreprise Transport"})`,
+            `Téléphone : ${activeRecipient.phone || "Non renseigné"}`,
+            `Email : ${activeRecipient.email || "Non renseigné"}`,
+            `Ville : ${activeRecipient.city || "France"}`,
+            `Date d'export : ${new Date().toLocaleString("fr-FR")}`,
+            `Source : Supabase Live Database`,
+            `=============================================================\n`,
+            ...messages.map(
+              (m) =>
+                `[${m.time}] ${m.sender === "admin" ? "Support TruckMatch (Admin)" : activeRecipient.name} :\n${m.text}\n`
+            ),
+          ].join("\n");
 
-          <div className="admin-chat-layout">
-            <div className="admin-chat-sidebar">
-              <div className="admin-chat-sidebar-header">
-                <h3>Discussions actives</h3>
-                <div className="admin-search-box w-full">
-                  <Search size={14} className="text-muted" />
-                  <input
-                    type="text"
-                    placeholder="Chercher un contact..."
-                    value={chatSearch}
-                    onChange={(e) => setChatSearch(e.target.value)}
-                  />
+          const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `TruckMatch_Chat_${activeRecipient.name.replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.txt`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        };
+
+        const handleClearCurrentChat = () => {
+          if (!activeRecipient) return;
+          if (!confirm(`Voulez-vous effacer l'historique de discussion avec ${activeRecipient.name} ?`)) {
+            return;
+          }
+          setChatMessages((prev) => {
+            const next = { ...prev };
+            delete next[activeRecipient.id];
+            if (typeof window !== "undefined") {
+              localStorage.setItem("tm_admin_chats", JSON.stringify(next));
+            }
+            return next;
+          });
+        };
+
+        return (
+          <div className="support-cockpit-view">
+            {/* A. Header Cockpit Support & Actions Rapides */}
+            <div className="candidates-cockpit-header">
+              <div className="candidates-header-row-1">
+                <div className="candidates-title-wrap">
+                  <h1 className="candidates-page-title">
+                    <MessageSquareText size={20} className="text-emerald-400" />
+                    <span>Support & Messagerie Directe</span>
+                  </h1>
+                  <span className="company-cockpit-badge">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block mr-1"></span>
+                    Passerelle Supabase Temps Réel
+                  </span>
+                  <span className="text-xs text-slate-400 bg-slate-900/60 px-2.5 py-1 rounded-full border border-slate-800">
+                    Tchat Direct Chauffeurs & Transporteurs
+                  </span>
                 </div>
 
-                <div className="chat-filter-tabs">
+                <div className="candidates-header-actions">
                   <button
                     type="button"
-                    onClick={() => setChatRecipientFilter("all")}
-                    className={`chat-filter-tab-btn ${chatRecipientFilter === "all" ? "active" : ""}`}
+                    onClick={handleExportCurrentChat}
+                    disabled={!activeRecipient}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 hover:text-white border border-slate-700 transition disabled:opacity-50"
                   >
-                    Tous ({chatThreads.length})
+                    <Download size={13} className="text-sky-400" />
+                    <span>Exporter Échanges (.TXT)</span>
                   </button>
+
                   <button
                     type="button"
-                    onClick={() => setChatRecipientFilter("candidats")}
-                    className={`chat-filter-tab-btn ${chatRecipientFilter === "candidats" ? "active" : ""}`}
+                    onClick={() => loadData()}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 hover:text-white border border-slate-700 transition"
                   >
-                    Chauffeurs ({drivers.length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setChatRecipientFilter("entreprises")}
-                    className={`chat-filter-tab-btn ${chatRecipientFilter === "entreprises" ? "active" : ""}`}
-                  >
-                    Entreprises ({companies.length})
+                    <RefreshCw size={13} className={loading ? "animate-spin text-sky-400" : "text-emerald-400"} />
+                    <span>Actualiser Contacts</span>
                   </button>
                 </div>
               </div>
+            </div>
 
-              <div className="admin-chat-threads-list">
-                {chatThreads.length === 0 ? (
-                  <p className="text-xs text-muted p-4 text-center">Aucun contact trouvé.</p>
-                ) : (
-                  chatThreads.map((thread) => {
-                    const isSelected = activeRecipient?.id === thread.id;
-                    return (
-                      <button
-                        key={thread.id}
-                        type="button"
-                        onClick={() =>
-                          setActiveRecipient({
-                            id: thread.id,
-                            name: thread.name,
-                            type: thread.type,
-                            phone: thread.phone,
-                            email: thread.email,
-                            city: thread.city,
-                          })
-                        }
-                        className={`chat-thread-item ${isSelected ? "active" : ""}`}
-                      >
-                        <div
-                          className={`chat-thread-avatar ${
-                            thread.type === "candidat" ? "avatar-candidat" : "avatar-entreprise"
-                          }`}
+            {/* B. Grille Principale 2 Colonnes Zero-Scroll */}
+            <div className="support-cockpit-grid">
+              {/* Colonne 1 : Annuaire des Discussions Supabase */}
+              <div className="support-sidebar-panel">
+                <div className="support-sidebar-header">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Users size={15} className="text-sky-400" />
+                      <h3 className="font-bold text-white text-xs uppercase tracking-wider">Discussions Actives</h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                      {chatThreads.length} contacts
+                    </span>
+                  </div>
+
+                  {/* Recherche contact */}
+                  <div className="support-search-box">
+                    <Search size={13} className="text-slate-400 shrink-0" />
+                    <input
+                      type="text"
+                      placeholder="Chercher nom, ville, téléphone..."
+                      value={chatSearch}
+                      onChange={(e) => setChatSearch(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Filtres tabs */}
+                  <div className="support-filter-tabs">
+                    <button
+                      type="button"
+                      onClick={() => setChatRecipientFilter("all")}
+                      className={`support-filter-btn ${chatRecipientFilter === "all" ? "active" : ""}`}
+                    >
+                      Tous ({drivers.length + companies.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setChatRecipientFilter("candidats")}
+                      className={`support-filter-btn ${chatRecipientFilter === "candidats" ? "active" : ""}`}
+                    >
+                      Chauffeurs ({drivers.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setChatRecipientFilter("entreprises")}
+                      className={`support-filter-btn ${chatRecipientFilter === "entreprises" ? "active" : ""}`}
+                    >
+                      Entreprises ({companies.length})
+                    </button>
+                  </div>
+                </div>
+
+                {/* Liste des discussions */}
+                <div className="support-threads-list">
+                  {chatThreads.length === 0 ? (
+                    <div className="text-center py-10 px-4 text-xs text-slate-400">
+                      Aucun contact correspondant trouvé.
+                    </div>
+                  ) : (
+                    chatThreads.map((thread) => {
+                      const isSelected = activeRecipient?.id === thread.id;
+                      return (
+                        <button
+                          key={thread.id}
+                          type="button"
+                          onClick={() =>
+                            setActiveRecipient({
+                              id: thread.id,
+                              name: thread.name,
+                              type: thread.type,
+                              phone: thread.phone,
+                              email: thread.email,
+                              city: thread.city,
+                              raw: thread.raw,
+                            })
+                          }
+                          className={`support-thread-item ${isSelected ? "active" : ""}`}
                         >
-                          {thread.type === "candidat" ? (
-                            <Truck size={18} />
-                          ) : (
-                            <Building2 size={18} />
-                          )}
-                        </div>
-                        <div className="chat-thread-content">
-                          <div className="chat-thread-row">
-                            <span className="chat-thread-name">{thread.name}</span>
-                            <span className="chat-thread-time">{thread.time}</span>
+                          <div className={`support-thread-avatar ${thread.type}`}>
+                            {thread.type === "candidat" ? (
+                              <Truck size={17} />
+                            ) : (
+                              <Building2 size={17} />
+                            )}
+                            <span className="support-online-dot"></span>
                           </div>
-                          <p className="chat-thread-lastmsg">{thread.lastMsg}</p>
+
+                          <div className="support-thread-info">
+                            <div className="support-thread-top">
+                              <span className="support-thread-name" title={thread.name}>
+                                {thread.name}
+                              </span>
+                              <span className="support-thread-time">{thread.time}</span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span
+                                className="text-[10px] font-bold px-1.5 py-0.2 rounded"
+                                style={{
+                                  backgroundColor: thread.type === "candidat" ? "rgba(2, 132, 199, 0.15)" : "rgba(16, 185, 129, 0.15)",
+                                  color: thread.type === "candidat" ? "#38bdf8" : "#34d399",
+                                  border: `1px solid ${thread.type === "candidat" ? "rgba(2, 132, 199, 0.3)" : "rgba(16, 185, 129, 0.3)"}`,
+                                }}
+                              >
+                                {thread.type === "candidat" ? "Chauffeur" : "Transporteur"}
+                              </span>
+                              {thread.city && (
+                                <span className="text-[10px] text-slate-400 truncate max-w-[130px]">
+                                  • {thread.city}
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="support-thread-lastmsg" title={thread.lastMsg}>
+                              {thread.lastMsg}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Colonne 2 : Terminal de Messagerie Directe */}
+              <div className="support-main-panel">
+                {activeRecipient ? (
+                  <>
+                    {/* Header Discussion Active */}
+                    <div className="support-chat-header">
+                      <div className="flex items-center gap-3">
+                        <div className={`support-thread-avatar ${activeRecipient.type}`}>
+                          {activeRecipient.type === "candidat" ? <Truck size={20} /> : <Building2 size={20} />}
+                          <span className="support-online-dot"></span>
                         </div>
+
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h2 className="text-sm font-extrabold text-white">{activeRecipient.name}</h2>
+                            <span
+                              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                              style={{
+                                backgroundColor:
+                                  activeRecipient.type === "candidat"
+                                    ? "rgba(2, 132, 199, 0.15)"
+                                    : "rgba(16, 185, 129, 0.15)",
+                                color: activeRecipient.type === "candidat" ? "#38bdf8" : "#34d399",
+                                border: `1px solid ${activeRecipient.type === "candidat" ? "rgba(2, 132, 199, 0.3)" : "rgba(16, 185, 129, 0.3)"}`,
+                              }}
+                            >
+                              {activeRecipient.type === "candidat" ? "Candidat Chauffeur" : "Entreprise Transport"}
+                            </span>
+                            <span className="flex items-center gap-1 text-[11px] text-emerald-400 font-semibold">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                              En direct
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3 text-xs text-slate-400 mt-0.5">
+                            {activeRecipient.phone && (
+                              <span className="flex items-center gap-1 text-slate-300">
+                                <Phone size={11} className="text-sky-400" />
+                                <span>{activeRecipient.phone}</span>
+                              </span>
+                            )}
+                            {activeRecipient.email && (
+                              <span className="flex items-center gap-1 text-slate-300">
+                                <Mail size={11} className="text-slate-400" />
+                                <span className="truncate max-w-[200px]">{activeRecipient.email}</span>
+                              </span>
+                            )}
+                            {activeRecipient.city && (
+                              <span className="flex items-center gap-1 text-slate-400">
+                                <MapPin size={11} className="text-amber-400" />
+                                <span>{activeRecipient.city}</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Actions Contact */}
+                      <div className="flex items-center gap-2">
+                        {activeRecipient.phone && (
+                          <a
+                            href={`tel:${activeRecipient.phone}`}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700 hover:text-white border border-slate-700 transition"
+                          >
+                            <Phone size={12} className="text-emerald-400" />
+                            <span>Appeler</span>
+                          </a>
+                        )}
+
+                        {activeRecipient.email && (
+                          <a
+                            href={`mailto:${activeRecipient.email}`}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700 hover:text-white border border-slate-700 transition"
+                          >
+                            <Mail size={12} className="text-sky-400" />
+                            <span>Email</span>
+                          </a>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => setSelectedContactModal(activeRecipient)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700 hover:text-white border border-slate-700 transition"
+                          title="Voir la fiche détaillée Supabase"
+                        >
+                          <Eye size={12} className="text-amber-400" />
+                          <span>Fiche</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleClearCurrentChat}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-slate-700/60 transition"
+                          title="Vider la conversation"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Messages Container */}
+                    <div className="support-chat-messages-area">
+                      <div className="flex items-center justify-center my-1">
+                        <span className="text-[11px] font-semibold text-slate-400 bg-slate-900/80 px-3 py-1 rounded-full border border-slate-800">
+                          🔒 Échanges chiffrés et archivés • Supervision TruckMatch
+                        </span>
+                      </div>
+
+                      {activeConversationMessages.map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`support-bubble-row ${msg.sender === "admin" ? "admin" : "recipient"}`}
+                        >
+                          <div className="support-msg-bubble">{msg.text}</div>
+                          <div className="support-bubble-meta">
+                            <span>{msg.time}</span>
+                            {msg.sender === "admin" && (
+                              <span className="text-sky-400 flex items-center gap-0.5">
+                                <Check size={11} />
+                                <Check size={11} className="-ml-1.5" />
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Quick Replies Bar */}
+                    <div className="support-quick-bar">
+                      <span className="text-xs font-bold text-slate-400 flex items-center gap-1 shrink-0">
+                        <Sparkles size={13} className="text-amber-400" />
+                        <span>Réponses rapides :</span>
+                      </span>
+
+                      {activeRecipient.type === "candidat" ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleSendMessage(
+                                "Bonjour ! Un transporteur vérifié de votre département recherche un conducteur avec vos qualifications. Êtes-vous disponible cette semaine ?"
+                              )
+                            }
+                            className="support-quick-chip"
+                          >
+                            🚛 Opportunité sur votre secteur
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleSendMessage(
+                                "Bonjour, votre profil est bien actif sur la plateforme. Pensez à déposer votre CV à jour pour être contacté en priorité par les exploitants."
+                              )
+                            }
+                            className="support-quick-chip"
+                          >
+                            📄 Relance CV
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleSendMessage(
+                                "Votre profil a été certifié par l'équipe TruckMatch. Vous êtes désormais visible auprès de l'ensemble des transporteurs abonnés !"
+                              )
+                            }
+                            className="support-quick-chip"
+                          >
+                            ✅ Validation profil
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleSendMessage(
+                                "Pouvez-vous nous confirmer vos dates de disponibilité exacte (immédiate ou avec préavis) pour la transmission de votre dossier ?"
+                              )
+                            }
+                            className="support-quick-chip"
+                          >
+                            ⏱️ Confirmation disponibilité
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleSendMessage(
+                                "Bonjour, nous avons plusieurs conducteurs qualifiés (SPL, PL, ADR) disponibles immédiatement sur votre secteur géographique."
+                              )
+                            }
+                            className="support-quick-chip"
+                          >
+                            👥 Chauffeurs disponibles
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleSendMessage(
+                                "Votre compte entreprise et votre SIRET ont été vérifiés avec succès. Vous bénéficiez d'un accès complet et direct au vivier sans commission."
+                              )
+                            }
+                            className="support-quick-chip"
+                          >
+                            🏢 Validation SIRET
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleSendMessage(
+                                "Souhaitez-vous planifier un échange téléphonique de 10 min avec notre équipe pour cibler au mieux vos recherches de relais et tractions ?"
+                              )
+                            }
+                            className="support-quick-chip"
+                          >
+                            📞 Point d'accompagnement
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleSendMessage(
+                                "Votre formule Pro Flotte est active. Vos offres de postes et recherches de chauffeurs bénéficient d'une diffusion prioritaire."
+                              )
+                            }
+                            className="support-quick-chip"
+                          >
+                            ⭐ Statut Flotte Pro
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Input Bar */}
+                    <div className="support-input-bar">
+                      <input
+                        type="text"
+                        placeholder={`Écrire un message à ${activeRecipient.name}... (Appuyez sur Entrée pour envoyer)`}
+                        value={messageInput}
+                        onChange={(e) => setMessageInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendMessage();
+                          }
+                        }}
+                        className="support-input-field"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleSendMessage()}
+                        className="support-send-btn"
+                      >
+                        <Send size={14} />
+                        <span>Envoyer</span>
                       </button>
-                    );
-                  })
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-slate-400 p-8 text-center">
+                    <div>
+                      <MessageSquareText size={42} className="mx-auto mb-3 text-slate-600" />
+                      <p className="font-bold text-white text-base">Sélectionnez une discussion</p>
+                      <p className="text-xs text-slate-400 mt-1 max-w-sm">
+                        Choisissez un candidat chauffeur ou une entreprise de transport dans la liste de gauche pour échanger en direct.
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
 
-            <div className="admin-chat-main-area">
-              {activeRecipient ? (
-                <>
-                  <div className="admin-chat-header">
-                    <div className="admin-chat-target-info">
-                      <div
-                        className={`chat-thread-avatar ${
-                          activeRecipient.type === "candidat" ? "avatar-candidat" : "avatar-entreprise"
-                        }`}
+            {/* C. Modal Détail Fiche Profil */}
+            {selectedContactModal && (() => {
+              const isCand = selectedContactModal.type === "candidat";
+              const raw = selectedContactModal.raw || {};
+              return (
+                <div
+                  className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm"
+                  onClick={() => setSelectedContactModal(null)}
+                >
+                  <div
+                    className="bg-[#0c1626] border border-[#1e324d] rounded-xl w-full max-w-md shadow-2xl overflow-hidden"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between p-4 border-b border-[#1e324d] bg-[#08101e]">
+                      <div className="flex items-center gap-2">
+                        {isCand ? <Truck size={18} className="text-sky-400" /> : <Building2 size={18} className="text-emerald-400" />}
+                        <h3 className="font-extrabold text-white text-sm">
+                          {isCand ? "Fiche Profil Candidat Chauffeur" : "Fiche Profil Entreprise Transport"}
+                        </h3>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedContactModal(null)}
+                        className="text-slate-400 hover:text-white p-1"
                       >
-                        {activeRecipient.type === "candidat" ? (
-                          <Truck size={20} />
-                        ) : (
-                          <Building2 size={20} />
+                        <X size={16} />
+                      </button>
+                    </div>
+
+                    <div className="p-4 space-y-3.5 text-xs">
+                      <div>
+                        <div className="text-base font-black text-white">{selectedContactModal.name}</div>
+                        <div className="text-slate-400 font-mono mt-0.5">
+                          ID Supabase : {selectedContactModal.id}
+                        </div>
+                      </div>
+
+                      <div className="bg-[#08101e] p-3 rounded-lg border border-[#1a2d47] space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Téléphone direct :</span>
+                          <span className="text-white font-semibold">{selectedContactModal.phone || "Non renseigné"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Email :</span>
+                          <span className="text-white font-semibold truncate max-w-[200px]">{selectedContactModal.email || "Non renseigné"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Localisation :</span>
+                          <span className="text-white font-semibold">{selectedContactModal.city || "France"}</span>
+                        </div>
+                        {isCand && raw.experience_years && (
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">Expérience route :</span>
+                            <span className="text-emerald-400 font-bold">{raw.experience_years} ans</span>
+                          </div>
+                        )}
+                        {isCand && raw.availability && (
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">Disponibilité :</span>
+                            <span className="text-emerald-400 font-bold">
+                              {raw.availability === "immediate" ? "Immédiate" : raw.availability}
+                            </span>
+                          </div>
+                        )}
+                        {!isCand && raw.siret && (
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">SIRET vérifié :</span>
+                            <span className="text-sky-400 font-mono font-bold">{raw.siret}</span>
+                          </div>
+                        )}
+                        {!isCand && raw.fleet_size && (
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">Taille de flotte :</span>
+                            <span className="text-sky-400 font-bold">{raw.fleet_size} camions</span>
+                          </div>
                         )}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h2 className="admin-chat-target-name">{activeRecipient.name}</h2>
-                          <span
-                            className={`espace-logo-badge ${
-                              activeRecipient.type === "candidat"
-                                ? "badge-candidat-tag"
-                                : "badge-entreprise-tag"
-                            }`}
-                          >
-                            {activeRecipient.type === "candidat" ? "Candidat Chauffeur" : "Entreprise"}
-                          </span>
-                        </div>
-                        <div className="admin-chat-target-details">
-                          {activeRecipient.phone && (
-                            <span className="flex items-center gap-1">
-                              <Phone size={11} className="text-primary" />
-                              <span>{activeRecipient.phone}</span>
-                            </span>
-                          )}
-                          {activeRecipient.email && (
-                            <span className="flex items-center gap-1">
-                              <Mail size={11} />
-                              <span>{activeRecipient.email}</span>
-                            </span>
-                          )}
-                          {activeRecipient.city && (
-                            <span className="flex items-center gap-1">
-                              <MapPin size={11} />
-                              <span>{activeRecipient.city}</span>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
 
-                    <div className="flex items-center gap-2">
-                      {activeRecipient.phone && (
-                        <a
-                          href={`tel:${activeRecipient.phone}`}
-                          className="btn btn-outline btn-xs"
-                        >
-                          <Phone size={12} />
-                          <span>Appeler</span>
-                        </a>
-                      )}
-                      {activeRecipient.email && (
-                        <a
-                          href={`mailto:${activeRecipient.email}`}
-                          className="btn btn-outline btn-xs"
-                        >
-                          <Mail size={12} />
-                          <span>Email</span>
-                        </a>
+                      {isCand && raw.driver_licenses && (
+                        <div className="bg-[#08101e] p-3 rounded-lg border border-[#1a2d47]">
+                          <div className="text-[10px] text-slate-400 uppercase font-bold mb-1.5">Permis & Habilitations</div>
+                          <div className="flex flex-wrap gap-1">
+                            {raw.driver_licenses.map((lic: string) => (
+                              <span key={lic} className="bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded text-[11px] font-bold border border-sky-500/30">
+                                {lic}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
-                  </div>
 
-                  <div className="admin-chat-messages-container">
-                    {activeConversationMessages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`chat-bubble-wrap ${msg.sender === "admin" ? "admin" : "recipient"}`}
+                    <div className="p-3 bg-[#08101e] border-t border-[#1e324d] flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedContactModal(null)}
+                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs font-bold transition"
                       >
-                        <div className="chat-bubble">{msg.text}</div>
-                        <span className="chat-bubble-time">{msg.time}</span>
-                      </div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                  </div>
-
-                  <div className="chat-quick-replies-bar">
-                    <span className="text-xs font-bold text-muted flex items-center gap-1">
-                      <Sparkles size={12} className="text-primary" />
-                      <span>Réponses rapides :</span>
-                    </span>
-
-                    {activeRecipient.type === "candidat" ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleSendMessage(
-                              "Bonjour ! Un transporteur de votre secteur recherche un conducteur avec vos permis. Seriez-vous disponible cette semaine ?"
-                            )
-                          }
-                          className="chat-quick-reply-btn"
-                        >
-                          🚛 Opportunité sur votre secteur
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleSendMessage(
-                              "Bonjour, nous avons bien reçu votre profil. Pourriez-vous déposer votre CV à jour pour faciliter le contact avec les exploitants ?"
-                            )
-                          }
-                          className="chat-quick-reply-btn"
-                        >
-                          📄 Relance CV
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleSendMessage(
-                              "Votre profil a été validé avec succès par notre équipe de supervision TruckMatch. Bonne route !"
-                            )
-                          }
-                          className="chat-quick-reply-btn"
-                        >
-                          ✅ Validation profil
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleSendMessage(
-                              "Bonjour, nous avons plusieurs conducteurs SPL et PL disponibles immédiatement sur votre département. Souhaitez-vous leurs coordonnées directes ?"
-                            )
-                          }
-                          className="chat-quick-reply-btn"
-                        >
-                          👥 Chauffeurs disponibles
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleSendMessage(
-                              "Bonjour, votre compte entreprise et votre SIRET ont été vérifiés avec succès. Vous pouvez désormais contacter directement les chauffeurs."
-                            )
-                          }
-                          className="chat-quick-reply-btn"
-                        >
-                          🏢 Confirmation SIRET
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleSendMessage(
-                              "Souhaitez-vous un point d'accompagnement téléphonique de 10 min pour optimiser vos recherches de tractions et relais ?"
-                            )
-                          }
-                          className="chat-quick-reply-btn"
-                        >
-                          📞 Point accompagnement
-                        </button>
-                      </>
-                    )}
-                  </div>
-
-                  <div className="admin-chat-input-bar">
-                    <input
-                      type="text"
-                      placeholder={`Écrire un message à ${activeRecipient.name}...`}
-                      value={messageInput}
-                      onChange={(e) => setMessageInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendMessage();
-                        }
-                      }}
-                      className="admin-chat-input-field"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleSendMessage()}
-                      className="btn-chat-send"
-                    >
-                      <Send size={15} />
-                      <span>Envoyer</span>
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="flex items-center justify-center h-full text-muted p-8 text-center">
-                  <div>
-                    <MessageSquareText size={36} className="mx-auto mb-2 text-slate-300" />
-                    <p className="font-bold">Sélectionnez une discussion</p>
-                    <p className="text-xs">
-                      Choisissez un candidat ou une entreprise dans la liste à gauche pour démarrer la messagerie.
-                    </p>
+                        Fermer
+                      </button>
+                    </div>
                   </div>
                 </div>
-              )}
+              );
+            })()}
+
+            {/* D. Status Ticker Fixe Bas (24px) */}
+            <div className="admin-ticker-bar">
+              <div className="ticker-left">
+                <span className="text-emerald-400 font-bold">● PASSERELLE MESSAGERIE SÉCURISÉE ACTIF</span>
+                <span>•</span>
+                <span>Échanges directs avec les candidats et entreprises sans intermédiaire</span>
+                <span>•</span>
+                <span>Contact actif : {activeRecipient ? activeRecipient.name : "Aucun"}</span>
+              </div>
+              <div className="ticker-right">
+                <span>Latence Supabase : {supabaseLatency}ms</span>
+                <span>•</span>
+                <span>Dernière synchro : {lastSyncTime}</span>
+              </div>
             </div>
           </div>
-        </main>
-      )}
+        );
+      })()}
     </div>
   );
 }
