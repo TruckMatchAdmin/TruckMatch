@@ -1606,180 +1606,293 @@ export default function AdminDashboardPage() {
       {/* ============================================================== */}
       {/* 6. AUTRES RUBRIQUES (Entreprises, Stats, Support)              */}
       {/* ============================================================== */}
+      {/* 4. RUBRIQUE ENTREPRISES (ZERO-SCROLL COCKPIT PRO)              */}
+      {/* ============================================================== */}
       {activeTab === "entreprises" && (
-        <main className="admin-main-body">
-          <div className="admin-page-heading">
-            <div>
-              <h1 className="admin-heading-title">Entreprises de transport inscrites</h1>
-              <p className="admin-heading-sub">
-                Transporteurs, logisticiens et exploitants vérifiés par numéro SIRET officiel.
-              </p>
+        <div className="companies-cockpit-view">
+          {/* A. Bloc Contrôle Haut : Titre + Actions (Ligne 1) & Recherche + Filtres (Ligne 2) */}
+          <div className="candidates-header-block">
+            {/* Ligne 1 : Titre + Actions */}
+            <div className="candidates-header-row-1">
+              <div className="candidates-title-wrap">
+                <h1 className="candidates-page-title">
+                  <Building2 size={18} className="text-primary" />
+                  <span>Entreprises & Transporteurs Vérifiés</span>
+                </h1>
+                <span className="cockpit-panel-badge">
+                  ● Supabase Live : {companies.length} sociétés actives
+                </span>
+              </div>
+
+              <div className="candidates-header-actions">
+                <button
+                  type="button"
+                  onClick={handleExportData}
+                  className="btn-cockpit-action"
+                  title="Exporter les données Supabase"
+                >
+                  <Download size={13} />
+                  <span>Export JSON</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={loadData}
+                  disabled={loading}
+                  className="btn-cockpit-action"
+                  title="Actualiser Supabase"
+                >
+                  <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
+                  <span>Actualiser</span>
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-muted">
-                {companies.length} entreprises dans Supabase
-              </span>
-              <button onClick={loadData} className="btn btn-outline btn-sm">
-                <RefreshCw size={13} />
-                <span>Actualiser</span>
-              </button>
+
+            {/* Ligne 2 : Recherche sombre + Pilules filtres claires */}
+            <div className="candidates-header-row-2">
+              <div className="candidates-search-dark">
+                <Search size={14} className="text-muted" />
+                <input
+                  type="text"
+                  placeholder="Rechercher par raison sociale, SIRET, dirigeant, ville, tél..."
+                  value={companySearch}
+                  onChange={(e) => setCompanySearch(e.target.value)}
+                />
+              </div>
+
+              <div className="candidates-pills-bar">
+                <button
+                  type="button"
+                  onClick={() => setCompanyFilter("all")}
+                  className={`candidates-filter-pill ${companyFilter === "all" ? "active" : ""}`}
+                >
+                  Toutes ({companies.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCompanyFilter("fleet-small")}
+                  className={`candidates-filter-pill ${companyFilter === "fleet-small" ? "active" : ""}`}
+                >
+                  1 à 5 camions
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCompanyFilter("fleet-medium")}
+                  className={`candidates-filter-pill ${companyFilter === "fleet-medium" ? "active" : ""}`}
+                >
+                  6 à 20 camions
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCompanyFilter("fleet-large")}
+                  className={`candidates-filter-pill ${companyFilter === "fleet-large" ? "active" : ""}`}
+                >
+                  + de 20 camions
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="admin-table-toolbar">
-            <div className="admin-search-box">
-              <Search size={15} className="text-muted" />
-              <input
-                type="text"
-                placeholder="Rechercher par raison sociale, SIRET, dirigeant..."
-                value={companySearch}
-                onChange={(e) => setCompanySearch(e.target.value)}
-              />
+          {/* B. Bandeau KPI Aéré (68px) */}
+          <div className="candidates-kpis-strip">
+            <div className="candidates-kpi-item">
+              <div>
+                <div className="candidates-kpi-lbl">Total Sociétés</div>
+                <div className="candidates-kpi-val">{companies.length}</div>
+              </div>
+              <Building2 size={18} className="text-primary" />
             </div>
 
-            <div className="admin-filter-pills">
-              <button
-                type="button"
-                onClick={() => setCompanyFilter("all")}
-                className={`admin-filter-pill-btn ${companyFilter === "all" ? "active" : ""}`}
-              >
-                Toutes ({companies.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setCompanyFilter("fleet-small")}
-                className={`admin-filter-pill-btn ${companyFilter === "fleet-small" ? "active" : ""}`}
-              >
-                1 à 5 camions
-              </button>
-              <button
-                type="button"
-                onClick={() => setCompanyFilter("fleet-medium")}
-                className={`admin-filter-pill-btn ${companyFilter === "fleet-medium" ? "active" : ""}`}
-              >
-                6 à 20 camions
-              </button>
-              <button
-                type="button"
-                onClick={() => setCompanyFilter("fleet-large")}
-                className={`admin-filter-pill-btn ${companyFilter === "fleet-large" ? "active" : ""}`}
-              >
-                + de 20 camions
-              </button>
+            <div className="candidates-kpi-item">
+              <div>
+                <div className="candidates-kpi-lbl">Flotte 1 - 5 Véhicules</div>
+                <div className="candidates-kpi-val">
+                  {companies.filter((c) => !c.fleet_size || c.fleet_size === "1-5").length}
+                </div>
+              </div>
+              <Truck size={18} className="text-sky-400" />
+            </div>
+
+            <div className="candidates-kpi-item">
+              <div>
+                <div className="candidates-kpi-lbl">Flotte 6 - 20 Véhicules</div>
+                <div className="candidates-kpi-val">
+                  {companies.filter((c) => c.fleet_size === "6-20").length}
+                </div>
+              </div>
+              <Truck size={18} className="text-emerald-400" />
+            </div>
+
+            <div className="candidates-kpi-item">
+              <div>
+                <div className="candidates-kpi-lbl">Flotte &gt; 20 Véhicules</div>
+                <div className="candidates-kpi-val">
+                  {companies.filter((c) => c.fleet_size === "21-50" || c.fleet_size === "> 50").length}
+                </div>
+              </div>
+              <Truck size={18} className="text-amber-400" />
+            </div>
+
+            <div className="candidates-kpi-item">
+              <div>
+                <div className="candidates-kpi-lbl">SIRET Vérifiés</div>
+                <div className="candidates-kpi-val">
+                  {companies.filter((c) => c.siret).length}
+                </div>
+              </div>
+              <ShieldCheck size={18} className="text-emerald-400" />
             </div>
           </div>
 
-          <div className="admin-table-card">
-            {companies.length === 0 ? (
-              <div className="admin-empty-state">
-                <p>Aucune entreprise ne correspond à cette recherche.</p>
+          {/* C. Table Complète Sombre Haute Précision */}
+          <div className="candidates-table-container">
+            {companies
+              .filter((c) => {
+                if (companyFilter === "fleet-small" && c.fleet_size && c.fleet_size !== "1-5") return false;
+                if (companyFilter === "fleet-medium" && c.fleet_size !== "6-20") return false;
+                if (companyFilter === "fleet-large" && c.fleet_size !== "21-50" && c.fleet_size !== "> 50") return false;
+                if (!companySearch) return true;
+                const q = companySearch.toLowerCase();
+                return (
+                  c.company_name?.toLowerCase().includes(q) ||
+                  c.siret?.includes(q) ||
+                  c.email?.toLowerCase().includes(q) ||
+                  c.city?.toLowerCase().includes(q) ||
+                  c.contact_last_name?.toLowerCase().includes(q)
+                );
+              }).length === 0 ? (
+              <div className="text-center py-16 text-slate-400">
+                <Building2 size={36} className="mx-auto mb-2 text-slate-600 opacity-60" />
+                <p className="font-bold text-sm text-white">Aucune entreprise ne correspond à cette recherche.</p>
               </div>
             ) : (
-              <div className="table-responsive">
-                <table className="admin-pro-table">
-                  <thead>
-                    <tr>
-                      <th>Entreprise Transport</th>
-                      <th>SIRET Officiel</th>
-                      <th>Responsable / Contact</th>
-                      <th>Coordonnées</th>
-                      <th>Dépôt / Ville</th>
-                      <th>Flotte</th>
-                      <th>Date inscription</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {companies
-                      .filter((c) => {
-                        if (companyFilter === "fleet-small" && c.fleet_size && c.fleet_size !== "1-5") return false;
-                        if (companyFilter === "fleet-medium" && c.fleet_size !== "6-20") return false;
-                        if (companyFilter === "fleet-large" && c.fleet_size !== "21-50" && c.fleet_size !== "> 50") return false;
-                        if (!companySearch) return true;
-                        const q = companySearch.toLowerCase();
-                        return (
-                          c.company_name?.toLowerCase().includes(q) ||
-                          c.siret?.includes(q) ||
-                          c.email?.toLowerCase().includes(q) ||
-                          c.city?.toLowerCase().includes(q) ||
-                          c.contact_last_name?.toLowerCase().includes(q)
-                        );
-                      })
-                      .map((c) => (
-                        <tr key={c.id}>
-                          <td>
-                            <div className="font-bold text-navy">{c.company_name}</div>
-                            <div className="text-xs text-muted">{c.tva_number || "Transport de marchandises"}</div>
-                          </td>
-                          <td>
-                            <div className="font-mono text-xs font-bold text-navy flex items-center gap-1">
-                              <span>{c.siret}</span>
-                              <ShieldCheck size={13} className="text-success" />
-                            </div>
-                            <div className="text-xs text-muted">{c.naf_code || "Code NAF 49.41A"}</div>
-                          </td>
-                          <td>
-                            <div className="font-bold text-xs">
-                              {c.contact_first_name} {c.contact_last_name}
-                            </div>
-                            <div className="text-xs text-muted">{c.contact_role || "Exploitant / Dirigeant"}</div>
-                          </td>
-                          <td>
-                            <div className="flex items-center gap-1.5 text-xs">
-                              <Phone size={12} className="text-primary" />
-                              <a href={`tel:${c.phone}`} className="hover:underline font-semibold">
-                                {c.phone || "-"}
-                              </a>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-xs text-muted mt-1">
-                              <Mail size={12} />
-                              <a href={`mailto:${c.email}`} className="hover:underline">
-                                {c.email || "-"}
-                              </a>
-                            </div>
-                          </td>
-                          <td>
-                            <div className="flex items-center gap-1 text-xs font-semibold text-navy">
-                              <MapPin size={12} className="text-muted" />
-                              <span>{c.postal_code} {c.city}</span>
-                            </div>
-                            <div className="text-xs text-muted truncate max-w-[180px]">{c.address}</div>
-                          </td>
-                          <td>
-                            <span className="badge-fleet-mini">{c.fleet_size || "1-5"} camions</span>
-                          </td>
-                          <td className="text-xs text-muted">
-                            {c.created_at ? new Date(c.created_at).toLocaleDateString("fr-FR") : "-"}
-                          </td>
-                          <td>
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => handleOpenChatWithCompany(c)}
-                                className="btn-table-action btn-table-action-chat"
-                                title="Démarrer un échange tchat"
-                              >
-                                <MessageSquareText size={13} />
-                                <span>Tchat</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteCompany(c.id, c.company_name)}
-                                className="btn-cockpit-mini btn-cockpit-mini-danger"
-                                title="Supprimer"
-                              >
-                                <Trash2 size={12} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
+              <table className="candidates-table-dark">
+                <thead>
+                  <tr>
+                    <th>Entreprise Transport</th>
+                    <th>SIRET Officiel</th>
+                    <th>Responsable / Contact</th>
+                    <th>Coordonnées</th>
+                    <th>Dépôt / Ville</th>
+                    <th>Flotte</th>
+                    <th>Date Inscription</th>
+                    <th style={{ textAlign: "right" }}>Actions Supabase</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {companies
+                    .filter((c) => {
+                      if (companyFilter === "fleet-small" && c.fleet_size && c.fleet_size !== "1-5") return false;
+                      if (companyFilter === "fleet-medium" && c.fleet_size !== "6-20") return false;
+                      if (companyFilter === "fleet-large" && c.fleet_size !== "21-50" && c.fleet_size !== "> 50") return false;
+                      if (!companySearch) return true;
+                      const q = companySearch.toLowerCase();
+                      return (
+                        c.company_name?.toLowerCase().includes(q) ||
+                        c.siret?.includes(q) ||
+                        c.email?.toLowerCase().includes(q) ||
+                        c.city?.toLowerCase().includes(q) ||
+                        c.contact_last_name?.toLowerCase().includes(q)
+                      );
+                    })
+                    .map((c) => (
+                      <tr key={c.id}>
+                        <td>
+                          <div className="font-bold text-white text-sm tracking-tight mb-1">
+                            {c.company_name}
+                          </div>
+                          <div className="text-xs text-slate-400">
+                            {c.tva_number || "Transport de marchandises routier"}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="font-mono text-xs font-bold text-sky-400 flex items-center gap-1 mb-1">
+                            <span>{c.siret}</span>
+                            <ShieldCheck size={13} className="text-emerald-400" />
+                          </div>
+                          <div className="text-xs text-slate-400">{c.naf_code || "Code NAF 49.41A"}</div>
+                        </td>
+                        <td>
+                          <div className="font-bold text-xs text-white mb-1">
+                            {c.contact_first_name} {c.contact_last_name}
+                          </div>
+                          <div className="text-xs text-slate-400">{c.contact_role || "Exploitant / Dirigeant"}</div>
+                        </td>
+                        <td>
+                          <div className="flex items-center gap-1.5 text-xs mb-1">
+                            <Phone size={12} className="text-sky-400 shrink-0" />
+                            <a href={`tel:${c.phone}`} className="hover:underline font-semibold text-white">
+                              {c.phone || "-"}
+                            </a>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                            <Mail size={12} className="text-slate-400 shrink-0" />
+                            <a href={`mailto:${c.email}`} className="hover:underline hover:text-white truncate max-w-[170px]">
+                              {c.email || "-"}
+                            </a>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="flex items-center gap-1 text-xs font-semibold text-white mb-1">
+                            <MapPin size={12} className="text-sky-400 shrink-0" />
+                            <span>{c.postal_code} {c.city}</span>
+                          </div>
+                          <div className="text-xs text-slate-400 truncate max-w-[170px]">{c.address || "Dépôt principal"}</div>
+                        </td>
+                        <td>
+                          <span
+                            className="cockpit-badge-pill"
+                            style={{ background: "#0c4a6e", color: "#38bdf8", border: "1px solid #0284c7" }}
+                          >
+                            {c.fleet_size || "1-5"} camions
+                          </span>
+                        </td>
+                        <td className="text-xs text-slate-400">
+                          {c.created_at ? new Date(c.created_at).toLocaleDateString("fr-FR") : "-"}
+                        </td>
+                        <td>
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenChatWithCompany(c)}
+                              className="btn-cockpit-action btn-cockpit-action-primary"
+                              style={{ fontSize: "0.74rem", padding: "0.3rem 0.65rem", borderRadius: "7px" }}
+                              title="Démarrer un échange tchat"
+                            >
+                              <MessageSquareText size={12} />
+                              <span>Tchat</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCompany(c.id, c.company_name)}
+                              className="btn-cockpit-mini btn-cockpit-mini-danger"
+                              title="Supprimer définitivement de Supabase"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
             )}
           </div>
-        </main>
+
+          {/* D. Status Ticker Fixe Bas (24px) */}
+          <div className="admin-ticker-bar">
+            <div className="ticker-left">
+              <span className="text-emerald-400 font-bold">● MODULE ENTREPRISES CONNECTÉ</span>
+              <span>•</span>
+              <span>{companies.length} transporteurs officiels vérifiés</span>
+            </div>
+            <div className="ticker-right">
+              <span>Latence : {supabaseLatency}ms</span>
+              <span>•</span>
+              <span>Supabase Direct Sync</span>
+            </div>
+          </div>
+        </div>
       )}
 
       {activeTab === "stats-site" && (

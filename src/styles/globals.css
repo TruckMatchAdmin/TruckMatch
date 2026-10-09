@@ -7868,14 +7868,103 @@ p {
   background: #0c1726;
 }
 
+/* ==========================================================================
+   ESPACE ENTREPRISE / COCKPIT RECRUTEUR ZERO-SCROLL
+   ========================================================================== */
 
+.company-cockpit-wrapper {
+  height: 100vh;
+  max-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #060b13;
+  color: #ffffff;
+}
 
+.company-cockpit-header {
+  height: 48px;
+  background: #050a12;
+  border-bottom: 1px solid #131f32;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  flex-shrink: 0;
+  z-index: 100;
+}
 
+.company-cockpit-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
 
+.company-cockpit-brand .logo-text {
+  font-size: 1.18rem;
+  font-weight: 900;
+  color: #ffffff;
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
 
+.company-cockpit-brand .logo-text span {
+  color: #38bdf8;
+}
 
+.company-cockpit-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
 
+.company-cockpit-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: #0d1726;
+  border: 1px solid #1a2c44;
+  border-radius: 8px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #cbd5e1;
+}
 
+.company-cockpit-main {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 1.1rem 1.6rem 0.85rem;
+  gap: 1rem;
+  background: #060b13;
+  box-sizing: border-box;
+}
 
+/* ==========================================================================
+   ADMIN ENTREPRISES COCKPIT ZERO-SCROLL
+   ========================================================================== */
 
-
+.companies-cockpit-view {
+  flex: 1;
+  min-height: 0;
+  height: calc(100vh - 92px);
+  max-height: calc(100vh - 92px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 1.1rem 1.6rem 0.85rem;
+  gap: 1rem;
+  background: #060b13;
+  box-sizing: border-box;
+}
