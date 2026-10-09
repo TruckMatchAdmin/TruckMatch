@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { AddressAutocomplete } from "@/components/forms/AddressAutocomplete";
 import { SiretAutocomplete, CompanyDetails } from "@/components/forms/SiretAutocomplete";
+import { ResumeUpload } from "@/components/forms/ResumeUpload";
 
 function InscriptionContent() {
   const searchParams = useSearchParams();
@@ -72,6 +73,8 @@ function InscriptionContent() {
     experience: "3-5",
     missionType: ["regional"] as string[],
     availability: "immediate",
+    resumeUrl: "",
+    resumeName: "",
     password: "",
     cguAccepted: true,
   });
@@ -179,6 +182,8 @@ function InscriptionContent() {
           experience: driverForm.experience,
           missionType: driverForm.missionType,
           availability: driverForm.availability,
+          resumeUrl: driverForm.resumeUrl,
+          resumeName: driverForm.resumeName,
         }),
       });
 
@@ -871,6 +876,20 @@ function InscriptionContent() {
                         );
                       })}
                     </div>
+                  </div>
+
+                  {/* Dépôt de CV (Curriculum Vitae) */}
+                  <div className="form-group mt-6 pt-5" style={{ borderTop: "1px solid #e2e8f0" }}>
+                    <ResumeUpload
+                      onUploadSuccess={(url, name) => {
+                        setDriverForm({ ...driverForm, resumeUrl: url, resumeName: name });
+                      }}
+                      onRemove={() => {
+                        setDriverForm({ ...driverForm, resumeUrl: "", resumeName: "" });
+                      }}
+                      currentFileName={driverForm.resumeName}
+                      currentUrl={driverForm.resumeUrl}
+                    />
                   </div>
                 </div>
               </section>

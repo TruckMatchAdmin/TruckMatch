@@ -31,6 +31,8 @@ export async function POST(request: Request) {
       experience,
       missionType,
       availability,
+      resumeUrl,
+      resumeName,
       // Company fields
       siret,
       companyName,
@@ -123,6 +125,8 @@ export async function POST(request: Request) {
           experience: experience || "1-3",
           mission_type: missionType || [],
           availability: availability || "immediate",
+          resume_url: resumeUrl || null,
+          resume_name: resumeName || null,
         },
       ]).select();
 
