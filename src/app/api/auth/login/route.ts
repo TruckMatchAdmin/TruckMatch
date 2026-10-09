@@ -22,6 +22,37 @@ export async function POST(request: Request) {
 
     const cleanEmail = email.trim().toLowerCase();
 
+    // Vérification directe identifiants Administrateur
+    const adminEmail = (process.env.ADMIN_EMAIL || "admin@truckmatch.fr").toLowerCase();
+    const adminPassword = process.env.ADMIN_PASSWORD || "AdminTruckMatch2025!";
+
+    if (cleanEmail === adminEmail && password === adminPassword) {
+      const sessionPayload = {
+        id: "admin-master-id",
+        email: cleanEmail,
+        role: "admin",
+        name: "Administrateur TruckMatch",
+        timestamp: Date.now(),
+      };
+
+      const response = NextResponse.json({
+        success: true,
+        role: "admin",
+        redirectUrl: "/espace-admin",
+        user: sessionPayload,
+      });
+
+      response.cookies.set("tm_session", JSON.stringify(sessionPayload), {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+        sameSite: "lax",
+      });
+
+      return response;
+    }
+
     // 1. Authentification via Supabase Auth
     const { data: authData, error: authError } = await supabaseAuth.auth.signInWithPassword({
       email: cleanEmail,
