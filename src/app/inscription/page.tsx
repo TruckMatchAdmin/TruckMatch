@@ -193,6 +193,7 @@ function InscriptionContent() {
           availability: driverForm.availability,
           resumeUrl: driverForm.resumeUrl,
           resumeName: driverForm.resumeName,
+          password: driverForm.password,
         }),
       });
 
@@ -257,6 +258,7 @@ function InscriptionContent() {
           tvaNumber: companyForm.tvaNumber,
           fleetSize: companyForm.fleetSize,
           targetDrivers: companyForm.targetDrivers,
+          password: companyForm.password,
         }),
       });
 

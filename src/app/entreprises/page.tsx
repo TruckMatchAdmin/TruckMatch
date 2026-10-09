@@ -123,10 +123,10 @@ export default function EntreprisesPage() {
               </p>
 
               <div className="hero-cta-group">
-                <a href="#demande-recrutement" className="btn btn-primary btn-lg">
-                  <Search size={17} />
-                  <span>Déposer un besoin de chauffeur</span>
-                </a>
+                <Link href="/inscription?type=entreprise" className="btn btn-primary btn-lg">
+                  <Building2 size={17} />
+                  <span>Créer mon espace entreprise</span>
+                </Link>
                 <a href="#profils-chauffeurs" className="btn btn-outline btn-lg">
                   <Users size={17} />
                   <span>Consulter les profils disponibles</span>
@@ -389,98 +389,45 @@ export default function EntreprisesPage() {
         </div>
       </section>
 
-      {/* 5. Formulaire Express Dépôt de Besoin Chauffeur */}
-      <section className="recruiter-form-section" id="demande-recrutement">
+      {/* 5. Section Recrutement Entreprise */}
+      <section className="cta-section-modern" id="demande-recrutement">
         <div className="container">
-          <div className="recruiter-form-layout">
-            <div>
-              <span className="badge badge-navy">Recrutement Rapide</span>
-              <h2 className="hero-title" style={{ marginTop: "0.75rem", marginBottom: "1rem" }}>
-                Déposez votre recherche de chauffeur
+          <div className="cta-banner-modern">
+            <div className="cta-banner-content">
+              <span className="badge badge-navy">Recrutement Direct & Sans Intermédiaire</span>
+              <h2 className="cta-banner-title">
+                Accédez immédiatement aux chauffeurs disponibles
               </h2>
-              <p className="hero-subtitle">
-                Renseignez les détails de votre besoin de transport. Notre équipe vous transmet sous 24h
-                les profils de conducteurs qualifiés répondant précisément à vos critères de tournée.
+              <p className="cta-banner-desc">
+                Inscrivez votre entreprise avec votre numéro SIRET en 2 minutes : trouvez des conducteurs vérifiés (SPL, PL, Porteur, VUL) proches de vos dépôts, sans commission d'agence d'intérim.
               </p>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginTop: "1.5rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", fontSize: "0.95rem", fontWeight: "600", color: "var(--color-navy)" }}>
-                  <CheckCircle2 size={18} style={{ color: "var(--color-primary)" }} />
-                  <span>Prise en charge personnalisée sous 2 heures ouvrées</span>
+              <div className="cta-points-row">
+                <div className="cta-point-item">
+                  <CheckCircle2 size={18} />
+                  <span>Vérification officielle SIRET gouvernementale</span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", fontSize: "0.95rem", fontWeight: "600", color: "var(--color-navy)" }}>
-                  <CheckCircle2 size={18} style={{ color: "var(--color-primary)" }} />
-                  <span>Aucun engagement contractuel initial</span>
+                <div className="cta-point-item">
+                  <CheckCircle2 size={18} />
+                  <span>Recherche géolocalisée par commune & permis</span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", fontSize: "0.95rem", fontWeight: "600", color: "var(--color-navy)" }}>
-                  <CheckCircle2 size={18} style={{ color: "var(--color-primary)" }} />
-                  <span>Respect strict de la confidentialité de votre entreprise</span>
+                <div className="cta-point-item">
+                  <CheckCircle2 size={18} />
+                  <span>Prise de contact directe et immédiate</span>
                 </div>
               </div>
-            </div>
 
-            <div className="recruiter-form-card">
-              <form className="recruiter-form">
-                <div className="form-field-modern">
-                  <label>Raison sociale de l'entreprise *</label>
-                  <input type="text" placeholder="Ex: Transports Dubois & Fils" required />
-                </div>
-
-                <div className="form-grid-2">
-                  <div className="form-field-modern">
-                    <label>Nom & Prénom du contact *</label>
-                    <input type="text" placeholder="Ex: Marc Dubois" required />
-                  </div>
-                  <div className="form-field-modern">
-                    <label>Téléphone professionnel *</label>
-                    <input type="tel" placeholder="06 00 00 00 00" required />
-                  </div>
-                </div>
-
-                <div className="form-grid-2">
-                  <div className="form-field-modern">
-                    <label>Email professionnel *</label>
-                    <input type="email" placeholder="contact@transports-dubois.fr" required />
-                  </div>
-                  <div className="form-field-modern">
-                    <label>Dépôt / Ville de départ *</label>
-                    <input type="text" placeholder="Ex: 59000 Lille" required />
-                  </div>
-                </div>
-
-                <div className="form-grid-2">
-                  <div className="form-field-modern">
-                    <label>Permis recherché *</label>
-                    <select defaultValue="spl">
-                      <option value="spl">Conducteur SPL (Permis CE)</option>
-                      <option value="pl">Chauffeur PL (Permis C)</option>
-                      <option value="porteur">Porteur / Grue (Permis C)</option>
-                      <option value="vul">Chauffeur Livreur VUL (Permis B)</option>
-                    </select>
-                  </div>
-                  <div className="form-field-modern">
-                    <label>Type de contrat souhaité</label>
-                    <select defaultValue="cdi">
-                      <option value="cdi">CDI</option>
-                      <option value="cdd">CDD / Remplacement</option>
-                      <option value="saisonnier">Renfort saisonnier</option>
-                      <option value="urgent">Mission d'urgence</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-field-modern">
-                  <label>Détails de la mission (facultatif)</label>
-                  <textarea placeholder="Précisez le type de matériel (Tautliner, Frigo, Benne), horaires (jour/nuit), découches ou exigences particulières..." />
-                </div>
-
-                <div className="btn-group" style={{ marginTop: "0.5rem" }}>
-                  <button type="button" className="btn btn-primary btn-lg w-full">
-                    <span>Transmettre ma demande de chauffeur</span>
-                    <ArrowRight size={17} />
-                  </button>
-                </div>
-              </form>
+              <div className="cta-actions-row">
+                <Link href="/inscription?type=entreprise" className="btn btn-primary btn-lg">
+                  <Building2 size={18} />
+                  <span>Créer mon espace entreprise</span>
+                  <ArrowRight size={17} />
+                </Link>
+                <Link href="/carte-chauffeurs" className="btn btn-outline btn-lg">
+                  <MapPin size={18} />
+                  <span>Consulter la carte des chauffeurs</span>
+                </Link>
+              </div>
             </div>
           </div>
         </div>

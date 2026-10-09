@@ -179,10 +179,10 @@ export default function ChauffeursHubPage() {
               </p>
 
               <div className="hero-cta-group">
-                <a href="#inscription-chauffeur" className="btn btn-primary btn-lg">
+                <Link href="/inscription?type=candidat" className="btn btn-primary btn-lg">
                   <UserCheck size={17} />
                   <span>Créer mon profil gratuitement</span>
-                </a>
+                </Link>
                 <Link href="/offres-emploi" className="btn btn-outline btn-lg">
                   <Briefcase size={17} />
                   <span>Consulter les offres d'emploi</span>
@@ -376,124 +376,45 @@ export default function ChauffeursHubPage() {
         </div>
       </section>
 
-      {/* 6. Formulaire d'Inscription Chauffeur Gratuit */}
-      <section className="recruiter-form-section" id="inscription-chauffeur">
+      {/* 6. Section Inscription Chauffeur */}
+      <section className="cta-section-modern" id="inscription-chauffeur">
         <div className="container">
-          <div className="recruiter-form-layout">
-            <div>
-              <span className="badge badge-navy">Inscription 100% Gratuite</span>
-              <h2 className="hero-title" style={{ marginTop: "0.75rem", marginBottom: "1rem" }}>
-                Créez votre profil chauffeur en 2 minutes
+          <div className="cta-banner-modern">
+            <div className="cta-banner-content">
+              <span className="badge badge-navy">Rejoignez le Réseau TruckMatch</span>
+              <h2 className="cta-banner-title">
+                Prêt à trouver la route qui vous correspond ?
               </h2>
-              <p className="hero-subtitle">
-                Renseignez vos permis, vos disponibilités et votre secteur préféré. Votre profil sera
-                rendu visible auprès de transporteurs vérifiés qui recrutent sur votre région.
+              <p className="cta-banner-desc">
+                Renseignez vos permis, vos disponibilités et votre secteur préféré. Votre profil sera rendu visible auprès de transporteurs vérifiés qui recrutent sur votre région, sans intermédiaire ni boîte d'intérim.
               </p>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginTop: "1.5rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", fontSize: "0.95rem", fontWeight: "600", color: "var(--color-navy)" }}>
-                  <FileCheck size={18} style={{ color: "var(--color-primary)" }} />
+              <div className="cta-points-row">
+                <div className="cta-point-item">
+                  <FileCheck size={18} />
                   <span>Aucun frais d'inscription ni commission sur votre salaire</span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", fontSize: "0.95rem", fontWeight: "600", color: "var(--color-navy)" }}>
-                  <FileCheck size={18} style={{ color: "var(--color-primary)" }} />
+                <div className="cta-point-item">
+                  <FileCheck size={18} />
                   <span>Confidentialité garantie : vos coordonnées ne sont pas publiques</span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", fontSize: "0.95rem", fontWeight: "600", color: "var(--color-navy)" }}>
-                  <FileCheck size={18} style={{ color: "var(--color-primary)" }} />
+                <div className="cta-point-item">
+                  <FileCheck size={18} />
                   <span>Contact direct avec les dirigeants et exploitants transport</span>
                 </div>
               </div>
-            </div>
 
-            <div className="recruiter-form-card">
-              <form className="recruiter-form">
-                <div className="form-field-modern">
-                  <label>Nom et Prénom *</label>
-                  <input type="text" placeholder="Ex: Jean Dupont" required />
-                </div>
-
-                <div className="form-grid-2">
-                  <div className="form-field-modern">
-                    <label>Téléphone portable *</label>
-                    <input type="tel" placeholder="06 12 34 56 78" required />
-                  </div>
-                  <div className="form-field-modern">
-                    <label>Email *</label>
-                    <input type="email" placeholder="jean.dupont@email.com" required />
-                  </div>
-                </div>
-
-                <div className="form-grid-2">
-                  <div className="form-field-modern">
-                    <label>Permis principal détenu *</label>
-                    <select defaultValue="spl">
-                      <option value="spl">Permis CE — Super Lourd (SPL)</option>
-                      <option value="pl">Permis C — Poids Lourd (PL)</option>
-                      <option value="c1">Permis C1 — Porteur léger</option>
-                      <option value="b">Permis B — Utilitaire (VUL)</option>
-                    </select>
-                  </div>
-                  <div className="form-field-modern">
-                    <label>Département de résidence *</label>
-                    <input type="text" placeholder="Ex: 59 - Lille" required />
-                  </div>
-                </div>
-
-                <div className="form-grid-2">
-                  <div className="form-field-modern">
-                    <label>Habilitations & Spécialités</label>
-                    <select defaultValue="fimo">
-                      <option value="fimo">FIMO / FCO Marchandises à jour</option>
-                      <option value="adr-citerne">ADR Citerne étendue</option>
-                      <option value="adr-base">ADR Base (Colis)</option>
-                      <option value="caces-grue">CACES R490 Grue Auxiliaire</option>
-                      <option value="frigo">Température Dirigée (Frigo)</option>
-                    </select>
-                  </div>
-                  <div className="form-field-modern">
-                    <label>Rythme souhaité</label>
-                    <select defaultValue="soir">
-                      <option value="soir">Retour domicile chaque soir</option>
-                      <option value="nuit">Tractions régulières de nuit</option>
-                      <option value="national">National / Découchés acceptés</option>
-                      <option value="indifferent">Indifférent / Flexible</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-grid-2">
-                  <div className="form-field-modern">
-                    <label>Disponibilité *</label>
-                    <select defaultValue="immediat">
-                      <option value="immediat">Disponible immédiatement</option>
-                      <option value="48h">Sous 48h à 7 jours</option>
-                      <option value="preavis">Sous préavis (1 mois)</option>
-                      <option value="veille">En poste mais à l'écoute</option>
-                    </select>
-                  </div>
-                  <div className="form-field-modern">
-                    <label>Années d'expérience au volant</label>
-                    <select defaultValue="5-10">
-                      <option value="debutant">Débutant (moins de 2 ans)</option>
-                      <option value="2-5">2 à 5 ans</option>
-                      <option value="5-10">5 à 10 ans</option>
-                      <option value="plus-10">Plus de 10 ans</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="btn-group" style={{ marginTop: "0.5rem" }}>
-                  <button type="button" className="btn btn-primary btn-lg w-full">
-                    <UserCheck size={18} />
-                    <span>Créer mon profil chauffeur gratuitement</span>
-                  </button>
-                </div>
-
-                <p style={{ fontSize: "0.8rem", color: "var(--color-text-light)", textAlign: "center", marginTop: "0.5rem" }}>
-                  En créant votre profil, vous acceptez les Conditions Générales de TruckMatch. Données protégées RGPD.
-                </p>
-              </form>
+              <div className="cta-actions-row">
+                <Link href="/inscription?type=candidat" className="btn btn-primary btn-lg">
+                  <UserCheck size={18} />
+                  <span>Créer mon profil candidat certifié</span>
+                  <ArrowRight size={17} />
+                </Link>
+                <Link href="/offres-emploi" className="btn btn-outline btn-lg">
+                  <Briefcase size={18} />
+                  <span>Consulter les offres d'emploi</span>
+                </Link>
+              </div>
             </div>
           </div>
         </div>

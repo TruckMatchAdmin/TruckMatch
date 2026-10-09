@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://azxwqcdnwkolodxwsqoq.supabase.co";
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
 // Regex pour valider un numéro français strict à 10 chiffres (ex: 0612345678 ou 06 12 34 56 78)
 const PHONE_REGEX = /^0[1-9][0-9]{8}$/;
@@ -9,6 +13,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       type, // 'driver' | 'company'
+      password,
       // Driver fields
       firstName,
       lastName,
@@ -109,7 +114,7 @@ export async function POST(request: Request) {
         );
       }
 
-      const { data, error } = await supabase.from("drivers").insert([
+      const { data, error } = await supabaseAdmin.from("drivers").insert([
         {
           first_name: firstName.trim(),
           last_name: lastName.trim(),
@@ -149,6 +154,24 @@ export async function POST(request: Request) {
           { error: "Erreur lors de l'enregistrement de votre profil chauffeur : " + error.message },
           { status: 500 }
         );
+      }
+
+      // Création de l'accès auth pour connexion
+      if (password) {
+        try {
+          await supabaseAdmin.auth.admin.createUser({
+            email: email.trim().toLowerCase(),
+            password,
+            email_confirm: true,
+            user_metadata: {
+              role: "driver",
+              name: `${firstName.trim()} ${lastName.trim()}`,
+              phone: cleanPhone,
+            },
+          });
+        } catch (authErr) {
+          console.warn("Auth user creation warning:", authErr);
+        }
       }
 
       return NextResponse.json({
@@ -191,7 +214,7 @@ export async function POST(request: Request) {
         );
       }
 
-      const { data, error } = await supabase.from("companies").insert([
+      const { data, error } = await supabaseAdmin.from("companies").insert([
         {
           siret: cleanSiret,
           company_name: companyName.trim(),
@@ -222,6 +245,25 @@ export async function POST(request: Request) {
           { error: "Erreur lors de l'enregistrement de l'entreprise : " + error.message },
           { status: 500 }
         );
+      }
+
+      // Création de l'accès auth pour connexion entreprise
+      if (password) {
+        try {
+          await supabaseAdmin.auth.admin.createUser({
+            email: email.trim().toLowerCase(),
+            password,
+            email_confirm: true,
+            user_metadata: {
+              role: "company",
+              name: companyName.trim(),
+              contactName: `${contactFirstName.trim()} ${contactLastName.trim()}`,
+              phone: cleanPhone,
+            },
+          });
+        } catch (authErr) {
+          console.warn("Auth user creation warning:", authErr);
+        }
       }
 
       return NextResponse.json({
