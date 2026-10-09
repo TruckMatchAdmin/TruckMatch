@@ -66,9 +66,27 @@ export function ResumeUpload({
         body: formData,
       });
 
-      const data = await res.json();
+      let data: any = null;
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          data = await res.json();
+        } catch {
+          data = null;
+        }
+      }
+
       if (!res.ok) {
-        throw new Error(data.error || "Erreur lors de l'envoi du CV.");
+        if (res.status === 413) {
+          throw new Error("Le fichier est trop volumineux pour le serveur (maximum 10 Mo).");
+        }
+        throw new Error(
+          data?.error || `Erreur serveur (${res.status}). Veuillez réessayer avec un fichier plus léger ou contacter le support.`
+        );
+      }
+
+      if (!data) {
+        throw new Error("Réponse inattendue du serveur lors de l'envoi.");
       }
 
       setUploadedFile({
