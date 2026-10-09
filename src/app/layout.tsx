@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "@/styles/globals.css";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://truckmatch.fr"),
@@ -126,9 +125,7 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Header />
-        <main style={{ minHeight: "calc(100vh - 160px)" }}>{children}</main>
-        <Footer />
+        <AppLayout>{children}</AppLayout>
       </body>
     </html>
   );

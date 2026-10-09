@@ -49,7 +49,29 @@ export default function CandidatePortalPage() {
 
   return (
     <div className="candidate-portal-page">
-      <div className="container">
+      {/* Topbar Espace Candidat épurée */}
+      <header className="espace-simple-topbar">
+        <div className="espace-simple-topbar-inner">
+          <div className="flex items-center gap-3">
+            <Link href="/" className="espace-logo-link">
+              <span>TruckMatch</span>
+            </Link>
+            <span className="espace-logo-badge badge-candidat-tag">Espace Conducteur</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Link href="/" className="btn btn-outline btn-sm">
+              <span>Voir le site</span>
+            </Link>
+            <button onClick={handleLogout} className="btn-logout-pro">
+              <LogOut size={14} />
+              <span>Déconnexion</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="container mt-6">
         {/* En-tête Chauffeur */}
         <div className="portal-header-card">
           <div className="portal-header-left">
@@ -71,13 +93,6 @@ export default function CandidatePortalPage() {
                 Votre profil et vos permis sont enregistrés et consultables par les exploitants et transporteurs vérifiés de votre région.
               </p>
             </div>
-          </div>
-
-          <div className="portal-header-actions">
-            <button onClick={handleLogout} className="btn-logout-pro">
-              <LogOut size={15} />
-              <span>Déconnexion</span>
-            </button>
           </div>
         </div>
 
