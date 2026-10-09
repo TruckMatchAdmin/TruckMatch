@@ -405,6 +405,7 @@ export default function AdminDashboardPage() {
       phone: d.phone,
       email: d.email,
       city: `${d.postal_code || ""} ${d.city || ""}`.trim(),
+      raw: d,
     });
     setActiveTab("support");
   };
@@ -417,6 +418,7 @@ export default function AdminDashboardPage() {
       phone: c.phone,
       email: c.email,
       city: `${c.postal_code || ""} ${c.city || ""}`.trim(),
+      raw: c,
     });
     setActiveTab("support");
   };
@@ -623,455 +625,469 @@ export default function AdminDashboardPage() {
       {/* ============================================================== */}
       {/* 2. RUBRIQUE DASHBOARD (ZERO-SCROLL COCKPIT)                     */}
       {/* ============================================================== */}
-      {activeTab === "dashboard" && (
-        <div className="cockpit-content-area">
-          {/* Header Strip */}
-          <div className="cockpit-header-strip">
-            <div className="cockpit-title-group">
-              <h1 className="cockpit-main-title">
-                <Activity size={17} className="text-primary" />
-                <span>Cockpit de Supervision & Flux Directs</span>
-              </h1>
-              <div className="cockpit-supabase-badge" title="Connecté à la base Supabase en direct">
-                <span className="beacon-dot" />
-                <span>Supabase Live ({supabaseLatency}ms)</span>
-              </div>
-            </div>
+      {activeTab === "dashboard" && (() => {
+        const ceCount = drivers.filter((d) => d.permits?.includes("CE")).length;
+        const cCount = drivers.filter((d) => d.permits?.includes("C")).length;
+        const fimoCount = drivers.filter((d) => d.fimo || d.fco || d.chrono_card).length;
+        const totalDriversCount = Math.max(1, drivers.length);
+        const cePct = Math.min(100, Math.round((ceCount / totalDriversCount) * 100));
+        const cPct = Math.min(100, Math.round((cCount / totalDriversCount) * 100));
+        const fimoPct = Math.min(100, Math.round((fimoCount / totalDriversCount) * 100));
+        const estimatedMRR = Math.max(12450, companies.length * 890);
 
-            <div className="cockpit-actions-group">
-              <button
-                type="button"
-                onClick={handleSeedSupabase}
-                disabled={actionLoading}
-                className="btn-cockpit-action btn-cockpit-action-primary"
-                title="Insérer 3 chauffeurs qualifiés et 2 entreprises tests réelles dans Supabase"
-              >
-                <Sparkles size={13} />
-                <span>{actionLoading ? "Injection..." : "Générer Données Tests"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={loadData}
-                disabled={loading}
-                className="btn-cockpit-action"
-                title="Actualiser les données depuis Supabase"
-              >
-                <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
-                <span>Actualiser</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleExportData}
-                className="btn-cockpit-action"
-                title="Exporter les tables en fichier JSON"
-              >
-                <Download size={13} />
-                <span>Export JSON</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Rangée KPI Ultra-Pro (72px) */}
-          <div className="cockpit-kpi-row">
-            <div className="cockpit-kpi-card">
-              <div className="kpi-main-info">
-                <div className="kpi-num-val">{drivers.length}</div>
-                <div className="kpi-text-label">Chauffeurs Inscrits</div>
-                <div className="kpi-sub-meta">Base Supabase</div>
-              </div>
-              <div className="kpi-icon-square">
-                <Users size={18} />
-              </div>
-            </div>
-
-            <div className="cockpit-kpi-card">
-              <div className="kpi-main-info">
-                <div className="kpi-num-val">{companies.length}</div>
-                <div className="kpi-text-label">Entreprises Vérifiées</div>
-                <div className="kpi-sub-meta">SIRET Validés</div>
-              </div>
-              <div className="kpi-icon-square" style={{ background: "rgba(16, 185, 129, 0.15)", color: "#34d399" }}>
-                <Building2 size={18} />
-              </div>
-            </div>
-
-            <div className="cockpit-kpi-card">
-              <div className="kpi-main-info">
-                <div className="kpi-num-val">{stats.withResume}</div>
-                <div className="kpi-text-label">CVs Déposés & Prêts</div>
-                <div className="kpi-sub-meta">Prêts à embaucher</div>
-              </div>
-              <div className="kpi-icon-square" style={{ background: "rgba(56, 189, 248, 0.15)", color: "#38bdf8" }}>
-                <FileText size={18} />
-              </div>
-            </div>
-
-            <div className="cockpit-kpi-card">
-              <div className="kpi-main-info">
-                <div className="kpi-num-val">{stats.availableNow}</div>
-                <div className="kpi-text-label">Disponibles sous 48h</div>
-                <div className="kpi-sub-meta">Tournées immédiates</div>
-              </div>
-              <div className="kpi-icon-square" style={{ background: "rgba(245, 158, 11, 0.15)", color: "#fbbf24" }}>
-                <Clock size={18} />
-              </div>
-            </div>
-
-            <div className="cockpit-kpi-card">
-              <div className="kpi-main-info">
-                <div className="kpi-num-val">
-                  {Math.max(12450, companies.length * 890)} €
+        return (
+          <div className="dashboard-cockpit-view">
+            {/* A. Header Cockpit & Actions Rapides */}
+            <div className="candidates-cockpit-header">
+              <div className="candidates-header-row-1">
+                <div className="candidates-title-wrap">
+                  <h1 className="candidates-page-title">
+                    <Activity size={20} className="text-emerald-400" />
+                    <span>Vue Générale & Supervision Plateforme</span>
+                  </h1>
+                  <span className="company-cockpit-badge">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block mr-1"></span>
+                    Supabase Live ({supabaseLatency}ms)
+                  </span>
+                  <span className="text-xs text-slate-400 bg-slate-900/60 px-2.5 py-1 rounded-full border border-slate-800">
+                    Mise en relation directe 0% commission
+                  </span>
                 </div>
-                <div className="kpi-text-label">MRR Forfaits Flotte</div>
-                <div className="kpi-sub-meta">0% commission</div>
-              </div>
-              <div className="kpi-icon-square" style={{ background: "rgba(168, 85, 247, 0.15)", color: "#c084fc" }}>
-                <BadgeEuro size={18} />
-              </div>
-            </div>
-          </div>
 
-          {/* Grille Centrale 3 Colonnes */}
-          <div className="cockpit-main-grid">
-            {/* Colonne 1 : Flux Conducteurs */}
-            <div className="cockpit-panel">
-              <div className="cockpit-panel-header">
-                <div className="cockpit-panel-title">
-                  <Truck size={15} className="text-primary" />
-                  <span>Flux Conducteurs ({drivers.length})</span>
-                </div>
-                <div className="admin-search-box" style={{ minWidth: "150px", padding: "0.2rem 0.5rem" }}>
-                  <Search size={12} className="text-muted" />
-                  <input
-                    type="text"
-                    placeholder="Filtrer..."
-                    value={cockpitDriverSearch}
-                    onChange={(e) => setCockpitDriverSearch(e.target.value)}
-                    style={{ fontSize: "0.72rem", color: "#fff" }}
-                  />
+                <div className="candidates-header-actions">
+                  <button
+                    type="button"
+                    onClick={handleSeedSupabase}
+                    disabled={actionLoading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-sky-300 bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 transition disabled:opacity-50"
+                    title="Insérer 3 chauffeurs qualifiés et 2 entreprises tests réelles dans Supabase"
+                  >
+                    <Sparkles size={13} className="text-sky-400" />
+                    <span>{actionLoading ? "Injection..." : "Générer Données Tests"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={loadData}
+                    disabled={loading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 hover:text-white border border-slate-700 transition"
+                    title="Actualiser les données depuis Supabase"
+                  >
+                    <RefreshCw size={13} className={loading ? "animate-spin text-sky-400" : "text-emerald-400"} />
+                    <span>Actualiser</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleExportData}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 hover:text-white border border-slate-700 transition"
+                    title="Exporter les tables en fichier JSON"
+                  >
+                    <Download size={13} className="text-sky-400" />
+                    <span>Export JSON</span>
+                  </button>
                 </div>
               </div>
+            </div>
 
-              <div className="cockpit-panel-body">
-                {cockpitDrivers.length === 0 ? (
-                  <div className="text-center py-6 text-muted" style={{ fontSize: "0.75rem" }}>
-                    <p>Aucun conducteur dans Supabase.</p>
-                    <button
-                      onClick={handleSeedSupabase}
-                      className="btn-cockpit-action btn-cockpit-action-primary mt-2"
-                    >
-                      <Sparkles size={12} />
-                      <span>Ajouter des profils tests</span>
-                    </button>
+            {/* B. Bandeau KPI Ultra-Pro Aéré (68px, 5 cartes) */}
+            <div className="candidates-kpis-strip">
+              <div className="candidates-kpi-item">
+                <div>
+                  <div className="candidates-kpi-lbl">Chauffeurs Inscrits</div>
+                  <div className="candidates-kpi-val text-white">{drivers.length}</div>
+                </div>
+                <Users size={18} className="text-sky-400" />
+              </div>
+
+              <div className="candidates-kpi-item">
+                <div>
+                  <div className="candidates-kpi-lbl">Entreprises Validées</div>
+                  <div className="candidates-kpi-val text-emerald-400">{companies.length}</div>
+                </div>
+                <Building2 size={18} className="text-emerald-400" />
+              </div>
+
+              <div className="candidates-kpi-item">
+                <div>
+                  <div className="candidates-kpi-lbl">Dossiers avec CV</div>
+                  <div className="candidates-kpi-val text-sky-400">{stats.withResume}</div>
+                </div>
+                <FileText size={18} className="text-sky-400" />
+              </div>
+
+              <div className="candidates-kpi-item">
+                <div>
+                  <div className="candidates-kpi-lbl">Disponibles sous 48h</div>
+                  <div className="candidates-kpi-val text-amber-400">{stats.availableNow}</div>
+                </div>
+                <Clock size={18} className="text-amber-400" />
+              </div>
+
+              <div className="candidates-kpi-item">
+                <div>
+                  <div className="candidates-kpi-lbl">MRR Forfaits Flotte</div>
+                  <div className="candidates-kpi-val text-purple-400">
+                    {estimatedMRR.toLocaleString("fr-FR")} €
                   </div>
-                ) : (
-                  cockpitDrivers.map((d) => (
-                    <div key={d.id} className="cockpit-row-item">
-                      <div className="cockpit-item-left">
-                        <div className="cockpit-item-name">
-                          {d.first_name} {d.last_name}
-                        </div>
-                        <div className="cockpit-item-sub">
-                          <span className="text-slate-300 font-bold">
-                            {Array.isArray(d.permits) ? d.permits.join("/") : "C/CE"}
-                          </span>
-                          <span>•</span>
-                          <span>{d.city || "France"}</span>
-                          {d.phone && (
-                            <>
+                </div>
+                <BadgeEuro size={18} className="text-purple-400" />
+              </div>
+            </div>
+
+            {/* C. Grille Principale 3 Colonnes Aérée (Zero-scroll) */}
+            <div className="dashboard-cockpit-grid">
+              {/* Colonne 1 : Flux Chauffeurs */}
+              <div className="dashboard-panel-dark">
+                <div className="dashboard-panel-header">
+                  <div className="flex items-center gap-2">
+                    <Truck size={16} className="text-sky-400" />
+                    <h3 className="font-bold text-white text-sm">Vivier Conducteurs Direct</h3>
+                  </div>
+                  <span className="text-xs text-slate-400 font-mono">
+                    {cockpitDrivers.length} / {drivers.length} profils
+                  </span>
+                </div>
+
+                <div className="px-3 pt-2.5 pb-1">
+                  <div className="support-search-box">
+                    <Search size={13} className="text-slate-400 shrink-0" />
+                    <input
+                      type="text"
+                      placeholder="Filtrer nom, permis, ville, tél..."
+                      value={cockpitDriverSearch}
+                      onChange={(e) => setCockpitDriverSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="dashboard-panel-scroll">
+                  {cockpitDrivers.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 text-xs">
+                      <p>Aucun conducteur trouvé.</p>
+                      <button
+                        onClick={handleSeedSupabase}
+                        className="mt-2 px-3 py-1 bg-sky-500/20 text-sky-300 hover:bg-sky-500/30 rounded text-xs font-bold border border-sky-500/30 transition"
+                      >
+                        + Ajouter des profils tests
+                      </button>
+                    </div>
+                  ) : (
+                    cockpitDrivers.map((d) => (
+                      <div key={d.id} className="dashboard-feed-item">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="dashboard-feed-avatar driver">
+                            {d.first_name ? `${d.first_name[0]}${d.last_name ? d.last_name[0] : ""}` : "CH"}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-bold text-white text-xs truncate max-w-[150px]">
+                              {d.first_name} {d.last_name}
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
+                              <span className="text-sky-400 font-bold">
+                                {Array.isArray(d.permits) ? d.permits.join("/") : "C/CE"}
+                              </span>
                               <span>•</span>
-                              <span className="text-primary">{d.phone}</span>
-                            </>
-                          )}
+                              <span className="truncate max-w-[100px]">{d.city || "France"}</span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="cockpit-item-right">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleDriverAvailability(d.id)}
-                          className={`cockpit-badge-pill ${
-                            d.availability === "immediate" ? "badge-imm-on" : "badge-imm-off"
-                          }`}
-                          title="Basculer disponibilité dans Supabase"
-                        >
-                          {d.availability === "immediate" ? "Immédiat" : "Flexible"}
-                        </button>
-
-                        {d.resume_url && (
-                          <a
-                            href={d.resume_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn-cockpit-mini"
-                            title="Voir CV"
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleDriverAvailability(d.id)}
+                            className={`cockpit-badge-pill ${
+                              d.availability === "immediate" ? "badge-imm-on" : "badge-imm-off"
+                            }`}
+                            title="Basculer disponibilité dans Supabase"
                           >
-                            <FileText size={12} />
-                          </a>
-                        )}
+                            {d.availability === "immediate" ? "Immédiat" : "Flexible"}
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() => handleOpenChatWithDriver(d)}
-                          className="btn-cockpit-mini"
-                          title="Tchat direct"
-                        >
-                          <MessageSquareText size={12} />
-                        </button>
+                          {d.resume_url && (
+                            <a
+                              href={d.resume_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn-cockpit-mini"
+                              title="Voir le CV"
+                            >
+                              <FileText size={12} />
+                            </a>
+                          )}
 
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteDriver(d.id, `${d.first_name} ${d.last_name}`)}
-                          className="btn-cockpit-mini btn-cockpit-mini-danger"
-                          title="Supprimer de Supabase"
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenChatWithDriver(d)}
+                            className="btn-cockpit-mini"
+                            title="Ouvrir le tchat direct"
+                          >
+                            <MessageSquareText size={12} />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteDriver(d.id, `${d.first_name} ${d.last_name}`)}
+                            className="btn-cockpit-mini btn-cockpit-mini-danger"
+                            title="Supprimer de Supabase"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Colonne 2 : Flux Entreprises */}
+              <div className="dashboard-panel-dark">
+                <div className="dashboard-panel-header">
+                  <div className="flex items-center gap-2">
+                    <Building2 size={16} className="text-emerald-400" />
+                    <h3 className="font-bold text-white text-sm">Transporteurs & Flottes</h3>
+                  </div>
+                  <span className="text-xs text-slate-400 font-mono">
+                    {cockpitCompanies.length} / {companies.length} sociétés
+                  </span>
+                </div>
+
+                <div className="px-3 pt-2.5 pb-1">
+                  <div className="support-search-box">
+                    <Search size={13} className="text-slate-400 shrink-0" />
+                    <input
+                      type="text"
+                      placeholder="Filtrer transporteur, SIRET, ville..."
+                      value={cockpitCompanySearch}
+                      onChange={(e) => setCockpitCompanySearch(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="dashboard-panel-scroll">
+                  {cockpitCompanies.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 text-xs">
+                      <p>Aucune entreprise trouvée.</p>
+                      <button
+                        onClick={handleSeedSupabase}
+                        className="mt-2 px-3 py-1 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 rounded text-xs font-bold border border-emerald-500/30 transition"
+                      >
+                        + Ajouter des transporteurs tests
+                      </button>
+                    </div>
+                  ) : (
+                    cockpitCompanies.map((c) => (
+                      <div key={c.id} className="dashboard-feed-item">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="dashboard-feed-avatar company">
+                            <Building2 size={16} />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-bold text-white text-xs truncate max-w-[150px]" title={c.company_name}>
+                              {c.company_name}
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
+                              <span className="font-mono text-emerald-400 font-bold flex items-center gap-0.5">
+                                <span>{c.siret ? c.siret.slice(0, 9) : "SIRET"}</span>
+                                <ShieldCheck size={11} className="text-emerald-400" />
+                              </span>
+                              <span>•</span>
+                              <span className="truncate max-w-[100px]">{c.city || "France"}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span
+                            className="cockpit-badge-pill"
+                            style={{ background: "#0c4a6e", color: "#38bdf8", border: "1px solid #0284c7" }}
+                          >
+                            {c.fleet_size || "1-5"} camions
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() => handleOpenChatWithCompany(c)}
+                            className="btn-cockpit-mini"
+                            title="Ouvrir le tchat direct"
+                          >
+                            <MessageSquareText size={12} />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCompany(c.id, c.company_name)}
+                            className="btn-cockpit-mini btn-cockpit-mini-danger"
+                            title="Supprimer de Supabase"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Colonne 3 : Opérations Supabase & Diagnostics */}
+              <div className="dashboard-panel-dark">
+                <div className="dashboard-panel-header">
+                  <div className="flex items-center gap-2">
+                    <Database size={16} className="text-purple-400" />
+                    <h3 className="font-bold text-white text-sm">Santé & Diagnostic Système</h3>
+                  </div>
+                  <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    OPÉRATIONNEL
+                  </span>
+                </div>
+
+                <div className="dashboard-panel-scroll">
+                  {/* Widget 1 : Serveur & Cloud */}
+                  <div className="dashboard-widget-box">
+                    <div className="dashboard-widget-title">
+                      <span>Infrastructure Supabase Cloud</span>
+                      <span className="text-emerald-400 font-mono text-[11px] font-bold">PostgreSQL v15</span>
+                    </div>
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex justify-between text-slate-300">
+                        <span className="text-slate-400">Latence Requête :</span>
+                        <span className="text-emerald-400 font-mono font-bold">{supabaseLatency} ms</span>
+                      </div>
+                      <div className="flex justify-between text-slate-300">
+                        <span className="text-slate-400">Table Conducteurs :</span>
+                        <span className="text-white font-mono font-bold">{drivers.length} profils</span>
+                      </div>
+                      <div className="flex justify-between text-slate-300">
+                        <span className="text-slate-400">Table Entreprises :</span>
+                        <span className="text-white font-mono font-bold">{companies.length} sociétés</span>
+                      </div>
+                      <div className="flex justify-between text-slate-300">
+                        <span className="text-slate-400">Dernière synchronisation :</span>
+                        <span className="text-slate-300 font-mono">{lastSyncTime || "En direct"}</span>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Colonne 2 : Flux Entreprises */}
-            <div className="cockpit-panel">
-              <div className="cockpit-panel-header">
-                <div className="cockpit-panel-title">
-                  <Building2 size={15} className="text-emerald-400" />
-                  <span>Flux Entreprises ({companies.length})</span>
-                </div>
-                <div className="admin-search-box" style={{ minWidth: "150px", padding: "0.2rem 0.5rem" }}>
-                  <Search size={12} className="text-muted" />
-                  <input
-                    type="text"
-                    placeholder="Filtrer..."
-                    value={cockpitCompanySearch}
-                    onChange={(e) => setCockpitCompanySearch(e.target.value)}
-                    style={{ fontSize: "0.72rem", color: "#fff" }}
-                  />
-                </div>
-              </div>
-
-              <div className="cockpit-panel-body">
-                {cockpitCompanies.length === 0 ? (
-                  <div className="text-center py-6 text-muted" style={{ fontSize: "0.75rem" }}>
-                    <p>Aucune entreprise dans Supabase.</p>
-                    <button
-                      onClick={handleSeedSupabase}
-                      className="btn-cockpit-action btn-cockpit-action-primary mt-2"
-                    >
-                      <Sparkles size={12} />
-                      <span>Ajouter des entreprises tests</span>
-                    </button>
                   </div>
-                ) : (
-                  cockpitCompanies.map((c) => (
-                    <div key={c.id} className="cockpit-row-item">
-                      <div className="cockpit-item-left">
-                        <div className="cockpit-item-name">{c.company_name}</div>
-                        <div className="cockpit-item-sub">
-                          <span className="text-slate-300 font-mono text-xs">{c.siret || "SIRET"}</span>
-                          <span>•</span>
-                          <span>{c.city || "France"}</span>
-                          {c.phone && (
-                            <>
-                              <span>•</span>
-                              <span className="text-emerald-400">{c.phone}</span>
-                            </>
-                          )}
+
+                  {/* Widget 2 : Répartition Qualifications */}
+                  <div className="dashboard-widget-box">
+                    <div className="dashboard-widget-title">
+                      <span>Qualifications du Vivier</span>
+                      <span className="text-slate-400 font-mono text-[11px]">{drivers.length} chauffeurs</span>
+                    </div>
+
+                    <div className="space-y-2 mt-1">
+                      <div>
+                        <div className="flex justify-between text-xs text-slate-300 mb-1">
+                          <span className="font-semibold">Super Lourd (Permis CE)</span>
+                          <span className="font-bold font-mono text-sky-400">{ceCount} ({cePct}%)</span>
+                        </div>
+                        <div className="stats-metric-track" style={{ height: "6px" }}>
+                          <div className="stats-metric-fill" style={{ width: `${cePct}%`, background: "#0284c7" }} />
                         </div>
                       </div>
 
-                      <div className="cockpit-item-right">
-                        <span className="cockpit-badge-pill" style={{ background: "#1e293b", color: "#cbd5e1" }}>
-                          {c.fleet_size || "1-5"} camions
-                        </span>
+                      <div>
+                        <div className="flex justify-between text-xs text-slate-300 mb-1">
+                          <span className="font-semibold">Poids Lourd (Permis C)</span>
+                          <span className="font-bold font-mono text-emerald-400">{cCount} ({cPct}%)</span>
+                        </div>
+                        <div className="stats-metric-track" style={{ height: "6px" }}>
+                          <div className="stats-metric-fill" style={{ width: `${cPct}%`, background: "#10b981" }} />
+                        </div>
+                      </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleOpenChatWithCompany(c)}
-                          className="btn-cockpit-mini"
-                          title="Tchat direct"
-                        >
-                          <MessageSquareText size={12} />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteCompany(c.id, c.company_name)}
-                          className="btn-cockpit-mini btn-cockpit-mini-danger"
-                          title="Supprimer de Supabase"
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                      <div>
+                        <div className="flex justify-between text-xs text-slate-300 mb-1">
+                          <span className="font-semibold">FIMO / FCO / Carte Conducteur</span>
+                          <span className="font-bold font-mono text-amber-400">{fimoCount} ({fimoPct}%)</span>
+                        </div>
+                        <div className="stats-metric-track" style={{ height: "6px" }}>
+                          <div className="stats-metric-fill" style={{ width: `${fimoPct}%`, background: "#f59e0b" }} />
+                        </div>
                       </div>
                     </div>
-                  ))
-                )}
+                  </div>
+
+                  {/* Widget 3 : Navigation Rapide */}
+                  <div className="dashboard-widget-box">
+                    <div className="dashboard-widget-title">
+                      <span>Raccourcis Cockpit</span>
+                      <span className="text-slate-400 text-[10px]">Accès direct</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("candidats")}
+                        className="dashboard-quick-nav-btn"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Users size={12} className="text-sky-400" />
+                          <span>Candidats</span>
+                        </span>
+                        <span className="font-mono text-[10px] text-slate-400">{drivers.length}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("entreprises")}
+                        className="dashboard-quick-nav-btn"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Building2 size={12} className="text-emerald-400" />
+                          <span>Entreprises</span>
+                        </span>
+                        <span className="font-mono text-[10px] text-slate-400">{companies.length}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("stats-revenu")}
+                        className="dashboard-quick-nav-btn"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <DollarSign size={12} className="text-purple-400" />
+                          <span>Stats Revenu</span>
+                        </span>
+                        <span className="font-mono text-[10px] text-purple-400">MRR</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("support")}
+                        className="dashboard-quick-nav-btn"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <MessageSquareText size={12} className="text-amber-400" />
+                          <span>Support & Tchat</span>
+                        </span>
+                        <span className="font-mono text-[10px] text-emerald-400">Live</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Colonne 3 : Opérations Supabase & Diagnostics */}
-            <div className="cockpit-panel">
-              <div className="cockpit-panel-header">
-                <div className="cockpit-panel-title">
-                  <Database size={15} className="text-sky-400" />
-                  <span>Opérations Supabase & Santé</span>
-                </div>
-                <span className="cockpit-panel-badge">Temps Réel</span>
+            {/* D. Status Ticker Fixe Bas (24px) */}
+            <div className="admin-ticker-bar">
+              <div className="ticker-left">
+                <span className="text-emerald-400 font-bold">● COCKPIT ACTIF</span>
+                <span>•</span>
+                <span>Supervision centralisée temps réel TruckMatch</span>
+                <span>•</span>
+                <span>Base connectée : Supabase Cloud (azxwqcdnwkolodxwsqoq)</span>
               </div>
-
-              <div className="cockpit-panel-body cockpit-ops-section">
-                <div className="ops-card-widget">
-                  <div className="ops-widget-title">
-                    <span>État Connexion Serveur</span>
-                    <span className="text-emerald-400 font-bold">OPÉRATIONNEL</span>
-                  </div>
-                  <div className="ops-row-metric">
-                    <span>Base Supabase</span>
-                    <span className="ops-val">azxwqcdnwkolodxwsqoq</span>
-                  </div>
-                  <div className="ops-row-metric">
-                    <span>Temps de réponse (Ping)</span>
-                    <span className="ops-val text-emerald-400 font-mono">{supabaseLatency} ms</span>
-                  </div>
-                  <div className="ops-row-metric">
-                    <span>Table Conducteurs (drivers)</span>
-                    <span className="ops-val">{drivers.length} lignes</span>
-                  </div>
-                  <div className="ops-row-metric">
-                    <span>Table Entreprises (companies)</span>
-                    <span className="ops-val">{companies.length} lignes</span>
-                  </div>
-                  <div className="ops-row-metric">
-                    <span>Dernière synchro</span>
-                    <span className="ops-val font-mono text-muted">{lastSyncTime || "En cours"}</span>
-                  </div>
-                </div>
-
-                <div className="ops-card-widget">
-                  <div className="ops-widget-title">
-                    <span>Qualifications Vivier Chauffeurs</span>
-                  </div>
-                  <div className="space-y-1.5 mt-1">
-                    <div>
-                      <div className="flex justify-between text-xs text-slate-300 mb-0.5">
-                        <span>Permis CE (Super Lourd SPL)</span>
-                        <span className="font-bold">
-                          {drivers.filter((d) => d.permits?.includes("CE")).length}
-                        </span>
-                      </div>
-                      <div className="stats-bar-track" style={{ height: "5px", background: "#1e293b" }}>
-                        <div
-                          className="stats-bar-fill"
-                          style={{
-                            width: `${Math.min(100, (drivers.filter((d) => d.permits?.includes("CE")).length / Math.max(1, drivers.length)) * 100)}%`,
-                            background: "#0284c7",
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between text-xs text-slate-300 mb-0.5">
-                        <span>Permis C (Poids Lourd Porteur)</span>
-                        <span className="font-bold">
-                          {drivers.filter((d) => d.permits?.includes("C")).length}
-                        </span>
-                      </div>
-                      <div className="stats-bar-track" style={{ height: "5px", background: "#1e293b" }}>
-                        <div
-                          className="stats-bar-fill"
-                          style={{
-                            width: `${Math.min(100, (drivers.filter((d) => d.permits?.includes("C")).length / Math.max(1, drivers.length)) * 100)}%`,
-                            background: "#10b981",
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between text-xs text-slate-300 mb-0.5">
-                        <span>FIMO / FCO / Carte Chrono</span>
-                        <span className="font-bold">
-                          {drivers.filter((d) => d.fimo || d.fco || d.chrono_card).length}
-                        </span>
-                      </div>
-                      <div className="stats-bar-track" style={{ height: "5px", background: "#1e293b" }}>
-                        <div
-                          className="stats-bar-fill"
-                          style={{
-                            width: `${Math.min(100, (drivers.filter((d) => d.fimo || d.fco || d.chrono_card).length / Math.max(1, drivers.length)) * 100)}%`,
-                            background: "#f59e0b",
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="ops-card-widget">
-                  <div className="ops-widget-title">
-                    <span>Navigation Rapide</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5 mt-1">
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("candidats")}
-                      className="btn-cockpit-action w-full justify-center"
-                    >
-                      <Users size={12} />
-                      <span>Table Candidats</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("entreprises")}
-                      className="btn-cockpit-action w-full justify-center"
-                    >
-                      <Building2 size={12} />
-                      <span>Table Entreprises</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("support")}
-                      className="btn-cockpit-action w-full justify-center"
-                    >
-                      <MessageSquareText size={12} />
-                      <span>Ouvrir Tchat</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("stats-revenu")}
-                      className="btn-cockpit-action w-full justify-center"
-                    >
-                      <DollarSign size={12} />
-                      <span>Stats Revenu</span>
-                    </button>
-                  </div>
-                </div>
+              <div className="ticker-right">
+                <span>Latence Supabase : {supabaseLatency}ms</span>
+                <span>•</span>
+                <span>Dernière synchro : {lastSyncTime}</span>
               </div>
             </div>
           </div>
-
-          {/* Status Ticker Fixe Bas (24px) */}
-          <div className="cockpit-status-ticker">
-            <div className="ticker-left">
-              <span className="text-emerald-400 font-bold">● COCKPIT ACTIF</span>
-              <span>Supabase Cloud ID: azxwqcdnwkolodxwsqoq</span>
-              <span>Chauffeurs: {drivers.length}</span>
-              <span>Entreprises: {companies.length}</span>
-            </div>
-            <div className="ticker-right">
-              <span>Modèle Direct sans Intermédiaire</span>
-              <span>Synchro: {lastSyncTime}</span>
-              <span>Version 2.0 Pro</span>
-            </div>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ============================================================== */}
       {/* 3. RUBRIQUE CANDIDATS (ZERO-SCROLL COCKPIT PRO)                */}
