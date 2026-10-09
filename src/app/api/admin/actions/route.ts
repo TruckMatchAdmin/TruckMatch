@@ -61,6 +61,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
+    // 4b. CRÉER UN CONDUCTEUR DIRECTEMENT DANS SUPABASE
+    if (action === "create_driver" && data) {
+      const { data: inserted, error } = await supabaseAdmin.from("drivers").insert([data]).select();
+      if (error) throw error;
+      return NextResponse.json({ success: true, driver: inserted?.[0] });
+    }
+
     // 5. SEED EXEMPLES DE CANDIDATS & ENTREPRISES DANS SUPABASE
     if (action === "seed") {
       const sampleDrivers = [

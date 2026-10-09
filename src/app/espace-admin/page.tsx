@@ -40,6 +40,9 @@ import {
   Check,
   X,
   Zap,
+  Plus,
+  EyeIcon,
+  Award,
 } from "lucide-react";
 
 type AdminTab =
@@ -78,9 +81,33 @@ export default function AdminDashboardPage() {
   const [cockpitDriverSearch, setCockpitDriverSearch] = useState("");
   const [cockpitCompanySearch, setCockpitCompanySearch] = useState("");
 
-  // Filtres onglets détaillés
+  // Filtres onglet Candidats
   const [driverSearch, setDriverSearch] = useState("");
-  const [driverFilter, setDriverFilter] = useState<"all" | "ce" | "c" | "resume" | "immediate">("all");
+  const [driverFilter, setDriverFilter] = useState<"all" | "ce" | "c" | "resume" | "immediate" | "adr">("all");
+
+  // Modale création candidat
+  const [isAddDriverModalOpen, setIsAddDriverModalOpen] = useState(false);
+  const [newDriver, setNewDriver] = useState({
+    first_name: "",
+    last_name: "",
+    phone: "",
+    email: "",
+    city: "",
+    postal_code: "",
+    address: "",
+    permits: ["CE", "C"],
+    fimo: true,
+    fco: true,
+    chrono_card: true,
+    availability: "immediate",
+    experience: "3-5",
+    resume_url: "",
+  });
+
+  // Modale fiche détaillée candidat
+  const [selectedDriverDetail, setSelectedDriverDetail] = useState<any | null>(null);
+
+  // Filtres onglet Entreprises
   const [companySearch, setCompanySearch] = useState("");
   const [companyFilter, setCompanyFilter] = useState<"all" | "fleet-small" | "fleet-medium" | "fleet-large">("all");
 
@@ -132,7 +159,7 @@ export default function AdminDashboardPage() {
         `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`
       );
 
-      // Initialiser le destinataire par défaut pour le tchat s'il n'y en a pas
+      // Initialiser destinataire par défaut pour le tchat
       if (!activeRecipient) {
         if (loadedDrivers.length > 0) {
           const first = loadedDrivers[0];
@@ -167,7 +194,7 @@ export default function AdminDashboardPage() {
     loadData();
   }, []);
 
-  // Charger messages archivés
+  // Messages archivés en local
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedChats = localStorage.getItem("tm_admin_chats");
@@ -243,6 +270,9 @@ export default function AdminDashboardPage() {
       });
       if (res.ok) {
         setDrivers((prev) => prev.filter((d) => d.id !== driverId));
+        if (selectedDriverDetail?.id === driverId) {
+          setSelectedDriverDetail(null);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -262,6 +292,36 @@ export default function AdminDashboardPage() {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleCreateDriver = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDriver.first_name || !newDriver.last_name || !newDriver.email || !newDriver.phone) {
+      alert("Veuillez remplir au moins le nom, prénom, email et téléphone.");
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create_driver",
+          data: {
+            ...newDriver,
+            email: newDriver.email.trim().toLowerCase(),
+            phone: newDriver.phone.replace(/[\s\.\-_]/g, ""),
+          },
+        }),
+      });
+      if (!res.ok) throw new Error("Erreur lors de la création du candidat.");
+      setIsAddDriverModalOpen(false);
+      await loadData();
+    } catch (err: any) {
+      alert("Erreur: " + err.message);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -301,6 +361,25 @@ export default function AdminDashboardPage() {
       c.company_name?.toLowerCase().includes(q) ||
       c.siret?.includes(q) ||
       c.city?.toLowerCase().includes(q)
+    );
+  });
+
+  // Filtrage complet candidats pour l'onglet Candidats
+  const filteredCandidates = drivers.filter((d) => {
+    if (driverFilter === "ce" && !d.permits?.includes("CE")) return false;
+    if (driverFilter === "c" && !d.permits?.includes("C")) return false;
+    if (driverFilter === "resume" && !d.resume_url) return false;
+    if (driverFilter === "immediate" && d.availability !== "immediate") return false;
+    if (driverFilter === "adr" && (!d.adr || d.adr.length === 0)) return false;
+
+    if (!driverSearch) return true;
+    const q = driverSearch.toLowerCase();
+    return (
+      d.first_name?.toLowerCase().includes(q) ||
+      d.last_name?.toLowerCase().includes(q) ||
+      d.email?.toLowerCase().includes(q) ||
+      d.city?.toLowerCase().includes(q) ||
+      d.phone?.includes(q)
     );
   });
 
@@ -369,7 +448,7 @@ export default function AdminDashboardPage() {
     setMessageInput("");
   };
 
-  // Liste consolidée des contacts pour le tchat
+  // Discussions tchat
   const chatThreads = [
     ...drivers.map((d) => ({
       id: `cand-${d.id}`,
@@ -419,79 +498,20 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="admin-cockpit-screen">
-      {/* 1. TOP NAVBAR ADMIN ÉPURÉE & FIXE (52px) */}
-      <header className="admin-top-navbar" style={{ height: "52px" }}>
-        <div className="admin-top-navbar-main" style={{ height: "52px" }}>
-          {/* Logo & Badge */}
-          <div className="admin-brand-group">
-            <Link href="/espace-admin" className="admin-brand-logo">
+      {/* ============================================================== */}
+      {/* 1. DEUX ÉTAGES DE NAVIGATION ADMIN                             */}
+      {/* ============================================================== */}
+      <header className="admin-two-tier-header">
+        {/* Étage 1 (Haut) : Titre site + Sortie / Session */}
+        <div className="admin-tier-upper">
+          <div className="admin-tier-upper-brand">
+            <Link href="/espace-admin" className="brand-text">
               TruckMatch<span>Admin</span>
             </Link>
             <span className="admin-brand-pill">Cockpit Pro</span>
           </div>
 
-          {/* Navigation par Onglets */}
-          <nav className="admin-nav-tabs-bar">
-            <button
-              type="button"
-              onClick={() => setActiveTab("dashboard")}
-              className={`admin-nav-tab-item ${activeTab === "dashboard" ? "active" : ""}`}
-            >
-              <LayoutDashboard size={15} className="tab-icon" />
-              <span>Dashboard</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("candidats")}
-              className={`admin-nav-tab-item ${activeTab === "candidats" ? "active" : ""}`}
-            >
-              <Users size={15} className="tab-icon" />
-              <span>Candidats</span>
-              <span className="tab-badge-pill">{drivers.length}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("entreprises")}
-              className={`admin-nav-tab-item ${activeTab === "entreprises" ? "active" : ""}`}
-            >
-              <Building2 size={15} className="tab-icon" />
-              <span>Entreprises</span>
-              <span className="tab-badge-pill">{companies.length}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("stats-site")}
-              className={`admin-nav-tab-item ${activeTab === "stats-site" ? "active" : ""}`}
-            >
-              <BarChart3 size={15} className="tab-icon" />
-              <span>Stats Site</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("stats-revenu")}
-              className={`admin-nav-tab-item ${activeTab === "stats-revenu" ? "active" : ""}`}
-            >
-              <DollarSign size={15} className="tab-icon" />
-              <span>Stats Revenu</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("support")}
-              className={`admin-nav-tab-item ${activeTab === "support" ? "active" : ""}`}
-            >
-              <MessageSquareText size={15} className="tab-icon" />
-              <span>Support & Tchat</span>
-              <span className="tab-badge-pill tab-badge-live">Live</span>
-            </button>
-          </nav>
-
-          {/* Actions Droite */}
-          <div className="admin-top-right">
+          <div className="admin-tier-upper-actions">
             <Link
               href="/"
               target="_blank"
@@ -499,7 +519,7 @@ export default function AdminDashboardPage() {
               className="admin-public-link"
               title="Ouvrir le site public"
             >
-              <span>Site</span>
+              <span>Site public</span>
               <ExternalLink size={12} />
             </Link>
 
@@ -515,21 +535,82 @@ export default function AdminDashboardPage() {
               title="Déconnexion"
             >
               <LogOut size={13} />
-              <span>Sortir</span>
+              <span>Sortie</span>
             </button>
           </div>
         </div>
+
+        {/* Étage 2 (Descendu d'un cran) : Menu des onglets spacieux */}
+        <div className="admin-tier-lower">
+          <button
+            type="button"
+            onClick={() => setActiveTab("dashboard")}
+            className={`admin-tier-nav-item ${activeTab === "dashboard" ? "active" : ""}`}
+          >
+            <LayoutDashboard size={16} />
+            <span>Dashboard</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("candidats")}
+            className={`admin-tier-nav-item ${activeTab === "candidats" ? "active" : ""}`}
+          >
+            <Users size={16} />
+            <span>Candidats</span>
+            <span className="nav-count-badge">{drivers.length}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("entreprises")}
+            className={`admin-tier-nav-item ${activeTab === "entreprises" ? "active" : ""}`}
+          >
+            <Building2 size={16} />
+            <span>Entreprises</span>
+            <span className="nav-count-badge">{companies.length}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("stats-site")}
+            className={`admin-tier-nav-item ${activeTab === "stats-site" ? "active" : ""}`}
+          >
+            <BarChart3 size={16} />
+            <span>Stats Site</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("stats-revenu")}
+            className={`admin-tier-nav-item ${activeTab === "stats-revenu" ? "active" : ""}`}
+          >
+            <DollarSign size={16} />
+            <span>Stats Revenu</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("support")}
+            className={`admin-tier-nav-item ${activeTab === "support" ? "active" : ""}`}
+          >
+            <MessageSquareText size={16} />
+            <span>Support & Tchat</span>
+          </button>
+        </div>
       </header>
 
-      {/* 2. ZONE CONTENU ZERO-SCROLL DASHBOARD */}
-      {activeTab === "dashboard" ? (
+      {/* ============================================================== */}
+      {/* 2. RUBRIQUE DASHBOARD (ZERO-SCROLL COCKPIT)                     */}
+      {/* ============================================================== */}
+      {activeTab === "dashboard" && (
         <div className="cockpit-content-area">
-          {/* A. BANDEAU HAUT (Header Strip) */}
+          {/* Header Strip */}
           <div className="cockpit-header-strip">
             <div className="cockpit-title-group">
               <h1 className="cockpit-main-title">
-                <Activity size={18} className="text-primary" />
-                <span>Cockpit de Pilotage Direct</span>
+                <Activity size={17} className="text-primary" />
+                <span>Cockpit de Supervision & Flux Directs</span>
               </h1>
               <div className="cockpit-supabase-badge" title="Connecté à la base Supabase en direct">
                 <span className="beacon-dot" />
@@ -572,7 +653,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* B. RANGEE KPI ULTRA-PRO (72px) */}
+          {/* Rangée KPI Ultra-Pro (72px) */}
           <div className="cockpit-kpi-row">
             <div className="cockpit-kpi-card">
               <div className="kpi-main-info">
@@ -632,20 +713,20 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* C. GRILLE CENTRALE 3 COLONNES SANS SCROLL GLOBAL */}
+          {/* Grille Centrale 3 Colonnes */}
           <div className="cockpit-main-grid">
-            {/* Colonne 1 : Flux Candidats Supabase */}
+            {/* Colonne 1 : Flux Conducteurs */}
             <div className="cockpit-panel">
               <div className="cockpit-panel-header">
                 <div className="cockpit-panel-title">
                   <Truck size={15} className="text-primary" />
                   <span>Flux Conducteurs ({drivers.length})</span>
                 </div>
-                <div className="admin-search-box" style={{ minWidth: "160px", padding: "0.2rem 0.5rem" }}>
+                <div className="admin-search-box" style={{ minWidth: "150px", padding: "0.2rem 0.5rem" }}>
                   <Search size={12} className="text-muted" />
                   <input
                     type="text"
-                    placeholder="Filtrer nom, ville..."
+                    placeholder="Filtrer..."
                     value={cockpitDriverSearch}
                     onChange={(e) => setCockpitDriverSearch(e.target.value)}
                     style={{ fontSize: "0.72rem", color: "#fff" }}
@@ -656,7 +737,7 @@ export default function AdminDashboardPage() {
               <div className="cockpit-panel-body">
                 {cockpitDrivers.length === 0 ? (
                   <div className="text-center py-6 text-muted" style={{ fontSize: "0.75rem" }}>
-                    <p>Aucun conducteur dans Supabase pour l'instant.</p>
+                    <p>Aucun conducteur dans Supabase.</p>
                     <button
                       onClick={handleSeedSupabase}
                       className="btn-cockpit-action btn-cockpit-action-primary mt-2"
@@ -688,19 +769,17 @@ export default function AdminDashboardPage() {
                       </div>
 
                       <div className="cockpit-item-right">
-                        {/* Toggle Disponibilité Live */}
                         <button
                           type="button"
                           onClick={() => handleToggleDriverAvailability(d.id)}
                           className={`cockpit-badge-pill ${
                             d.availability === "immediate" ? "badge-imm-on" : "badge-imm-off"
                           }`}
-                          title="Cliquer pour basculer la disponibilité dans Supabase"
+                          title="Basculer disponibilité dans Supabase"
                         >
                           {d.availability === "immediate" ? "Immédiat" : "Flexible"}
                         </button>
 
-                        {/* CV */}
                         {d.resume_url && (
                           <a
                             href={d.resume_url}
@@ -713,7 +792,6 @@ export default function AdminDashboardPage() {
                           </a>
                         )}
 
-                        {/* Tchat direct */}
                         <button
                           type="button"
                           onClick={() => handleOpenChatWithDriver(d)}
@@ -723,12 +801,11 @@ export default function AdminDashboardPage() {
                           <MessageSquareText size={12} />
                         </button>
 
-                        {/* Supprimer de Supabase */}
                         <button
                           type="button"
                           onClick={() => handleDeleteDriver(d.id, `${d.first_name} ${d.last_name}`)}
                           className="btn-cockpit-mini btn-cockpit-mini-danger"
-                          title="Supprimer définitivement de Supabase"
+                          title="Supprimer de Supabase"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -739,18 +816,18 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Colonne 2 : Flux Entreprises Supabase */}
+            {/* Colonne 2 : Flux Entreprises */}
             <div className="cockpit-panel">
               <div className="cockpit-panel-header">
                 <div className="cockpit-panel-title">
                   <Building2 size={15} className="text-emerald-400" />
                   <span>Flux Entreprises ({companies.length})</span>
                 </div>
-                <div className="admin-search-box" style={{ minWidth: "160px", padding: "0.2rem 0.5rem" }}>
+                <div className="admin-search-box" style={{ minWidth: "150px", padding: "0.2rem 0.5rem" }}>
                   <Search size={12} className="text-muted" />
                   <input
                     type="text"
-                    placeholder="Filtrer raison sociale, SIRET..."
+                    placeholder="Filtrer..."
                     value={cockpitCompanySearch}
                     onChange={(e) => setCockpitCompanySearch(e.target.value)}
                     style={{ fontSize: "0.72rem", color: "#fff" }}
@@ -761,7 +838,7 @@ export default function AdminDashboardPage() {
               <div className="cockpit-panel-body">
                 {cockpitCompanies.length === 0 ? (
                   <div className="text-center py-6 text-muted" style={{ fontSize: "0.75rem" }}>
-                    <p>Aucune entreprise dans Supabase pour l'instant.</p>
+                    <p>Aucune entreprise dans Supabase.</p>
                     <button
                       onClick={handleSeedSupabase}
                       className="btn-cockpit-action btn-cockpit-action-primary mt-2"
@@ -797,7 +874,7 @@ export default function AdminDashboardPage() {
                           type="button"
                           onClick={() => handleOpenChatWithCompany(c)}
                           className="btn-cockpit-mini"
-                          title="Tchat direct avec le responsable"
+                          title="Tchat direct"
                         >
                           <MessageSquareText size={12} />
                         </button>
@@ -806,7 +883,7 @@ export default function AdminDashboardPage() {
                           type="button"
                           onClick={() => handleDeleteCompany(c.id, c.company_name)}
                           className="btn-cockpit-mini btn-cockpit-mini-danger"
-                          title="Supprimer définitivement de Supabase"
+                          title="Supprimer de Supabase"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -828,7 +905,6 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="cockpit-panel-body cockpit-ops-section">
-                {/* Diagnostic Base */}
                 <div className="ops-card-widget">
                   <div className="ops-widget-title">
                     <span>État Connexion Serveur</span>
@@ -856,7 +932,6 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
 
-                {/* Ventilation Permis */}
                 <div className="ops-card-widget">
                   <div className="ops-widget-title">
                     <span>Qualifications Vivier Chauffeurs</span>
@@ -918,7 +993,6 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
 
-                {/* Raccourcis Rapides */}
                 <div className="ops-card-widget">
                   <div className="ops-widget-title">
                     <span>Navigation Rapide</span>
@@ -962,7 +1036,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* D. STATUS TICKER FIXE DU BAS (24px) */}
+          {/* Status Ticker Fixe Bas (24px) */}
           <div className="cockpit-status-ticker">
             <div className="ticker-left">
               <span className="text-emerald-400 font-bold">● COCKPIT ACTIF</span>
@@ -977,1019 +1051,1318 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </div>
-      ) : (
-        /* VUES POUR LES AUTRES ONGLETS (Candidats, Entreprises, Stats, Support) */
-        <main className="admin-main-body">
-          {/* ============================================================== */}
-          {/* ONGLET 2 : CANDIDATS INSCRITS                                 */}
-          {/* ============================================================== */}
-          {activeTab === "candidats" && (
-            <div>
-              <div className="admin-page-heading">
-                <div>
-                  <h1 className="admin-heading-title">Candidats conducteurs inscrits</h1>
-                  <p className="admin-heading-sub">
-                    Répertoire complet des chauffeurs qualifiés (SPL, PL, VUL) avec coordonnées directes et CV vérifiés.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-muted">
-                    {drivers.length} conducteurs dans Supabase
-                  </span>
-                  <button onClick={loadData} className="btn btn-outline btn-sm">
-                    <RefreshCw size={13} />
-                    <span>Actualiser</span>
-                  </button>
-                </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* 3. RUBRIQUE CANDIDATS (ZERO-SCROLL COCKPIT PRO)                */}
+      {/* ============================================================== */}
+      {activeTab === "candidats" && (
+        <div className="candidates-cockpit-view">
+          {/* A. Toolbar Supérieure avec Actions */}
+          <div className="candidates-top-toolbar">
+            <div className="flex items-center gap-2 flex-1">
+              <div className="admin-search-box" style={{ minWidth: "240px", padding: "0.25rem 0.65rem" }}>
+                <Search size={14} className="text-muted" />
+                <input
+                  type="text"
+                  placeholder="Chercher nom, prénom, ville, tél..."
+                  value={driverSearch}
+                  onChange={(e) => setDriverSearch(e.target.value)}
+                  style={{ fontSize: "0.78rem", color: "#fff" }}
+                />
               </div>
 
-              {/* Barre d'outils filtres & recherche */}
-              <div className="admin-table-toolbar">
-                <div className="admin-search-box">
-                  <Search size={15} className="text-muted" />
-                  <input
-                    type="text"
-                    placeholder="Rechercher par nom, ville, email, téléphone..."
-                    value={driverSearch}
-                    onChange={(e) => setDriverSearch(e.target.value)}
-                  />
-                </div>
-
-                <div className="admin-filter-pills">
-                  <button
-                    type="button"
-                    onClick={() => setDriverFilter("all")}
-                    className={`admin-filter-pill-btn ${driverFilter === "all" ? "active" : ""}`}
-                  >
-                    Tous ({drivers.length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDriverFilter("ce")}
-                    className={`admin-filter-pill-btn ${driverFilter === "ce" ? "active" : ""}`}
-                  >
-                    Permis CE (SPL)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDriverFilter("c")}
-                    className={`admin-filter-pill-btn ${driverFilter === "c" ? "active" : ""}`}
-                  >
-                    Permis C (Porteur)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDriverFilter("resume")}
-                    className={`admin-filter-pill-btn ${driverFilter === "resume" ? "active" : ""}`}
-                  >
-                    Avec CV disponible
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDriverFilter("immediate")}
-                    className={`admin-filter-pill-btn ${driverFilter === "immediate" ? "active" : ""}`}
-                  >
-                    Disponible 48h
-                  </button>
-                </div>
-              </div>
-
-              {/* Table complète des candidats */}
-              <div className="admin-table-card">
-                {drivers.length === 0 ? (
-                  <div className="admin-empty-state">
-                    <p>Aucun conducteur ne correspond à ces critères.</p>
-                  </div>
-                ) : (
-                  <div className="table-responsive">
-                    <table className="admin-pro-table">
-                      <thead>
-                        <tr>
-                          <th>Candidat</th>
-                          <th>Coordonnées Directes</th>
-                          <th>Localisation</th>
-                          <th>Permis & Certifications</th>
-                          <th>CV Document</th>
-                          <th>Disponibilité</th>
-                          <th>Inscrit le</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {drivers
-                          .filter((d) => {
-                            if (driverFilter === "ce" && !d.permits?.includes("CE")) return false;
-                            if (driverFilter === "c" && !d.permits?.includes("C")) return false;
-                            if (driverFilter === "resume" && !d.resume_url) return false;
-                            if (driverFilter === "immediate" && d.availability !== "immediate") return false;
-                            if (!driverSearch) return true;
-                            const q = driverSearch.toLowerCase();
-                            return (
-                              d.first_name?.toLowerCase().includes(q) ||
-                              d.last_name?.toLowerCase().includes(q) ||
-                              d.email?.toLowerCase().includes(q) ||
-                              d.city?.toLowerCase().includes(q) ||
-                              d.phone?.includes(q)
-                            );
-                          })
-                          .map((d) => (
-                            <tr key={d.id}>
-                              <td>
-                                <div className="font-bold text-navy">
-                                  {d.first_name} {d.last_name}
-                                </div>
-                                <div className="text-xs text-muted">
-                                  {d.birth_date
-                                    ? `Né(e) le ${new Date(d.birth_date).toLocaleDateString("fr-FR")}`
-                                    : "Conducteur routier"}
-                                </div>
-                              </td>
-                              <td>
-                                <div className="flex items-center gap-1.5 text-xs">
-                                  <Phone size={12} className="text-primary" />
-                                  <a href={`tel:${d.phone}`} className="hover:underline font-semibold">
-                                    {d.phone || "-"}
-                                  </a>
-                                </div>
-                                <div className="flex items-center gap-1.5 text-xs text-muted mt-1">
-                                  <Mail size={12} />
-                                  <a href={`mailto:${d.email}`} className="hover:underline">
-                                    {d.email || "-"}
-                                  </a>
-                                </div>
-                              </td>
-                              <td>
-                                <div className="flex items-center gap-1 text-xs font-semibold text-navy">
-                                  <MapPin size={12} className="text-muted" />
-                                  <span>{d.postal_code} {d.city}</span>
-                                </div>
-                                <div className="text-xs text-muted truncate max-w-[180px]">
-                                  {d.address || ""}
-                                </div>
-                              </td>
-                              <td>
-                                <div className="flex flex-wrap gap-1">
-                                  {Array.isArray(d.permits) &&
-                                    d.permits.map((p: string) => (
-                                      <span key={p} className="badge-permit-mini">
-                                        {p}
-                                      </span>
-                                    ))}
-                                </div>
-                                <div className="flex gap-1 mt-1">
-                                  {d.fimo && <span className="badge-certif-mini">FIMO</span>}
-                                  {d.fco && <span className="badge-certif-mini">FCO</span>}
-                                  {d.chrono_card && <span className="badge-certif-mini">Chrono</span>}
-                                </div>
-                              </td>
-                              <td>
-                                {d.resume_url ? (
-                                  <a
-                                    href={d.resume_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="btn-table-action btn-table-action-cv"
-                                  >
-                                    <FileText size={13} />
-                                    <span>Consulter CV</span>
-                                    <ExternalLink size={11} />
-                                  </a>
-                                ) : (
-                                  <span className="text-xs text-muted">Aucun fichier</span>
-                                )}
-                              </td>
-                              <td>
-                                <button
-                                  type="button"
-                                  onClick={() => handleToggleDriverAvailability(d.id)}
-                                  className={`badge-status-pill ${
-                                    d.availability === "immediate"
-                                      ? "status-available"
-                                      : "status-other"
-                                  }`}
-                                  title="Cliquer pour basculer"
-                                >
-                                  {d.availability === "immediate" ? "Immédiat" : d.availability || "Standard"}
-                                </button>
-                              </td>
-                              <td className="text-xs text-muted">
-                                {d.created_at ? new Date(d.created_at).toLocaleDateString("fr-FR") : "-"}
-                              </td>
-                              <td>
-                                <div className="flex items-center gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenChatWithDriver(d)}
-                                    className="btn-table-action btn-table-action-chat"
-                                    title="Démarrer un échange tchat"
-                                  >
-                                    <MessageSquareText size={13} />
-                                    <span>Tchat</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteDriver(d.id, `${d.first_name} ${d.last_name}`)}
-                                    className="btn-cockpit-mini btn-cockpit-mini-danger"
-                                    title="Supprimer"
-                                  >
-                                    <Trash2 size={12} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+              {/* Filtres Pills */}
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setDriverFilter("all")}
+                  className={`admin-filter-pill-btn ${driverFilter === "all" ? "active" : ""}`}
+                >
+                  Tous ({drivers.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDriverFilter("ce")}
+                  className={`admin-filter-pill-btn ${driverFilter === "ce" ? "active" : ""}`}
+                >
+                  Permis CE (SPL)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDriverFilter("c")}
+                  className={`admin-filter-pill-btn ${driverFilter === "c" ? "active" : ""}`}
+                >
+                  Permis C (PL)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDriverFilter("resume")}
+                  className={`admin-filter-pill-btn ${driverFilter === "resume" ? "active" : ""}`}
+                >
+                  Avec CV ({drivers.filter((d) => d.resume_url).length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDriverFilter("immediate")}
+                  className={`admin-filter-pill-btn ${driverFilter === "immediate" ? "active" : ""}`}
+                >
+                  Immédiat ({drivers.filter((d) => d.availability === "immediate").length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDriverFilter("adr")}
+                  className={`admin-filter-pill-btn ${driverFilter === "adr" ? "active" : ""}`}
+                >
+                  ADR
+                </button>
               </div>
             </div>
-          )}
 
-          {/* ============================================================== */}
-          {/* ONGLET 3 : ENTREPRISES INSCRITES                              */}
-          {/* ============================================================== */}
-          {activeTab === "entreprises" && (
-            <div>
-              <div className="admin-page-heading">
-                <div>
-                  <h1 className="admin-heading-title">Entreprises de transport inscrites</h1>
-                  <p className="admin-heading-sub">
-                    Transporteurs, logisticiens et exploitants vérifiés par numéro SIRET officiel.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-muted">
-                    {companies.length} entreprises dans Supabase
-                  </span>
-                  <button onClick={loadData} className="btn btn-outline btn-sm">
-                    <RefreshCw size={13} />
-                    <span>Actualiser</span>
-                  </button>
-                </div>
-              </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsAddDriverModalOpen(true)}
+                className="btn-cockpit-action btn-cockpit-action-primary"
+                title="Ajouter un candidat directement dans Supabase"
+              >
+                <Plus size={13} />
+                <span>Nouveau Candidat</span>
+              </button>
 
-              {/* Filtres & Recherche */}
-              <div className="admin-table-toolbar">
-                <div className="admin-search-box">
-                  <Search size={15} className="text-muted" />
-                  <input
-                    type="text"
-                    placeholder="Rechercher par raison sociale, SIRET, dirigeant..."
-                    value={companySearch}
-                    onChange={(e) => setCompanySearch(e.target.value)}
-                  />
-                </div>
-
-                <div className="admin-filter-pills">
-                  <button
-                    type="button"
-                    onClick={() => setCompanyFilter("all")}
-                    className={`admin-filter-pill-btn ${companyFilter === "all" ? "active" : ""}`}
-                  >
-                    Toutes ({companies.length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCompanyFilter("fleet-small")}
-                    className={`admin-filter-pill-btn ${companyFilter === "fleet-small" ? "active" : ""}`}
-                  >
-                    1 à 5 camions
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCompanyFilter("fleet-medium")}
-                    className={`admin-filter-pill-btn ${companyFilter === "fleet-medium" ? "active" : ""}`}
-                  >
-                    6 à 20 camions
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCompanyFilter("fleet-large")}
-                    className={`admin-filter-pill-btn ${companyFilter === "fleet-large" ? "active" : ""}`}
-                  >
-                    + de 20 camions
-                  </button>
-                </div>
-              </div>
-
-              {/* Table complète des entreprises */}
-              <div className="admin-table-card">
-                {companies.length === 0 ? (
-                  <div className="admin-empty-state">
-                    <p>Aucune entreprise ne correspond à cette recherche.</p>
-                  </div>
-                ) : (
-                  <div className="table-responsive">
-                    <table className="admin-pro-table">
-                      <thead>
-                        <tr>
-                          <th>Entreprise Transport</th>
-                          <th>SIRET Officiel</th>
-                          <th>Responsable / Contact</th>
-                          <th>Coordonnées</th>
-                          <th>Dépôt / Ville</th>
-                          <th>Flotte</th>
-                          <th>Date inscription</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {companies
-                          .filter((c) => {
-                            if (companyFilter === "fleet-small" && c.fleet_size && c.fleet_size !== "1-5") return false;
-                            if (companyFilter === "fleet-medium" && c.fleet_size !== "6-20") return false;
-                            if (companyFilter === "fleet-large" && c.fleet_size !== "21-50" && c.fleet_size !== "> 50") return false;
-                            if (!companySearch) return true;
-                            const q = companySearch.toLowerCase();
-                            return (
-                              c.company_name?.toLowerCase().includes(q) ||
-                              c.siret?.includes(q) ||
-                              c.email?.toLowerCase().includes(q) ||
-                              c.city?.toLowerCase().includes(q) ||
-                              c.contact_last_name?.toLowerCase().includes(q)
-                            );
-                          })
-                          .map((c) => (
-                            <tr key={c.id}>
-                              <td>
-                                <div className="font-bold text-navy">{c.company_name}</div>
-                                <div className="text-xs text-muted">{c.tva_number || "Transport de marchandises"}</div>
-                              </td>
-                              <td>
-                                <div className="font-mono text-xs font-bold text-navy flex items-center gap-1">
-                                  <span>{c.siret}</span>
-                                  <ShieldCheck size={13} className="text-success" />
-                                </div>
-                                <div className="text-xs text-muted">{c.naf_code || "Code NAF 49.41A"}</div>
-                              </td>
-                              <td>
-                                <div className="font-bold text-xs">
-                                  {c.contact_first_name} {c.contact_last_name}
-                                </div>
-                                <div className="text-xs text-muted">{c.contact_role || "Exploitant / Dirigeant"}</div>
-                              </td>
-                              <td>
-                                <div className="flex items-center gap-1.5 text-xs">
-                                  <Phone size={12} className="text-primary" />
-                                  <a href={`tel:${c.phone}`} className="hover:underline font-semibold">
-                                    {c.phone || "-"}
-                                  </a>
-                                </div>
-                                <div className="flex items-center gap-1.5 text-xs text-muted mt-1">
-                                  <Mail size={12} />
-                                  <a href={`mailto:${c.email}`} className="hover:underline">
-                                    {c.email || "-"}
-                                  </a>
-                                </div>
-                              </td>
-                              <td>
-                                <div className="flex items-center gap-1 text-xs font-semibold text-navy">
-                                  <MapPin size={12} className="text-muted" />
-                                  <span>{c.postal_code} {c.city}</span>
-                                </div>
-                                <div className="text-xs text-muted truncate max-w-[180px]">{c.address}</div>
-                              </td>
-                              <td>
-                                <span className="badge-fleet-mini">{c.fleet_size || "1-5"} camions</span>
-                              </td>
-                              <td className="text-xs text-muted">
-                                {c.created_at ? new Date(c.created_at).toLocaleDateString("fr-FR") : "-"}
-                              </td>
-                              <td>
-                                <div className="flex items-center gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenChatWithCompany(c)}
-                                    className="btn-table-action btn-table-action-chat"
-                                    title="Démarrer un échange tchat"
-                                  >
-                                    <MessageSquareText size={13} />
-                                    <span>Tchat</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteCompany(c.id, c.company_name)}
-                                    className="btn-cockpit-mini btn-cockpit-mini-danger"
-                                    title="Supprimer"
-                                  >
-                                    <Trash2 size={12} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={loadData}
+                disabled={loading}
+                className="btn-cockpit-action"
+                title="Actualiser Supabase"
+              >
+                <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
+                <span>Actualiser</span>
+              </button>
             </div>
-          )}
+          </div>
 
-          {/* ============================================================== */}
-          {/* ONGLET 4 : STATS SITE                                         */}
-          {/* ============================================================== */}
-          {activeTab === "stats-site" && (
-            <div>
-              <div className="admin-page-heading">
-                <div>
-                  <h1 className="admin-heading-title">Statistiques de Fréquentation & Audience</h1>
-                  <p className="admin-heading-sub">
-                    Métriques globales de trafic, provenance des visiteurs et parcours sur la plateforme TruckMatch.
-                  </p>
-                </div>
-                <span className="badge-navy-pill">30 derniers jours</span>
+          {/* B. Bandeau KPI Condensé (52px) */}
+          <div className="candidates-kpis-strip">
+            <div className="candidates-kpi-item">
+              <div>
+                <div className="text-xs text-muted font-bold">Total Candidats</div>
+                <div className="text-base font-black text-white">{drivers.length}</div>
               </div>
-
-              <div className="stats-card-grid-4">
-                <div className="stats-card-pro">
-                  <div className="stats-card-pro-title">Visiteurs uniques / mois</div>
-                  <div className="stats-card-pro-number">14 850</div>
-                  <span className="stats-badge-growth">
-                    <TrendingUp size={12} />
-                    <span>+18.4% vs mois dernier</span>
-                  </span>
-                </div>
-
-                <div className="stats-card-pro">
-                  <div className="stats-card-pro-title">Pages vues totales</div>
-                  <div className="stats-card-pro-number">68 400</div>
-                  <span className="stats-badge-growth">
-                    <TrendingUp size={12} />
-                    <span>4.6 pages / session</span>
-                  </span>
-                </div>
-
-                <div className="stats-card-pro">
-                  <div className="stats-card-pro-title">Taux de conversion formulaires</div>
-                  <div className="stats-card-pro-number">9.8%</div>
-                  <span className="stats-badge-growth">
-                    <TrendingUp size={12} />
-                    <span>Candidats & Entreprises</span>
-                  </span>
-                </div>
-
-                <div className="stats-card-pro">
-                  <div className="stats-card-pro-title">Temps moyen sur la plateforme</div>
-                  <div className="stats-card-pro-number">3m 42s</div>
-                  <span className="stats-badge-growth">
-                    <TrendingUp size={12} />
-                    <span>Forte implication</span>
-                  </span>
-                </div>
-              </div>
-
-              <div className="admin-dashboard-two-col">
-                <div className="admin-section-card">
-                  <div className="admin-section-header">
-                    <h2 className="admin-section-title">
-                      <BarChart3 size={18} className="text-primary" />
-                      <span>Pages les plus consultées</span>
-                    </h2>
-                    <span className="text-xs text-muted">% du trafic total</span>
-                  </div>
-
-                  <div className="stats-bars-list">
-                    <div className="stats-bar-item">
-                      <div className="stats-bar-row">
-                        <span>Offres d'emploi & Tournées (/offres-emploi)</span>
-                        <span className="font-bold">42% (28 728 vues)</span>
-                      </div>
-                      <div className="stats-bar-track">
-                        <div className="stats-bar-fill" style={{ width: "42%" }} />
-                      </div>
-                    </div>
-
-                    <div className="stats-bar-item">
-                      <div className="stats-bar-row">
-                        <span>Formulaire d'inscription & Profil (/inscription)</span>
-                        <span className="font-bold">27% (18 468 vues)</span>
-                      </div>
-                      <div className="stats-bar-track">
-                        <div className="stats-bar-fill" style={{ width: "27%" }} />
-                      </div>
-                    </div>
-
-                    <div className="stats-bar-item">
-                      <div className="stats-bar-row">
-                        <span>Carte géolocalisée des chauffeurs (/carte-chauffeurs)</span>
-                        <span className="font-bold">18% (12 312 vues)</span>
-                      </div>
-                      <div className="stats-bar-track">
-                        <div className="stats-bar-fill" style={{ width: "18%" }} />
-                      </div>
-                    </div>
-
-                    <div className="stats-bar-item">
-                      <div className="stats-bar-row">
-                        <span>Espace Entreprises & Recruteurs (/entreprises)</span>
-                        <span className="font-bold">13% (8 892 vues)</span>
-                      </div>
-                      <div className="stats-bar-track">
-                        <div className="stats-bar-fill" style={{ width: "13%" }} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="admin-section-card">
-                  <div className="admin-section-header">
-                    <h2 className="admin-section-title">
-                      <MapPin size={18} className="text-navy" />
-                      <span>Répartition géographique des utilisateurs</span>
-                    </h2>
-                    <span className="text-xs text-muted">France entière</span>
-                  </div>
-
-                  <div className="stats-bars-list">
-                    <div className="stats-bar-item">
-                      <div className="stats-bar-row">
-                        <span>Île-de-France (Hubs logistiques Rungis, Roissy)</span>
-                        <span className="font-bold">24%</span>
-                      </div>
-                      <div className="stats-bar-track">
-                        <div className="stats-bar-fill" style={{ width: "24%", background: "#0b192c" }} />
-                      </div>
-                    </div>
-
-                    <div className="stats-bar-item">
-                      <div className="stats-bar-row">
-                        <span>Auvergne-Rhône-Alpes (Couloir rhodanien)</span>
-                        <span className="font-bold">19%</span>
-                      </div>
-                      <div className="stats-bar-track">
-                        <div className="stats-bar-fill" style={{ width: "19%", background: "#0284c7" }} />
-                      </div>
-                    </div>
-
-                    <div className="stats-bar-item">
-                      <div className="stats-bar-row">
-                        <span>Hauts-de-France (Lille, Dourges, Fret Nord)</span>
-                        <span className="font-bold">16%</span>
-                      </div>
-                      <div className="stats-bar-track">
-                        <div className="stats-bar-fill" style={{ width: "16%", background: "#0ea5e9" }} />
-                      </div>
-                    </div>
-
-                    <div className="stats-bar-item">
-                      <div className="stats-bar-row">
-                        <span>Occitanie & PACA (Marseille, Toulouse)</span>
-                        <span className="font-bold">14%</span>
-                      </div>
-                      <div className="stats-bar-track">
-                        <div className="stats-bar-fill" style={{ width: "14%", background: "#38bdf8" }} />
-                      </div>
-                    </div>
-
-                    <div className="stats-bar-item">
-                      <div className="stats-bar-row">
-                        <span>Autres régions françaises</span>
-                        <span className="font-bold">27%</span>
-                      </div>
-                      <div className="stats-bar-track">
-                        <div className="stats-bar-fill" style={{ width: "27%", background: "#94a3b8" }} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <Users size={16} className="text-primary" />
             </div>
-          )}
 
-          {/* ============================================================== */}
-          {/* ONGLET 5 : STATS REVENU                                       */}
-          {/* ============================================================== */}
-          {activeTab === "stats-revenu" && (
-            <div>
-              <div className="admin-page-heading">
-                <div>
-                  <h1 className="admin-heading-title">Statistiques de Revenu & Abonnements</h1>
-                  <p className="admin-heading-sub">
-                    Suivi du Chiffre d'Affaires Mensuel Récurrent (MRR), des abonnements transporteurs et des économies clients.
-                  </p>
-                </div>
-                <span className="badge-navy-pill">Facturation Directe</span>
-              </div>
-
-              <div className="stats-card-grid-4">
-                <div className="stats-card-pro">
-                  <div className="stats-card-pro-title">MRR (Revenu Mensuel Récurrent)</div>
-                  <div className="stats-card-pro-number">12 450 €</div>
-                  <span className="stats-badge-growth">
-                    <TrendingUp size={12} />
-                    <span>+21.5% ce trimestre</span>
-                  </span>
-                </div>
-
-                <div className="stats-card-pro">
-                  <div className="stats-card-pro-title">ARR Projeté Annuel</div>
-                  <div className="stats-card-pro-number">149 400 €</div>
-                  <span className="stats-badge-growth">
-                    <TrendingUp size={12} />
-                    <span>Base récurrente</span>
-                  </span>
-                </div>
-
-                <div className="stats-card-pro">
-                  <div className="stats-card-pro-title">Transporteurs abonnés actifs</div>
-                  <div className="stats-card-pro-number">28</div>
-                  <span className="stats-badge-growth">
-                    <TrendingUp size={12} />
-                    <span>Taux de rétention : 96.2%</span>
-                  </span>
-                </div>
-
-                <div className="stats-card-pro">
-                  <div className="stats-card-pro-title">Économies générées vs Intérim</div>
-                  <div className="stats-card-pro-number">142 800 €</div>
-                  <span className="stats-badge-growth">
-                    <TrendingUp size={12} />
-                    <span>2 400 € / chauffeur embauché</span>
-                  </span>
+            <div className="candidates-kpi-item">
+              <div>
+                <div className="text-xs text-muted font-bold">Permis CE (SPL)</div>
+                <div className="text-base font-black text-white">
+                  {drivers.filter((d) => d.permits?.includes("CE")).length}
                 </div>
               </div>
+              <Truck size={16} className="text-sky-400" />
+            </div>
 
-              <div className="admin-section-card mt-6">
-                <div className="admin-section-header">
+            <div className="candidates-kpi-item">
+              <div>
+                <div className="text-xs text-muted font-bold">Permis C (Porteur)</div>
+                <div className="text-base font-black text-white">
+                  {drivers.filter((d) => d.permits?.includes("C")).length}
+                </div>
+              </div>
+              <Truck size={16} className="text-emerald-400" />
+            </div>
+
+            <div className="candidates-kpi-item">
+              <div>
+                <div className="text-xs text-muted font-bold">CVs Déposés</div>
+                <div className="text-base font-black text-white">
+                  {drivers.filter((d) => d.resume_url).length}
+                </div>
+              </div>
+              <FileText size={16} className="text-amber-400" />
+            </div>
+
+            <div className="candidates-kpi-item">
+              <div>
+                <div className="text-xs text-muted font-bold">Dispo Immédiate</div>
+                <div className="text-base font-black text-white">
+                  {drivers.filter((d) => d.availability === "immediate").length}
+                </div>
+              </div>
+              <Clock size={16} className="text-purple-400" />
+            </div>
+          </div>
+
+          {/* C. Table Complète Sombre Haute Précision */}
+          <div className="candidates-table-container">
+            {filteredCandidates.length === 0 ? (
+              <div className="text-center py-12 text-muted">
+                <Users size={32} className="mx-auto mb-2 text-slate-500 opacity-50" />
+                <p className="font-bold text-sm">Aucun conducteur ne correspond aux filtres.</p>
+                <button
+                  onClick={() => setIsAddDriverModalOpen(true)}
+                  className="btn-cockpit-action btn-cockpit-action-primary mt-2"
+                >
+                  <Plus size={13} />
+                  <span>Créer un conducteur</span>
+                </button>
+              </div>
+            ) : (
+              <table className="candidates-table-dark">
+                <thead>
+                  <tr>
+                    <th>Conducteur</th>
+                    <th>Coordonnées</th>
+                    <th>Localisation</th>
+                    <th>Permis & Titres</th>
+                    <th>CV Document</th>
+                    <th>Disponibilité</th>
+                    <th>Inscrit le</th>
+                    <th style={{ textAlign: "right" }}>Actions Supabase</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCandidates.map((d) => (
+                    <tr key={d.id}>
+                      <td>
+                        <div className="font-bold text-white text-sm">
+                          {d.first_name} {d.last_name}
+                        </div>
+                        <div className="text-xs text-muted">
+                          {d.birth_date
+                            ? `Né(e) le ${new Date(d.birth_date).toLocaleDateString("fr-FR")}`
+                            : "Conducteur Routier"}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <Phone size={12} className="text-primary" />
+                          <a href={`tel:${d.phone}`} className="hover:underline font-semibold text-white">
+                            {d.phone || "-"}
+                          </a>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-muted mt-0.5">
+                          <Mail size={12} />
+                          <a href={`mailto:${d.email}`} className="hover:underline">
+                            {d.email || "-"}
+                          </a>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-1 text-xs font-semibold text-white">
+                          <MapPin size={12} className="text-muted" />
+                          <span>{d.postal_code} {d.city}</span>
+                        </div>
+                        <div className="text-xs text-muted truncate max-w-[160px]">{d.address}</div>
+                      </td>
+                      <td>
+                        <div className="flex flex-wrap gap-1">
+                          {Array.isArray(d.permits) &&
+                            d.permits.map((p: string) => (
+                              <span key={p} className="cockpit-badge-pill" style={{ background: "#0284c7", color: "#fff" }}>
+                                {p}
+                              </span>
+                            ))}
+                        </div>
+                        <div className="flex gap-1 mt-1">
+                          {d.fimo && <span className="cockpit-badge-pill" style={{ background: "#1e293b", color: "#34d399" }}>FIMO</span>}
+                          {d.fco && <span className="cockpit-badge-pill" style={{ background: "#1e293b", color: "#38bdf8" }}>FCO</span>}
+                          {d.chrono_card && <span className="cockpit-badge-pill" style={{ background: "#1e293b", color: "#fbbf24" }}>Chrono</span>}
+                          {Array.isArray(d.adr) && d.adr.length > 0 && (
+                            <span className="cockpit-badge-pill" style={{ background: "#b45309", color: "#fff" }}>ADR</span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        {d.resume_url ? (
+                          <a
+                            href={d.resume_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn-cockpit-action"
+                            style={{ fontSize: "0.72rem", padding: "0.2rem 0.5rem" }}
+                            title="Télécharger / Consulter CV"
+                          >
+                            <FileText size={12} className="text-primary" />
+                            <span>Voir CV</span>
+                            <ExternalLink size={10} />
+                          </a>
+                        ) : (
+                          <span className="text-xs text-muted">Aucun CV</span>
+                        )}
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleDriverAvailability(d.id)}
+                          className={`cockpit-badge-pill ${
+                            d.availability === "immediate" ? "badge-imm-on" : "badge-imm-off"
+                          }`}
+                          title="Cliquer pour basculer la disponibilité dans Supabase"
+                        >
+                          {d.availability === "immediate" ? "● Immédiat" : "○ Flexible"}
+                        </button>
+                      </td>
+                      <td className="text-xs text-muted">
+                        {d.created_at ? new Date(d.created_at).toLocaleDateString("fr-FR") : "-"}
+                      </td>
+                      <td>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedDriverDetail(d)}
+                            className="btn-cockpit-mini"
+                            title="Voir le dossier complet"
+                          >
+                            <EyeIcon size={12} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenChatWithDriver(d)}
+                            className="btn-cockpit-mini"
+                            title="Ouvrir le tchat direct"
+                          >
+                            <MessageSquareText size={12} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteDriver(d.id, `${d.first_name} ${d.last_name}`)}
+                            className="btn-cockpit-mini btn-cockpit-mini-danger"
+                            title="Supprimer définitivement de Supabase"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* D. Status Ticker Fixe Bas (24px) */}
+          <div className="cockpit-status-ticker">
+            <div className="ticker-left">
+              <span className="text-emerald-400 font-bold">● MODULE CANDIDATS</span>
+              <span>{filteredCandidates.length} affichés sur {drivers.length}</span>
+              <span>Base Supabase Synchronisée</span>
+            </div>
+            <div className="ticker-right">
+              <span>Clic sur disponibilité = Sauvegarde instantanée</span>
+              <span>Latence: {supabaseLatency}ms</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* 4. MODALE AJOUT CONDUCTEUR DANS SUPABASE                        */}
+      {/* ============================================================== */}
+      {isAddDriverModalOpen && (
+        <div className="admin-modal-backdrop" onClick={() => setIsAddDriverModalOpen(false)}>
+          <div className="admin-modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <div className="flex items-center gap-2">
+                <Truck size={18} className="text-primary" />
+                <h3 className="font-bold text-white text-base">Ajouter un Conducteur dans Supabase</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddDriverModalOpen(false)}
+                className="btn-cockpit-mini"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateDriver}>
+              <div className="admin-modal-body">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <h2 className="admin-section-title">
-                      <DollarSign size={18} className="text-primary" />
-                      <span>Ventilation des formules transporteurs</span>
-                    </h2>
-                    <p className="text-xs text-muted mt-0.5">
-                      Abonnements sans commission sur salaires : les transporteurs paient un forfait d'accès direct au vivier.
+                    <label className="text-xs text-muted block mb-1 font-bold">Prénom *</label>
+                    <input
+                      type="text"
+                      required
+                      value={newDriver.first_name}
+                      onChange={(e) => setNewDriver({ ...newDriver, first_name: e.target.value })}
+                      className="admin-chat-input-field w-full"
+                      style={{ background: "#101c2e", color: "#fff", borderColor: "#1e3352" }}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted block mb-1 font-bold">Nom *</label>
+                    <input
+                      type="text"
+                      required
+                      value={newDriver.last_name}
+                      onChange={(e) => setNewDriver({ ...newDriver, last_name: e.target.value })}
+                      className="admin-chat-input-field w-full"
+                      style={{ background: "#101c2e", color: "#fff", borderColor: "#1e3352" }}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted block mb-1 font-bold">Email *</label>
+                    <input
+                      type="email"
+                      required
+                      value={newDriver.email}
+                      onChange={(e) => setNewDriver({ ...newDriver, email: e.target.value })}
+                      className="admin-chat-input-field w-full"
+                      style={{ background: "#101c2e", color: "#fff", borderColor: "#1e3352" }}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted block mb-1 font-bold">Téléphone (10 chiffres) *</label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="0612345678"
+                      value={newDriver.phone}
+                      onChange={(e) => setNewDriver({ ...newDriver, phone: e.target.value })}
+                      className="admin-chat-input-field w-full"
+                      style={{ background: "#101c2e", color: "#fff", borderColor: "#1e3352" }}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted block mb-1 font-bold">Ville</label>
+                    <input
+                      type="text"
+                      value={newDriver.city}
+                      onChange={(e) => setNewDriver({ ...newDriver, city: e.target.value })}
+                      className="admin-chat-input-field w-full"
+                      style={{ background: "#101c2e", color: "#fff", borderColor: "#1e3352" }}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted block mb-1 font-bold">Code Postal</label>
+                    <input
+                      type="text"
+                      value={newDriver.postal_code}
+                      onChange={(e) => setNewDriver({ ...newDriver, postal_code: e.target.value })}
+                      className="admin-chat-input-field w-full"
+                      style={{ background: "#101c2e", color: "#fff", borderColor: "#1e3352" }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs text-muted block mb-1 font-bold">Permis</label>
+                  <div className="flex gap-3">
+                    {["CE", "C", "B"].map((p) => (
+                      <label key={p} className="flex items-center gap-1.5 text-xs text-white cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={newDriver.permits.includes(p)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setNewDriver({ ...newDriver, permits: [...newDriver.permits, p] });
+                            } else {
+                              setNewDriver({ ...newDriver, permits: newDriver.permits.filter((x) => x !== p) });
+                            }
+                          }}
+                        />
+                        <span>Permis {p}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs text-muted block mb-1 font-bold">Disponibilité</label>
+                  <select
+                    value={newDriver.availability}
+                    onChange={(e) => setNewDriver({ ...newDriver, availability: e.target.value })}
+                    className="admin-chat-input-field w-full"
+                    style={{ background: "#101c2e", color: "#fff", borderColor: "#1e3352" }}
+                  >
+                    <option value="immediate">Disponible sous 48h (Immédiat)</option>
+                    <option value="flexible">Sous 15 jours à 1 mois (Flexible)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="admin-modal-footer">
+                <button
+                  type="button"
+                  onClick={() => setIsAddDriverModalOpen(false)}
+                  className="btn-cockpit-action"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="btn-cockpit-action btn-cockpit-action-primary"
+                >
+                  <Plus size={13} />
+                  <span>{actionLoading ? "Création..." : "Enregistrer dans Supabase"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* 5. MODALE FICHE DOSSIER COMPLET DU CANDIDAT                    */}
+      {/* ============================================================== */}
+      {selectedDriverDetail && (
+        <div className="admin-modal-backdrop" onClick={() => setSelectedDriverDetail(null)}>
+          <div className="admin-modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <div className="flex items-center gap-2">
+                <Truck size={18} className="text-primary" />
+                <h3 className="font-bold text-white text-base">
+                  Fiche Complète : {selectedDriverDetail.first_name} {selectedDriverDetail.last_name}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedDriverDetail(null)}
+                className="btn-cockpit-mini"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            <div className="admin-modal-body">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="ops-card-widget">
+                  <div className="ops-widget-title">État Civil & Contact</div>
+                  <div className="ops-row-metric"><span>Email :</span><span className="ops-val">{selectedDriverDetail.email}</span></div>
+                  <div className="ops-row-metric"><span>Téléphone :</span><span className="ops-val text-primary">{selectedDriverDetail.phone}</span></div>
+                  <div className="ops-row-metric"><span>Date de naissance :</span><span className="ops-val">{selectedDriverDetail.birth_date || "Non renseignée"}</span></div>
+                  <div className="ops-row-metric"><span>Adresse :</span><span className="ops-val">{selectedDriverDetail.address || "-"}</span></div>
+                  <div className="ops-row-metric"><span>Ville / CP :</span><span className="ops-val">{selectedDriverDetail.postal_code} {selectedDriverDetail.city}</span></div>
+                </div>
+
+                <div className="ops-card-widget">
+                  <div className="ops-widget-title">Qualifications & Titres</div>
+                  <div className="ops-row-metric"><span>Permis obtenus :</span><span className="ops-val">{Array.isArray(selectedDriverDetail.permits) ? selectedDriverDetail.permits.join(", ") : "-"}</span></div>
+                  <div className="ops-row-metric"><span>FIMO à jour :</span><span className="ops-val">{selectedDriverDetail.fimo ? "Oui" : "Non"}</span></div>
+                  <div className="ops-row-metric"><span>FCO à jour :</span><span className="ops-val">{selectedDriverDetail.fco ? "Oui" : "Non"}</span></div>
+                  <div className="ops-row-metric"><span>Carte conducteur :</span><span className="ops-val">{selectedDriverDetail.chrono_card ? "Oui" : "Non"}</span></div>
+                  <div className="ops-row-metric"><span>ADR Matières Dangereuses :</span><span className="ops-val">{Array.isArray(selectedDriverDetail.adr) && selectedDriverDetail.adr.length > 0 ? selectedDriverDetail.adr.join(", ") : "Aucune"}</span></div>
+                  <div className="ops-row-metric"><span>CACES :</span><span className="ops-val">{Array.isArray(selectedDriverDetail.caces) && selectedDriverDetail.caces.length > 0 ? selectedDriverDetail.caces.join(", ") : "Aucun"}</span></div>
+                </div>
+              </div>
+
+              <div className="ops-card-widget">
+                <div className="ops-widget-title">Préférences de Tournées & Expérience</div>
+                <div className="ops-row-metric"><span>Années d'expérience :</span><span className="ops-val">{selectedDriverDetail.experience || "Non précisée"}</span></div>
+                <div className="ops-row-metric"><span>Disponibilité :</span><span className="ops-val text-emerald-400">{selectedDriverDetail.availability === "immediate" ? "Immédiat sous 48h" : "Flexible"}</span></div>
+                <div className="ops-row-metric"><span>Types de missions :</span><span className="ops-val">{Array.isArray(selectedDriverDetail.mission_type) ? selectedDriverDetail.mission_type.join(", ") : "Toutes"}</span></div>
+                <div className="ops-row-metric"><span>Spécialités :</span><span className="ops-val">{Array.isArray(selectedDriverDetail.specialties) ? selectedDriverDetail.specialties.join(", ") : "-"}</span></div>
+              </div>
+            </div>
+
+            <div className="admin-modal-footer">
+              {selectedDriverDetail.resume_url && (
+                <a
+                  href={selectedDriverDetail.resume_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-cockpit-action"
+                >
+                  <FileText size={13} />
+                  <span>Consulter CV PDF</span>
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  handleOpenChatWithDriver(selectedDriverDetail);
+                  setSelectedDriverDetail(null);
+                }}
+                className="btn-cockpit-action btn-cockpit-action-primary"
+              >
+                <MessageSquareText size={13} />
+                <span>Ouvrir Tchat</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* 6. AUTRES RUBRIQUES (Entreprises, Stats, Support)              */}
+      {/* ============================================================== */}
+      {activeTab === "entreprises" && (
+        <main className="admin-main-body">
+          <div className="admin-page-heading">
+            <div>
+              <h1 className="admin-heading-title">Entreprises de transport inscrites</h1>
+              <p className="admin-heading-sub">
+                Transporteurs, logisticiens et exploitants vérifiés par numéro SIRET officiel.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-muted">
+                {companies.length} entreprises dans Supabase
+              </span>
+              <button onClick={loadData} className="btn btn-outline btn-sm">
+                <RefreshCw size={13} />
+                <span>Actualiser</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="admin-table-toolbar">
+            <div className="admin-search-box">
+              <Search size={15} className="text-muted" />
+              <input
+                type="text"
+                placeholder="Rechercher par raison sociale, SIRET, dirigeant..."
+                value={companySearch}
+                onChange={(e) => setCompanySearch(e.target.value)}
+              />
+            </div>
+
+            <div className="admin-filter-pills">
+              <button
+                type="button"
+                onClick={() => setCompanyFilter("all")}
+                className={`admin-filter-pill-btn ${companyFilter === "all" ? "active" : ""}`}
+              >
+                Toutes ({companies.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setCompanyFilter("fleet-small")}
+                className={`admin-filter-pill-btn ${companyFilter === "fleet-small" ? "active" : ""}`}
+              >
+                1 à 5 camions
+              </button>
+              <button
+                type="button"
+                onClick={() => setCompanyFilter("fleet-medium")}
+                className={`admin-filter-pill-btn ${companyFilter === "fleet-medium" ? "active" : ""}`}
+              >
+                6 à 20 camions
+              </button>
+              <button
+                type="button"
+                onClick={() => setCompanyFilter("fleet-large")}
+                className={`admin-filter-pill-btn ${companyFilter === "fleet-large" ? "active" : ""}`}
+              >
+                + de 20 camions
+              </button>
+            </div>
+          </div>
+
+          <div className="admin-table-card">
+            {companies.length === 0 ? (
+              <div className="admin-empty-state">
+                <p>Aucune entreprise ne correspond à cette recherche.</p>
+              </div>
+            ) : (
+              <div className="table-responsive">
+                <table className="admin-pro-table">
+                  <thead>
+                    <tr>
+                      <th>Entreprise Transport</th>
+                      <th>SIRET Officiel</th>
+                      <th>Responsable / Contact</th>
+                      <th>Coordonnées</th>
+                      <th>Dépôt / Ville</th>
+                      <th>Flotte</th>
+                      <th>Date inscription</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {companies
+                      .filter((c) => {
+                        if (companyFilter === "fleet-small" && c.fleet_size && c.fleet_size !== "1-5") return false;
+                        if (companyFilter === "fleet-medium" && c.fleet_size !== "6-20") return false;
+                        if (companyFilter === "fleet-large" && c.fleet_size !== "21-50" && c.fleet_size !== "> 50") return false;
+                        if (!companySearch) return true;
+                        const q = companySearch.toLowerCase();
+                        return (
+                          c.company_name?.toLowerCase().includes(q) ||
+                          c.siret?.includes(q) ||
+                          c.email?.toLowerCase().includes(q) ||
+                          c.city?.toLowerCase().includes(q) ||
+                          c.contact_last_name?.toLowerCase().includes(q)
+                        );
+                      })
+                      .map((c) => (
+                        <tr key={c.id}>
+                          <td>
+                            <div className="font-bold text-navy">{c.company_name}</div>
+                            <div className="text-xs text-muted">{c.tva_number || "Transport de marchandises"}</div>
+                          </td>
+                          <td>
+                            <div className="font-mono text-xs font-bold text-navy flex items-center gap-1">
+                              <span>{c.siret}</span>
+                              <ShieldCheck size={13} className="text-success" />
+                            </div>
+                            <div className="text-xs text-muted">{c.naf_code || "Code NAF 49.41A"}</div>
+                          </td>
+                          <td>
+                            <div className="font-bold text-xs">
+                              {c.contact_first_name} {c.contact_last_name}
+                            </div>
+                            <div className="text-xs text-muted">{c.contact_role || "Exploitant / Dirigeant"}</div>
+                          </td>
+                          <td>
+                            <div className="flex items-center gap-1.5 text-xs">
+                              <Phone size={12} className="text-primary" />
+                              <a href={`tel:${c.phone}`} className="hover:underline font-semibold">
+                                {c.phone || "-"}
+                              </a>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-xs text-muted mt-1">
+                              <Mail size={12} />
+                              <a href={`mailto:${c.email}`} className="hover:underline">
+                                {c.email || "-"}
+                              </a>
+                            </div>
+                          </td>
+                          <td>
+                            <div className="flex items-center gap-1 text-xs font-semibold text-navy">
+                              <MapPin size={12} className="text-muted" />
+                              <span>{c.postal_code} {c.city}</span>
+                            </div>
+                            <div className="text-xs text-muted truncate max-w-[180px]">{c.address}</div>
+                          </td>
+                          <td>
+                            <span className="badge-fleet-mini">{c.fleet_size || "1-5"} camions</span>
+                          </td>
+                          <td className="text-xs text-muted">
+                            {c.created_at ? new Date(c.created_at).toLocaleDateString("fr-FR") : "-"}
+                          </td>
+                          <td>
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenChatWithCompany(c)}
+                                className="btn-table-action btn-table-action-chat"
+                                title="Démarrer un échange tchat"
+                              >
+                                <MessageSquareText size={13} />
+                                <span>Tchat</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCompany(c.id, c.company_name)}
+                                className="btn-cockpit-mini btn-cockpit-mini-danger"
+                                title="Supprimer"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </main>
+      )}
+
+      {activeTab === "stats-site" && (
+        <main className="admin-main-body">
+          <div className="admin-page-heading">
+            <div>
+              <h1 className="admin-heading-title">Statistiques de Fréquentation & Audience</h1>
+              <p className="admin-heading-sub">
+                Métriques globales de trafic, provenance des visiteurs et parcours sur la plateforme TruckMatch.
+              </p>
+            </div>
+            <span className="badge-navy-pill">30 derniers jours</span>
+          </div>
+
+          <div className="stats-card-grid-4">
+            <div className="stats-card-pro">
+              <div className="stats-card-pro-title">Visiteurs uniques / mois</div>
+              <div className="stats-card-pro-number">14 850</div>
+              <span className="stats-badge-growth">
+                <TrendingUp size={12} />
+                <span>+18.4% vs mois dernier</span>
+              </span>
+            </div>
+
+            <div className="stats-card-pro">
+              <div className="stats-card-pro-title">Pages vues totales</div>
+              <div className="stats-card-pro-number">68 400</div>
+              <span className="stats-badge-growth">
+                <TrendingUp size={12} />
+                <span>4.6 pages / session</span>
+              </span>
+            </div>
+
+            <div className="stats-card-pro">
+              <div className="stats-card-pro-title">Taux de conversion formulaires</div>
+              <div className="stats-card-pro-number">9.8%</div>
+              <span className="stats-badge-growth">
+                <TrendingUp size={12} />
+                <span>Candidats & Entreprises</span>
+              </span>
+            </div>
+
+            <div className="stats-card-pro">
+              <div className="stats-card-pro-title">Temps moyen sur la plateforme</div>
+              <div className="stats-card-pro-number">3m 42s</div>
+              <span className="stats-badge-growth">
+                <TrendingUp size={12} />
+                <span>Forte implication</span>
+              </span>
+            </div>
+          </div>
+
+          <div className="admin-dashboard-two-col">
+            <div className="admin-section-card">
+              <div className="admin-section-header">
+                <h2 className="admin-section-title">
+                  <BarChart3 size={18} className="text-primary" />
+                  <span>Pages les plus consultées</span>
+                </h2>
+                <span className="text-xs text-muted">% du trafic total</span>
+              </div>
+
+              <div className="stats-bars-list">
+                <div className="stats-bar-item">
+                  <div className="stats-bar-row">
+                    <span>Offres d'emploi & Tournées (/offres-emploi)</span>
+                    <span className="font-bold">42% (28 728 vues)</span>
+                  </div>
+                  <div className="stats-bar-track">
+                    <div className="stats-bar-fill" style={{ width: "42%" }} />
+                  </div>
+                </div>
+
+                <div className="stats-bar-item">
+                  <div className="stats-bar-row">
+                    <span>Formulaire d'inscription & Profil (/inscription)</span>
+                    <span className="font-bold">27% (18 468 vues)</span>
+                  </div>
+                  <div className="stats-bar-track">
+                    <div className="stats-bar-fill" style={{ width: "27%" }} />
+                  </div>
+                </div>
+
+                <div className="stats-bar-item">
+                  <div className="stats-bar-row">
+                    <span>Carte géolocalisée des chauffeurs (/carte-chauffeurs)</span>
+                    <span className="font-bold">18% (12 312 vues)</span>
+                  </div>
+                  <div className="stats-bar-track">
+                    <div className="stats-bar-fill" style={{ width: "18%" }} />
+                  </div>
+                </div>
+
+                <div className="stats-bar-item">
+                  <div className="stats-bar-row">
+                    <span>Espace Entreprises & Recruteurs (/entreprises)</span>
+                    <span className="font-bold">13% (8 892 vues)</span>
+                  </div>
+                  <div className="stats-bar-track">
+                    <div className="stats-bar-fill" style={{ width: "13%" }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="admin-section-card">
+              <div className="admin-section-header">
+                <h2 className="admin-section-title">
+                  <MapPin size={18} className="text-navy" />
+                  <span>Répartition géographique des utilisateurs</span>
+                </h2>
+                <span className="text-xs text-muted">France entière</span>
+              </div>
+
+              <div className="stats-bars-list">
+                <div className="stats-bar-item">
+                  <div className="stats-bar-row">
+                    <span>Île-de-France (Hubs logistiques Rungis, Roissy)</span>
+                    <span className="font-bold">24%</span>
+                  </div>
+                  <div className="stats-bar-track">
+                    <div className="stats-bar-fill" style={{ width: "24%", background: "#0b192c" }} />
+                  </div>
+                </div>
+
+                <div className="stats-bar-item">
+                  <div className="stats-bar-row">
+                    <span>Auvergne-Rhône-Alpes (Couloir rhodanien)</span>
+                    <span className="font-bold">19%</span>
+                  </div>
+                  <div className="stats-bar-track">
+                    <div className="stats-bar-fill" style={{ width: "19%", background: "#0284c7" }} />
+                  </div>
+                </div>
+
+                <div className="stats-bar-item">
+                  <div className="stats-bar-row">
+                    <span>Hauts-de-France (Lille, Dourges, Fret Nord)</span>
+                    <span className="font-bold">16%</span>
+                  </div>
+                  <div className="stats-bar-track">
+                    <div className="stats-bar-fill" style={{ width: "16%", background: "#0ea5e9" }} />
+                  </div>
+                </div>
+
+                <div className="stats-bar-item">
+                  <div className="stats-bar-row">
+                    <span>Occitanie & PACA (Marseille, Toulouse)</span>
+                    <span className="font-bold">14%</span>
+                  </div>
+                  <div className="stats-bar-track">
+                    <div className="stats-bar-fill" style={{ width: "14%", background: "#38bdf8" }} />
+                  </div>
+                </div>
+
+                <div className="stats-bar-item">
+                  <div className="stats-bar-row">
+                    <span>Autres régions françaises</span>
+                    <span className="font-bold">27%</span>
+                  </div>
+                  <div className="stats-bar-track">
+                    <div className="stats-bar-fill" style={{ width: "27%", background: "#94a3b8" }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      )}
+
+      {activeTab === "stats-revenu" && (
+        <main className="admin-main-body">
+          <div className="admin-page-heading">
+            <div>
+              <h1 className="admin-heading-title">Statistiques de Revenu & Abonnements</h1>
+              <p className="admin-heading-sub">
+                Suivi du Chiffre d'Affaires Mensuel Récurrent (MRR), des abonnements transporteurs et des économies clients.
+              </p>
+            </div>
+            <span className="badge-navy-pill">Facturation Directe</span>
+          </div>
+
+          <div className="stats-card-grid-4">
+            <div className="stats-card-pro">
+              <div className="stats-card-pro-title">MRR (Revenu Mensuel Récurrent)</div>
+              <div className="stats-card-pro-number">12 450 €</div>
+              <span className="stats-badge-growth">
+                <TrendingUp size={12} />
+                <span>+21.5% ce trimestre</span>
+              </span>
+            </div>
+
+            <div className="stats-card-pro">
+              <div className="stats-card-pro-title">ARR Projeté Annuel</div>
+              <div className="stats-card-pro-number">149 400 €</div>
+              <span className="stats-badge-growth">
+                <TrendingUp size={12} />
+                <span>Base récurrente</span>
+              </span>
+            </div>
+
+            <div className="stats-card-pro">
+              <div className="stats-card-pro-title">Transporteurs abonnés actifs</div>
+              <div className="stats-card-pro-number">28</div>
+              <span className="stats-badge-growth">
+                <TrendingUp size={12} />
+                <span>Taux de rétention : 96.2%</span>
+              </span>
+            </div>
+
+            <div className="stats-card-pro">
+              <div className="stats-card-pro-title">Économies générées vs Intérim</div>
+              <div className="stats-card-pro-number">142 800 €</div>
+              <span className="stats-badge-growth">
+                <TrendingUp size={12} />
+                <span>2 400 € / chauffeur embauché</span>
+              </span>
+            </div>
+          </div>
+
+          <div className="admin-section-card mt-6">
+            <div className="admin-section-header">
+              <div>
+                <h2 className="admin-section-title">
+                  <DollarSign size={18} className="text-primary" />
+                  <span>Ventilation des formules transporteurs</span>
+                </h2>
+                <p className="text-xs text-muted mt-0.5">
+                  Abonnements sans commission sur salaires : les transporteurs paient un forfait d'accès direct au vivier.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+              <div className="revenue-tier-card">
+                <div>
+                  <span className="text-xs font-bold text-muted uppercase">Pack Découverte</span>
+                  <h3 className="text-lg font-black text-navy mt-1">Starter Flotte</h3>
+                  <div className="text-2xl font-black text-primary mt-2">
+                    490 € <span className="text-xs font-normal text-muted">HT / mois</span>
+                  </div>
+                  <p className="text-xs text-muted mt-2">
+                    Idéal pour les artisans transporteurs et TPE (1 à 2 recrutements réguliers).
+                  </p>
+                </div>
+                <div className="border-t pt-3">
+                  <div className="text-xs text-muted">Abonnés actifs : <span className="font-bold text-navy">12 entreprises</span></div>
+                  <div className="text-xs font-bold text-navy mt-1">Sous-total : 5 880 € / mois</div>
+                </div>
+              </div>
+
+              <div className="revenue-tier-card featured">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-primary uppercase">Le Plus Populaire</span>
+                    <span className="badge-navy-pill">Flotte Pro</span>
+                  </div>
+                  <h3 className="text-lg font-black text-navy mt-1">Pro Transport Régional</h3>
+                  <div className="text-2xl font-black text-primary mt-2">
+                    890 € <span className="text-xs font-normal text-muted">HT / mois</span>
+                  </div>
+                  <p className="text-xs text-muted mt-2">
+                    Pour transporteurs régionaux gérant 5 à 20 camions avec besoins continus.
+                  </p>
+                </div>
+                <div className="border-t pt-3">
+                  <div className="text-xs text-muted">Abonnés actifs : <span className="font-bold text-navy">11 entreprises</span></div>
+                  <div className="text-xs font-bold text-navy mt-1">Sous-total : 9 790 € / mois</div>
+                </div>
+              </div>
+
+              <div className="revenue-tier-card">
+                <div>
+                  <span className="text-xs font-bold text-muted uppercase">Grand Compte</span>
+                  <h3 className="text-lg font-black text-navy mt-1">Multi-Dépôts National</h3>
+                  <div className="text-2xl font-black text-primary mt-2">
+                    1 490 € <span className="text-xs font-normal text-muted">HT / mois</span>
+                  </div>
+                  <p className="text-xs text-muted mt-2">
+                    Accès multi-utilisateurs illimité sur tous les départements français.
+                  </p>
+                </div>
+                <div className="border-t pt-3">
+                  <div className="text-xs text-muted">Abonnés actifs : <span className="font-bold text-navy">5 entreprises</span></div>
+                  <div className="text-xs font-bold text-navy mt-1">Sous-total : 7 450 € / mois</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      )}
+
+      {activeTab === "support" && (
+        <main className="admin-main-body">
+          <div className="admin-page-heading mb-3">
+            <div>
+              <h1 className="admin-heading-title">Support & Messagerie Directe</h1>
+              <p className="admin-heading-sub">
+                Échangez en direct avec les chauffeurs candidats et les entreprises de transport inscrites.
+              </p>
+            </div>
+          </div>
+
+          <div className="admin-chat-layout">
+            <div className="admin-chat-sidebar">
+              <div className="admin-chat-sidebar-header">
+                <h3>Discussions actives</h3>
+                <div className="admin-search-box w-full">
+                  <Search size={14} className="text-muted" />
+                  <input
+                    type="text"
+                    placeholder="Chercher un contact..."
+                    value={chatSearch}
+                    onChange={(e) => setChatSearch(e.target.value)}
+                  />
+                </div>
+
+                <div className="chat-filter-tabs">
+                  <button
+                    type="button"
+                    onClick={() => setChatRecipientFilter("all")}
+                    className={`chat-filter-tab-btn ${chatRecipientFilter === "all" ? "active" : ""}`}
+                  >
+                    Tous ({chatThreads.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChatRecipientFilter("candidats")}
+                    className={`chat-filter-tab-btn ${chatRecipientFilter === "candidats" ? "active" : ""}`}
+                  >
+                    Chauffeurs ({drivers.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChatRecipientFilter("entreprises")}
+                    className={`chat-filter-tab-btn ${chatRecipientFilter === "entreprises" ? "active" : ""}`}
+                  >
+                    Entreprises ({companies.length})
+                  </button>
+                </div>
+              </div>
+
+              <div className="admin-chat-threads-list">
+                {chatThreads.length === 0 ? (
+                  <p className="text-xs text-muted p-4 text-center">Aucun contact trouvé.</p>
+                ) : (
+                  chatThreads.map((thread) => {
+                    const isSelected = activeRecipient?.id === thread.id;
+                    return (
+                      <button
+                        key={thread.id}
+                        type="button"
+                        onClick={() =>
+                          setActiveRecipient({
+                            id: thread.id,
+                            name: thread.name,
+                            type: thread.type,
+                            phone: thread.phone,
+                            email: thread.email,
+                            city: thread.city,
+                          })
+                        }
+                        className={`chat-thread-item ${isSelected ? "active" : ""}`}
+                      >
+                        <div
+                          className={`chat-thread-avatar ${
+                            thread.type === "candidat" ? "avatar-candidat" : "avatar-entreprise"
+                          }`}
+                        >
+                          {thread.type === "candidat" ? (
+                            <Truck size={18} />
+                          ) : (
+                            <Building2 size={18} />
+                          )}
+                        </div>
+                        <div className="chat-thread-content">
+                          <div className="chat-thread-row">
+                            <span className="chat-thread-name">{thread.name}</span>
+                            <span className="chat-thread-time">{thread.time}</span>
+                          </div>
+                          <p className="chat-thread-lastmsg">{thread.lastMsg}</p>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            <div className="admin-chat-main-area">
+              {activeRecipient ? (
+                <>
+                  <div className="admin-chat-header">
+                    <div className="admin-chat-target-info">
+                      <div
+                        className={`chat-thread-avatar ${
+                          activeRecipient.type === "candidat" ? "avatar-candidat" : "avatar-entreprise"
+                        }`}
+                      >
+                        {activeRecipient.type === "candidat" ? (
+                          <Truck size={20} />
+                        ) : (
+                          <Building2 size={20} />
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h2 className="admin-chat-target-name">{activeRecipient.name}</h2>
+                          <span
+                            className={`espace-logo-badge ${
+                              activeRecipient.type === "candidat"
+                                ? "badge-candidat-tag"
+                                : "badge-entreprise-tag"
+                            }`}
+                          >
+                            {activeRecipient.type === "candidat" ? "Candidat Chauffeur" : "Entreprise"}
+                          </span>
+                        </div>
+                        <div className="admin-chat-target-details">
+                          {activeRecipient.phone && (
+                            <span className="flex items-center gap-1">
+                              <Phone size={11} className="text-primary" />
+                              <span>{activeRecipient.phone}</span>
+                            </span>
+                          )}
+                          {activeRecipient.email && (
+                            <span className="flex items-center gap-1">
+                              <Mail size={11} />
+                              <span>{activeRecipient.email}</span>
+                            </span>
+                          )}
+                          {activeRecipient.city && (
+                            <span className="flex items-center gap-1">
+                              <MapPin size={11} />
+                              <span>{activeRecipient.city}</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {activeRecipient.phone && (
+                        <a
+                          href={`tel:${activeRecipient.phone}`}
+                          className="btn btn-outline btn-xs"
+                        >
+                          <Phone size={12} />
+                          <span>Appeler</span>
+                        </a>
+                      )}
+                      {activeRecipient.email && (
+                        <a
+                          href={`mailto:${activeRecipient.email}`}
+                          className="btn btn-outline btn-xs"
+                        >
+                          <Mail size={12} />
+                          <span>Email</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="admin-chat-messages-container">
+                    {activeConversationMessages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`chat-bubble-wrap ${msg.sender === "admin" ? "admin" : "recipient"}`}
+                      >
+                        <div className="chat-bubble">{msg.text}</div>
+                        <span className="chat-bubble-time">{msg.time}</span>
+                      </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+
+                  <div className="chat-quick-replies-bar">
+                    <span className="text-xs font-bold text-muted flex items-center gap-1">
+                      <Sparkles size={12} className="text-primary" />
+                      <span>Réponses rapides :</span>
+                    </span>
+
+                    {activeRecipient.type === "candidat" ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleSendMessage(
+                              "Bonjour ! Un transporteur de votre secteur recherche un conducteur avec vos permis. Seriez-vous disponible cette semaine ?"
+                            )
+                          }
+                          className="chat-quick-reply-btn"
+                        >
+                          🚛 Opportunité sur votre secteur
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleSendMessage(
+                              "Bonjour, nous avons bien reçu votre profil. Pourriez-vous déposer votre CV à jour pour faciliter le contact avec les exploitants ?"
+                            )
+                          }
+                          className="chat-quick-reply-btn"
+                        >
+                          📄 Relance CV
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleSendMessage(
+                              "Votre profil a été validé avec succès par notre équipe de supervision TruckMatch. Bonne route !"
+                            )
+                          }
+                          className="chat-quick-reply-btn"
+                        >
+                          ✅ Validation profil
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleSendMessage(
+                              "Bonjour, nous avons plusieurs conducteurs SPL et PL disponibles immédiatement sur votre département. Souhaitez-vous leurs coordonnées directes ?"
+                            )
+                          }
+                          className="chat-quick-reply-btn"
+                        >
+                          👥 Chauffeurs disponibles
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleSendMessage(
+                              "Bonjour, votre compte entreprise et votre SIRET ont été vérifiés avec succès. Vous pouvez désormais contacter directement les chauffeurs."
+                            )
+                          }
+                          className="chat-quick-reply-btn"
+                        >
+                          🏢 Confirmation SIRET
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleSendMessage(
+                              "Souhaitez-vous un point d'accompagnement téléphonique de 10 min pour optimiser vos recherches de tractions et relais ?"
+                            )
+                          }
+                          className="chat-quick-reply-btn"
+                        >
+                          📞 Point accompagnement
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="admin-chat-input-bar">
+                    <input
+                      type="text"
+                      placeholder={`Écrire un message à ${activeRecipient.name}...`}
+                      value={messageInput}
+                      onChange={(e) => setMessageInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                      className="admin-chat-input-field"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSendMessage()}
+                      className="btn-chat-send"
+                    >
+                      <Send size={15} />
+                      <span>Envoyer</span>
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted p-8 text-center">
+                  <div>
+                    <MessageSquareText size={36} className="mx-auto mb-2 text-slate-300" />
+                    <p className="font-bold">Sélectionnez une discussion</p>
+                    <p className="text-xs">
+                      Choisissez un candidat ou une entreprise dans la liste à gauche pour démarrer la messagerie.
                     </p>
                   </div>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                  <div className="revenue-tier-card">
-                    <div>
-                      <span className="text-xs font-bold text-muted uppercase">Pack Découverte</span>
-                      <h3 className="text-lg font-black text-navy mt-1">Starter Flotte</h3>
-                      <div className="text-2xl font-black text-primary mt-2">
-                        490 € <span className="text-xs font-normal text-muted">HT / mois</span>
-                      </div>
-                      <p className="text-xs text-muted mt-2">
-                        Idéal pour les artisans transporteurs et TPE (1 à 2 recrutements réguliers).
-                      </p>
-                    </div>
-                    <div className="border-t pt-3">
-                      <div className="text-xs text-muted">Abonnés actifs : <span className="font-bold text-navy">12 entreprises</span></div>
-                      <div className="text-xs font-bold text-navy mt-1">Sous-total : 5 880 € / mois</div>
-                    </div>
-                  </div>
-
-                  <div className="revenue-tier-card featured">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-primary uppercase">Le Plus Populaire</span>
-                        <span className="badge-navy-pill">Flotte Pro</span>
-                      </div>
-                      <h3 className="text-lg font-black text-navy mt-1">Pro Transport Régional</h3>
-                      <div className="text-2xl font-black text-primary mt-2">
-                        890 € <span className="text-xs font-normal text-muted">HT / mois</span>
-                      </div>
-                      <p className="text-xs text-muted mt-2">
-                        Pour transporteurs régionaux gérant 5 à 20 camions avec besoins continus.
-                      </p>
-                    </div>
-                    <div className="border-t pt-3">
-                      <div className="text-xs text-muted">Abonnés actifs : <span className="font-bold text-navy">11 entreprises</span></div>
-                      <div className="text-xs font-bold text-navy mt-1">Sous-total : 9 790 € / mois</div>
-                    </div>
-                  </div>
-
-                  <div className="revenue-tier-card">
-                    <div>
-                      <span className="text-xs font-bold text-muted uppercase">Grand Compte</span>
-                      <h3 className="text-lg font-black text-navy mt-1">Multi-Dépôts National</h3>
-                      <div className="text-2xl font-black text-primary mt-2">
-                        1 490 € <span className="text-xs font-normal text-muted">HT / mois</span>
-                      </div>
-                      <p className="text-xs text-muted mt-2">
-                        Accès multi-utilisateurs illimité sur tous les départements français.
-                      </p>
-                    </div>
-                    <div className="border-t pt-3">
-                      <div className="text-xs text-muted">Abonnés actifs : <span className="font-bold text-navy">5 entreprises</span></div>
-                      <div className="text-xs font-bold text-navy mt-1">Sous-total : 7 450 € / mois</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
-          )}
-
-          {/* ============================================================== */}
-          {/* ONGLET 6 : SUPPORT AVEC TCHAT VERS CANDIDAT OU ENTREPRISE     */}
-          {/* ============================================================== */}
-          {activeTab === "support" && (
-            <div>
-              <div className="admin-page-heading mb-3">
-                <div>
-                  <h1 className="admin-heading-title">Support & Messagerie Directe</h1>
-                  <p className="admin-heading-sub">
-                    Échangez en direct avec les chauffeurs candidats et les entreprises de transport inscrites.
-                  </p>
-                </div>
-              </div>
-
-              <div className="admin-chat-layout">
-                <div className="admin-chat-sidebar">
-                  <div className="admin-chat-sidebar-header">
-                    <h3>Discussions actives</h3>
-                    <div className="admin-search-box w-full">
-                      <Search size={14} className="text-muted" />
-                      <input
-                        type="text"
-                        placeholder="Chercher un contact..."
-                        value={chatSearch}
-                        onChange={(e) => setChatSearch(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="chat-filter-tabs">
-                      <button
-                        type="button"
-                        onClick={() => setChatRecipientFilter("all")}
-                        className={`chat-filter-tab-btn ${chatRecipientFilter === "all" ? "active" : ""}`}
-                      >
-                        Tous ({chatThreads.length})
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setChatRecipientFilter("candidats")}
-                        className={`chat-filter-tab-btn ${chatRecipientFilter === "candidats" ? "active" : ""}`}
-                      >
-                        Chauffeurs ({drivers.length})
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setChatRecipientFilter("entreprises")}
-                        className={`chat-filter-tab-btn ${chatRecipientFilter === "entreprises" ? "active" : ""}`}
-                      >
-                        Entreprises ({companies.length})
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="admin-chat-threads-list">
-                    {chatThreads.length === 0 ? (
-                      <p className="text-xs text-muted p-4 text-center">Aucun contact trouvé.</p>
-                    ) : (
-                      chatThreads.map((thread) => {
-                        const isSelected = activeRecipient?.id === thread.id;
-                        return (
-                          <button
-                            key={thread.id}
-                            type="button"
-                            onClick={() =>
-                              setActiveRecipient({
-                                id: thread.id,
-                                name: thread.name,
-                                type: thread.type,
-                                phone: thread.phone,
-                                email: thread.email,
-                                city: thread.city,
-                              })
-                            }
-                            className={`chat-thread-item ${isSelected ? "active" : ""}`}
-                          >
-                            <div
-                              className={`chat-thread-avatar ${
-                                thread.type === "candidat" ? "avatar-candidat" : "avatar-entreprise"
-                              }`}
-                            >
-                              {thread.type === "candidat" ? (
-                                <Truck size={18} />
-                              ) : (
-                                <Building2 size={18} />
-                              )}
-                            </div>
-                            <div className="chat-thread-content">
-                              <div className="chat-thread-row">
-                                <span className="chat-thread-name">{thread.name}</span>
-                                <span className="chat-thread-time">{thread.time}</span>
-                              </div>
-                              <p className="chat-thread-lastmsg">{thread.lastMsg}</p>
-                            </div>
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-
-                <div className="admin-chat-main-area">
-                  {activeRecipient ? (
-                    <>
-                      <div className="admin-chat-header">
-                        <div className="admin-chat-target-info">
-                          <div
-                            className={`chat-thread-avatar ${
-                              activeRecipient.type === "candidat" ? "avatar-candidat" : "avatar-entreprise"
-                            }`}
-                          >
-                            {activeRecipient.type === "candidat" ? (
-                              <Truck size={20} />
-                            ) : (
-                              <Building2 size={20} />
-                            )}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h2 className="admin-chat-target-name">{activeRecipient.name}</h2>
-                              <span
-                                className={`espace-logo-badge ${
-                                  activeRecipient.type === "candidat"
-                                    ? "badge-candidat-tag"
-                                    : "badge-entreprise-tag"
-                                }`}
-                              >
-                                {activeRecipient.type === "candidat" ? "Candidat Chauffeur" : "Entreprise"}
-                              </span>
-                            </div>
-                            <div className="admin-chat-target-details">
-                              {activeRecipient.phone && (
-                                <span className="flex items-center gap-1">
-                                  <Phone size={11} className="text-primary" />
-                                  <span>{activeRecipient.phone}</span>
-                                </span>
-                              )}
-                              {activeRecipient.email && (
-                                <span className="flex items-center gap-1">
-                                  <Mail size={11} />
-                                  <span>{activeRecipient.email}</span>
-                                </span>
-                              )}
-                              {activeRecipient.city && (
-                                <span className="flex items-center gap-1">
-                                  <MapPin size={11} />
-                                  <span>{activeRecipient.city}</span>
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {activeRecipient.phone && (
-                            <a
-                              href={`tel:${activeRecipient.phone}`}
-                              className="btn btn-outline btn-xs"
-                            >
-                              <Phone size={12} />
-                              <span>Appeler</span>
-                            </a>
-                          )}
-                          {activeRecipient.email && (
-                            <a
-                              href={`mailto:${activeRecipient.email}`}
-                              className="btn btn-outline btn-xs"
-                            >
-                              <Mail size={12} />
-                              <span>Email</span>
-                            </a>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="admin-chat-messages-container">
-                        {activeConversationMessages.map((msg) => (
-                          <div
-                            key={msg.id}
-                            className={`chat-bubble-wrap ${msg.sender === "admin" ? "admin" : "recipient"}`}
-                          >
-                            <div className="chat-bubble">{msg.text}</div>
-                            <span className="chat-bubble-time">{msg.time}</span>
-                          </div>
-                        ))}
-                        <div ref={messagesEndRef} />
-                      </div>
-
-                      <div className="chat-quick-replies-bar">
-                        <span className="text-xs font-bold text-muted flex items-center gap-1">
-                          <Sparkles size={12} className="text-primary" />
-                          <span>Réponses rapides :</span>
-                        </span>
-
-                        {activeRecipient.type === "candidat" ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleSendMessage(
-                                  "Bonjour ! Un transporteur de votre secteur recherche un conducteur avec vos permis. Seriez-vous disponible cette semaine ?"
-                                )
-                              }
-                              className="chat-quick-reply-btn"
-                            >
-                              🚛 Opportunité sur votre secteur
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleSendMessage(
-                                  "Bonjour, nous avons bien reçu votre profil. Pourriez-vous déposer votre CV à jour pour faciliter le contact avec les exploitants ?"
-                                )
-                              }
-                              className="chat-quick-reply-btn"
-                            >
-                              📄 Relance CV
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleSendMessage(
-                                  "Votre profil a été validé avec succès par notre équipe de supervision TruckMatch. Bonne route !"
-                                )
-                              }
-                              className="chat-quick-reply-btn"
-                            >
-                              ✅ Validation profil
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleSendMessage(
-                                  "Bonjour, nous avons plusieurs conducteurs SPL et PL disponibles immédiatement sur votre département. Souhaitez-vous leurs coordonnées directes ?"
-                                )
-                              }
-                              className="chat-quick-reply-btn"
-                            >
-                              👥 Chauffeurs disponibles
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleSendMessage(
-                                  "Bonjour, votre compte entreprise et votre SIRET ont été vérifiés avec succès. Vous pouvez désormais contacter directement les chauffeurs."
-                                )
-                              }
-                              className="chat-quick-reply-btn"
-                            >
-                              🏢 Confirmation SIRET
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleSendMessage(
-                                  "Souhaitez-vous un point d'accompagnement téléphonique de 10 min pour optimiser vos recherches de tractions et relais ?"
-                                )
-                              }
-                              className="chat-quick-reply-btn"
-                            >
-                              📞 Point accompagnement
-                            </button>
-                          </>
-                        )}
-                      </div>
-
-                      <div className="admin-chat-input-bar">
-                        <input
-                          type="text"
-                          placeholder={`Écrire un message à ${activeRecipient.name}...`}
-                          value={messageInput}
-                          onChange={(e) => setMessageInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              handleSendMessage();
-                            }
-                          }}
-                          className="admin-chat-input-field"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleSendMessage()}
-                          className="btn-chat-send"
-                        >
-                          <Send size={15} />
-                          <span>Envoyer</span>
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-muted p-8 text-center">
-                      <div>
-                        <MessageSquareText size={36} className="mx-auto mb-2 text-slate-300" />
-                        <p className="font-bold">Sélectionnez une discussion</p>
-                        <p className="text-xs">
-                          Choisissez un candidat ou une entreprise dans la liste à gauche pour démarrer la messagerie.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
         </main>
       )}
     </div>
