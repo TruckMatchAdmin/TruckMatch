@@ -13,6 +13,21 @@ export const metadata: Metadata = {
     siteName: "TruckMatch",
     locale: "fr_FR",
     type: "website",
+    images: [
+      {
+        url: "https://truckmatch.fr/images/hero-conseils.png",
+        width: 1024,
+        height: 369,
+        alt: "Conseils, réglementation RSE et guides de recrutement transport - TruckMatch",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Conseils & Guides Recrutement Transport Routier | TruckMatch",
+    description:
+      "Guides complets pour recruter un chauffeur SPL, PL ou VUL, réglementation FIMO/FCO et astuces d'embauche transport.",
+    images: ["https://truckmatch.fr/images/hero-conseils.png"],
   },
   alternates: {
     canonical: "https://truckmatch.fr/conseils",

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ARTICLES } from "@/lib/constants/articles";
 import {
   Clock,
@@ -120,53 +121,71 @@ export default function ConseilsHubPage() {
       />
 
       {/* 1. Hero En-tête Moderne Centre de Ressources */}
-      <section className="conseils-hero-section">
+      <section className="recruiter-hero-section">
         <div className="container">
-          <div className="hero-tag">
-            <span className="hero-tag-dot" />
-            <span>Centre de Ressources Transport & Logistique • Guides Experts 2026</span>
-          </div>
+          <div className="recruiter-hero-grid">
+            <div className="recruiter-hero-content">
+              <div className="hero-tag">
+                <span className="hero-tag-dot" />
+                <span>Centre de Ressources Transport & Logistique • Guides Experts 2026</span>
+              </div>
 
-          <h1 className="hero-title">
-            Conseils, réglementation et
-            <span className="hero-title-highlight">recrutement transport</span>
-          </h1>
+              <h1 className="hero-title">
+                Conseils, réglementation et
+                <span className="hero-title-highlight">recrutement transport</span>
+              </h1>
 
-          <p className="hero-subtitle">
-            Tout ce que les transporteurs, exploitants et conducteurs routiers doivent maîtriser :
-            règles sociales européennes (RSE), renouvellement FIMO/FCO, convention collective CCNTR,
-            grilles salariales et méthodes de sourcing direct sans commission d'intérim.
-          </p>
+              <p className="hero-subtitle">
+                Tout ce que les transporteurs, exploitants et conducteurs routiers doivent maîtriser :
+                règles sociales européennes (RSE), renouvellement FIMO/FCO, convention collective CCNTR,
+                grilles salariales et méthodes de sourcing direct sans commission d'intérim.
+              </p>
 
-          <div className="hero-cta-group">
-            <a href="#guides-pratiques" className="btn btn-primary btn-lg">
-              <BookOpen size={17} />
-              <span>Consulter les guides d'embauche</span>
-            </a>
-            <Link href="/carte-chauffeurs" className="btn btn-outline btn-lg">
-              <MapPin size={17} />
-              <span>Carte des chauffeurs disponibles</span>
-            </Link>
-          </div>
+              <div className="hero-cta-group">
+                <a href="#guides-pratiques" className="btn btn-primary btn-lg">
+                  <BookOpen size={17} />
+                  <span>Consulter les guides d'embauche</span>
+                </a>
+                <Link href="/carte-chauffeurs" className="btn btn-outline btn-lg">
+                  <MapPin size={17} />
+                  <span>Carte des chauffeurs disponibles</span>
+                </Link>
+              </div>
 
-          {/* Mots-clés SEO interactifs */}
-          <div className="hero-seo-pills">
-            <span className="seo-pill-label">Thématiques clés :</span>
-            <span className="seo-pill" onClick={() => setSearchQuery("SPL")} style={{ cursor: "pointer" }}>
-              Chauffeur SPL (CE)
-            </span>
-            <span className="seo-pill" onClick={() => setSearchQuery("FCO")} style={{ cursor: "pointer" }}>
-              FCO Marchandises
-            </span>
-            <span className="seo-pill" onClick={() => setSearchQuery("RSE")} style={{ cursor: "pointer" }}>
-              Temps de repos RSE
-            </span>
-            <span className="seo-pill" onClick={() => setSearchQuery("ADR")} style={{ cursor: "pointer" }}>
-              ADR Citerne & Colis
-            </span>
-            <span className="seo-pill" onClick={() => setSearchQuery("Permis C")} style={{ cursor: "pointer" }}>
-              Chauffeur PL Distribution
-            </span>
+              {/* Mots-clés SEO interactifs */}
+              <div className="hero-seo-pills">
+                <span className="seo-pill-label">Thématiques clés :</span>
+                <span className="seo-pill" onClick={() => setSearchQuery("SPL")} style={{ cursor: "pointer" }}>
+                  Chauffeur SPL (CE)
+                </span>
+                <span className="seo-pill" onClick={() => setSearchQuery("FCO")} style={{ cursor: "pointer" }}>
+                  FCO Marchandises
+                </span>
+                <span className="seo-pill" onClick={() => setSearchQuery("RSE")} style={{ cursor: "pointer" }}>
+                  Temps de repos RSE
+                </span>
+                <span className="seo-pill" onClick={() => setSearchQuery("ADR")} style={{ cursor: "pointer" }}>
+                  ADR Citerne & Colis
+                </span>
+                <span className="seo-pill" onClick={() => setSearchQuery("Permis C")} style={{ cursor: "pointer" }}>
+                  Chauffeur PL Distribution
+                </span>
+              </div>
+            </div>
+
+            {/* Colonne droite : Visuel Réglementation & Recrutement Transport */}
+            <div className="recruiter-hero-visual">
+              <div className="recruiter-image-card">
+                <Image
+                  src="/images/hero-conseils.png"
+                  alt="Conseils et réglementation transport routier, RSE, FCO, CCNTR - TruckMatch"
+                  width={1024}
+                  height={369}
+                  priority
+                  className="recruiter-main-img"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
