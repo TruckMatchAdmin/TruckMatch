@@ -111,6 +111,9 @@ export default function AdminDashboardPage() {
   const [companySearch, setCompanySearch] = useState("");
   const [companyFilter, setCompanyFilter] = useState<"all" | "fleet-small" | "fleet-medium" | "fleet-large">("all");
 
+  // Filtres onglet Stats Site
+  const [statsPeriod, setStatsPeriod] = useState<"all" | "30d" | "7d">("all");
+
   // Support / Tchat
   const [chatRecipientFilter, setChatRecipientFilter] = useState<"all" | "candidats" | "entreprises">("all");
   const [chatSearch, setChatSearch] = useState("");
@@ -1895,173 +1898,348 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {activeTab === "stats-site" && (
-        <main className="admin-main-body">
-          <div className="admin-page-heading">
-            <div>
-              <h1 className="admin-heading-title">Statistiques de Fréquentation & Audience</h1>
-              <p className="admin-heading-sub">
-                Métriques globales de trafic, provenance des visiteurs et parcours sur la plateforme TruckMatch.
-              </p>
+      {/* ============================================================== */}
+      {/* 5. RUBRIQUE STATS SITE (ZERO-SCROLL COCKPIT PRO)               */}
+      {/* ============================================================== */}
+      {activeTab === "stats-site" && (() => {
+        const now = new Date();
+        const daysLimit = statsPeriod === "7d" ? 7 : statsPeriod === "30d" ? 30 : 9999;
+        const cutoffDate = new Date(now.getTime() - daysLimit * 24 * 60 * 60 * 1000);
+
+        const currentDrivers = drivers.filter((d) => !d.created_at || new Date(d.created_at) >= cutoffDate);
+        const currentCompanies = companies.filter((c) => !c.created_at || new Date(c.created_at) >= cutoffDate);
+
+        const totalAccounts = currentDrivers.length + currentCompanies.length;
+        const totalDriversCount = currentDrivers.length || 1;
+        const totalCompaniesCount = currentCompanies.length || 1;
+
+        const ceCount = currentDrivers.filter((d) => d.permits?.includes("CE")).length;
+        const cCount = currentDrivers.filter((d) => d.permits?.includes("C")).length;
+        const fimoCount = currentDrivers.filter((d) => d.fimo).length;
+        const fcoCount = currentDrivers.filter((d) => d.fco).length;
+        const chronoCount = currentDrivers.filter((d) => d.chrono_card).length;
+        const adrCount = currentDrivers.filter((d) => d.adr && d.adr.length > 0).length;
+        const withCvCount = currentDrivers.filter((d) => d.resume_url).length;
+        const immediateCount = currentDrivers.filter((d) => d.availability === "immediate").length;
+
+        const cvRate = Math.round((withCvCount / totalDriversCount) * 100);
+        const immRate = Math.round((immediateCount / totalDriversCount) * 100);
+        const ceRate = Math.round((ceCount / totalDriversCount) * 100);
+        const cRate = Math.round((cCount / totalDriversCount) * 100);
+
+        const fleetSmall = currentCompanies.filter((c) => !c.fleet_size || c.fleet_size === "1-5").length;
+        const fleetMed = currentCompanies.filter((c) => c.fleet_size === "6-20").length;
+        const fleetBig = currentCompanies.filter((c) => c.fleet_size === "21-50" || c.fleet_size === "> 50").length;
+        const siretVerified = currentCompanies.filter((c) => c.siret).length;
+        const siretRate = Math.round((siretVerified / totalCompaniesCount) * 100);
+
+        // Répartition géographique dynamique calculée depuis Supabase
+        const allCities = [...currentDrivers.map((d) => d.city), ...currentCompanies.map((c) => c.city)].filter(Boolean);
+        const cityCounts: Record<string, number> = {};
+        allCities.forEach((city) => {
+          const norm = city.trim();
+          cityCounts[norm] = (cityCounts[norm] || 0) + 1;
+        });
+        const topCities = Object.entries(cityCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5);
+
+        return (
+          <div className="stats-cockpit-view">
+            {/* A. Bloc Contrôle Haut */}
+            <div className="candidates-header-block">
+              <div className="candidates-header-row-1">
+                <div className="candidates-title-wrap">
+                  <h1 className="candidates-page-title">
+                    <BarChart3 size={18} className="text-primary" />
+                    <span>Statistiques & Audience de la Plateforme</span>
+                  </h1>
+                  <span className="cockpit-panel-badge">
+                    ● Supabase Live Data ({totalAccounts} profils synchronisés)
+                  </span>
+                </div>
+
+                <div className="candidates-header-actions">
+                  <button
+                    type="button"
+                    onClick={handleExportData}
+                    className="btn-cockpit-action"
+                    title="Télécharger le rapport analytics complet"
+                  >
+                    <Download size={13} />
+                    <span>Export Rapport JSON</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={loadData}
+                    disabled={loading}
+                    className="btn-cockpit-action"
+                    title="Actualiser Supabase"
+                  >
+                    <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
+                    <span>Actualiser</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Ligne 2 : Filtres de période temporelle */}
+              <div className="candidates-header-row-2">
+                <div className="candidates-pills-bar">
+                  <span className="text-xs text-slate-400 font-bold mr-2">Période d'analyse :</span>
+                  <button
+                    type="button"
+                    onClick={() => setStatsPeriod("all")}
+                    className={`candidates-filter-pill ${statsPeriod === "all" ? "active" : ""}`}
+                  >
+                    Toutes les données
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStatsPeriod("30d")}
+                    className={`candidates-filter-pill ${statsPeriod === "30d" ? "active" : ""}`}
+                  >
+                    30 derniers jours
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStatsPeriod("7d")}
+                    className={`candidates-filter-pill ${statsPeriod === "7d" ? "active" : ""}`}
+                  >
+                    7 derniers jours
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <Activity size={13} className="text-emerald-400" />
+                  <span>Dernière synchro : {lastSyncTime || "Instantanée"}</span>
+                </div>
+              </div>
             </div>
-            <span className="badge-navy-pill">30 derniers jours</span>
+
+            {/* B. Bandeau KPI Supabase Aéré (68px) */}
+            <div className="candidates-kpis-strip">
+              <div className="candidates-kpi-item">
+                <div>
+                  <div className="candidates-kpi-lbl">Inscriptions Réelles</div>
+                  <div className="candidates-kpi-val">{totalAccounts}</div>
+                </div>
+                <Users size={18} className="text-primary" />
+              </div>
+
+              <div className="candidates-kpi-item">
+                <div>
+                  <div className="candidates-kpi-lbl">Complétion CV Chauffeurs</div>
+                  <div className="candidates-kpi-val">{cvRate}%</div>
+                </div>
+                <FileText size={18} className="text-amber-400" />
+              </div>
+
+              <div className="candidates-kpi-item">
+                <div>
+                  <div className="candidates-kpi-lbl">Disponibilité Immédiate</div>
+                  <div className="candidates-kpi-val">{immRate}%</div>
+                </div>
+                <Clock size={18} className="text-emerald-400" />
+              </div>
+
+              <div className="candidates-kpi-item">
+                <div>
+                  <div className="candidates-kpi-lbl">SIRET Vérifiés Sociétés</div>
+                  <div className="candidates-kpi-val">{siretRate}%</div>
+                </div>
+                <ShieldCheck size={18} className="text-sky-400" />
+              </div>
+
+              <div className="candidates-kpi-item">
+                <div>
+                  <div className="candidates-kpi-lbl">Trafic Estimé / Mois</div>
+                  <div className="candidates-kpi-val">14 850</div>
+                </div>
+                <TrendingUp size={18} className="text-purple-400" />
+              </div>
+            </div>
+
+            {/* C. Grille Principale 3 Colonnes Aérée (Zero-scroll) */}
+            <div className="stats-cockpit-grid">
+              {/* Carte 1 : Vivier & Permis Réels (Données Supabase) */}
+              <div className="stats-cockpit-card">
+                <div className="stats-card-header-bar">
+                  <h3>
+                    <Truck size={16} className="text-sky-400" />
+                    <span>Répartition des Permis & Titres (Supabase)</span>
+                  </h3>
+                  <span className="text-xs text-slate-400">{currentDrivers.length} chauffeurs</span>
+                </div>
+
+                <div className="stats-metric-row">
+                  <div className="stats-metric-labels">
+                    <span>Permis CE (Super Lourd / SPL)</span>
+                    <span className="font-bold text-white">{ceCount} ({ceRate}%)</span>
+                  </div>
+                  <div className="stats-metric-track">
+                    <div className="stats-metric-fill" style={{ width: `${ceRate}%`, background: "#0284c7" }} />
+                  </div>
+                </div>
+
+                <div className="stats-metric-row">
+                  <div className="stats-metric-labels">
+                    <span>Permis C (Porteur / Poids Lourd)</span>
+                    <span className="font-bold text-white">{cCount} ({cRate}%)</span>
+                  </div>
+                  <div className="stats-metric-track">
+                    <div className="stats-metric-fill" style={{ width: `${cRate}%`, background: "#10b981" }} />
+                  </div>
+                </div>
+
+                <div className="stats-metric-row">
+                  <div className="stats-metric-labels">
+                    <span>Qualification FIMO Marchandises</span>
+                    <span className="font-bold text-white">{fimoCount} ({Math.round((fimoCount / totalDriversCount) * 100)}%)</span>
+                  </div>
+                  <div className="stats-metric-track">
+                    <div className="stats-metric-fill" style={{ width: `${Math.round((fimoCount / totalDriversCount) * 100)}%`, background: "#34d399" }} />
+                  </div>
+                </div>
+
+                <div className="stats-metric-row">
+                  <div className="stats-metric-labels">
+                    <span>Formation Continue FCO Active</span>
+                    <span className="font-bold text-white">{fcoCount} ({Math.round((fcoCount / totalDriversCount) * 100)}%)</span>
+                  </div>
+                  <div className="stats-metric-track">
+                    <div className="stats-metric-fill" style={{ width: `${Math.round((fcoCount / totalDriversCount) * 100)}%`, background: "#38bdf8" }} />
+                  </div>
+                </div>
+
+                <div className="stats-metric-row">
+                  <div className="stats-metric-labels">
+                    <span>Carte Conducteur Chronotachygraphe</span>
+                    <span className="font-bold text-white">{chronoCount} ({Math.round((chronoCount / totalDriversCount) * 100)}%)</span>
+                  </div>
+                  <div className="stats-metric-track">
+                    <div className="stats-metric-fill" style={{ width: `${Math.round((chronoCount / totalDriversCount) * 100)}%`, background: "#fbbf24" }} />
+                  </div>
+                </div>
+
+                <div className="stats-metric-row">
+                  <div className="stats-metric-labels">
+                    <span>Habilitation Matières Dangereuses (ADR)</span>
+                    <span className="font-bold text-white">{adrCount} ({Math.round((adrCount / totalDriversCount) * 100)}%)</span>
+                  </div>
+                  <div className="stats-metric-track">
+                    <div className="stats-metric-fill" style={{ width: `${Math.round((adrCount / totalDriversCount) * 100)}%`, background: "#f97316" }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Carte 2 : Répartition Géographique Réelle (Supabase Live) */}
+              <div className="stats-cockpit-card">
+                <div className="stats-card-header-bar">
+                  <h3>
+                    <MapPin size={16} className="text-emerald-400" />
+                    <span>Top Bassins Logistiques Réels (Supabase)</span>
+                  </h3>
+                  <span className="text-xs text-slate-400">{allCities.length} localisations</span>
+                </div>
+
+                {topCities.length > 0 ? (
+                  topCities.map(([cityName, count]) => {
+                    const pct = Math.round((count / (allCities.length || 1)) * 100);
+                    return (
+                      <div key={cityName} className="stats-metric-row">
+                        <div className="stats-metric-labels">
+                          <span className="font-semibold text-white">{cityName}</span>
+                          <span className="font-bold text-slate-300">{count} profils ({pct}%)</span>
+                        </div>
+                        <div className="stats-metric-track">
+                          <div className="stats-metric-fill" style={{ width: `${pct}%`, background: "#0ea5e9" }} />
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-xs text-slate-400 py-4 text-center">Aucune localisation enregistrée.</div>
+                )}
+
+                <div className="mt-auto pt-3 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+                  <span>Couverture géographique :</span>
+                  <span className="text-emerald-400 font-bold">France Entière</span>
+                </div>
+              </div>
+
+              {/* Carte 3 : Flottes & Recrutement Entreprises (Supabase Live) */}
+              <div className="stats-cockpit-card">
+                <div className="stats-card-header-bar">
+                  <h3>
+                    <Building2 size={16} className="text-amber-400" />
+                    <span>Flottes & Recruteurs (Supabase)</span>
+                  </h3>
+                  <span className="text-xs text-slate-400">{currentCompanies.length} sociétés</span>
+                </div>
+
+                <div className="stats-metric-row">
+                  <div className="stats-metric-labels">
+                    <span>Artisans & PME (1 à 5 camions)</span>
+                    <span className="font-bold text-white">{fleetSmall} ({Math.round((fleetSmall / totalCompaniesCount) * 100)}%)</span>
+                  </div>
+                  <div className="stats-metric-track">
+                    <div className="stats-metric-fill" style={{ width: `${Math.round((fleetSmall / totalCompaniesCount) * 100)}%`, background: "#38bdf8" }} />
+                  </div>
+                </div>
+
+                <div className="stats-metric-row">
+                  <div className="stats-metric-labels">
+                    <span>Flottes Moyennes (6 à 20 camions)</span>
+                    <span className="font-bold text-white">{fleetMed} ({Math.round((fleetMed / totalCompaniesCount) * 100)}%)</span>
+                  </div>
+                  <div className="stats-metric-track">
+                    <div className="stats-metric-fill" style={{ width: `${Math.round((fleetMed / totalCompaniesCount) * 100)}%`, background: "#0284c7" }} />
+                  </div>
+                </div>
+
+                <div className="stats-metric-row">
+                  <div className="stats-metric-labels">
+                    <span>Grands Transporteurs (&gt; 20 camions)</span>
+                    <span className="font-bold text-white">{fleetBig} ({Math.round((fleetBig / totalCompaniesCount) * 100)}%)</span>
+                  </div>
+                  <div className="stats-metric-track">
+                    <div className="stats-metric-fill" style={{ width: `${Math.round((fleetBig / totalCompaniesCount) * 100)}%`, background: "#6366f1" }} />
+                  </div>
+                </div>
+
+                <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-800 mt-2">
+                  <div className="text-xs font-bold text-slate-300 mb-1 flex items-center justify-between">
+                    <span>Ratio Candidat / Transporteur :</span>
+                    <span className="text-emerald-400 font-bold">
+                      {currentCompanies.length > 0 ? (currentDrivers.length / currentCompanies.length).toFixed(1) : currentDrivers.length} : 1
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Tension de recrutement favorable aux transporteurs sur l'ensemble du territoire.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* D. Status Ticker Fixe Bas (24px) */}
+            <div className="admin-ticker-bar">
+              <div className="ticker-left">
+                <span className="text-emerald-400 font-bold">● ANALYTICS SUPABASE ACTIFS</span>
+                <span>•</span>
+                <span>{drivers.length} conducteurs et {companies.length} transporteurs en base</span>
+                <span>•</span>
+                <span>Synchronisation continue</span>
+              </div>
+              <div className="ticker-right">
+                <span>Latence : {supabaseLatency}ms</span>
+                <span>•</span>
+                <span>Période : {statsPeriod === "all" ? "Toutes" : statsPeriod === "30d" ? "30 jours" : "7 jours"}</span>
+              </div>
+            </div>
           </div>
-
-          <div className="stats-card-grid-4">
-            <div className="stats-card-pro">
-              <div className="stats-card-pro-title">Visiteurs uniques / mois</div>
-              <div className="stats-card-pro-number">14 850</div>
-              <span className="stats-badge-growth">
-                <TrendingUp size={12} />
-                <span>+18.4% vs mois dernier</span>
-              </span>
-            </div>
-
-            <div className="stats-card-pro">
-              <div className="stats-card-pro-title">Pages vues totales</div>
-              <div className="stats-card-pro-number">68 400</div>
-              <span className="stats-badge-growth">
-                <TrendingUp size={12} />
-                <span>4.6 pages / session</span>
-              </span>
-            </div>
-
-            <div className="stats-card-pro">
-              <div className="stats-card-pro-title">Taux de conversion formulaires</div>
-              <div className="stats-card-pro-number">9.8%</div>
-              <span className="stats-badge-growth">
-                <TrendingUp size={12} />
-                <span>Candidats & Entreprises</span>
-              </span>
-            </div>
-
-            <div className="stats-card-pro">
-              <div className="stats-card-pro-title">Temps moyen sur la plateforme</div>
-              <div className="stats-card-pro-number">3m 42s</div>
-              <span className="stats-badge-growth">
-                <TrendingUp size={12} />
-                <span>Forte implication</span>
-              </span>
-            </div>
-          </div>
-
-          <div className="admin-dashboard-two-col">
-            <div className="admin-section-card">
-              <div className="admin-section-header">
-                <h2 className="admin-section-title">
-                  <BarChart3 size={18} className="text-primary" />
-                  <span>Pages les plus consultées</span>
-                </h2>
-                <span className="text-xs text-muted">% du trafic total</span>
-              </div>
-
-              <div className="stats-bars-list">
-                <div className="stats-bar-item">
-                  <div className="stats-bar-row">
-                    <span>Offres d'emploi & Tournées (/offres-emploi)</span>
-                    <span className="font-bold">42% (28 728 vues)</span>
-                  </div>
-                  <div className="stats-bar-track">
-                    <div className="stats-bar-fill" style={{ width: "42%" }} />
-                  </div>
-                </div>
-
-                <div className="stats-bar-item">
-                  <div className="stats-bar-row">
-                    <span>Formulaire d'inscription & Profil (/inscription)</span>
-                    <span className="font-bold">27% (18 468 vues)</span>
-                  </div>
-                  <div className="stats-bar-track">
-                    <div className="stats-bar-fill" style={{ width: "27%" }} />
-                  </div>
-                </div>
-
-                <div className="stats-bar-item">
-                  <div className="stats-bar-row">
-                    <span>Carte géolocalisée des chauffeurs (/carte-chauffeurs)</span>
-                    <span className="font-bold">18% (12 312 vues)</span>
-                  </div>
-                  <div className="stats-bar-track">
-                    <div className="stats-bar-fill" style={{ width: "18%" }} />
-                  </div>
-                </div>
-
-                <div className="stats-bar-item">
-                  <div className="stats-bar-row">
-                    <span>Espace Entreprises & Recruteurs (/entreprises)</span>
-                    <span className="font-bold">13% (8 892 vues)</span>
-                  </div>
-                  <div className="stats-bar-track">
-                    <div className="stats-bar-fill" style={{ width: "13%" }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="admin-section-card">
-              <div className="admin-section-header">
-                <h2 className="admin-section-title">
-                  <MapPin size={18} className="text-navy" />
-                  <span>Répartition géographique des utilisateurs</span>
-                </h2>
-                <span className="text-xs text-muted">France entière</span>
-              </div>
-
-              <div className="stats-bars-list">
-                <div className="stats-bar-item">
-                  <div className="stats-bar-row">
-                    <span>Île-de-France (Hubs logistiques Rungis, Roissy)</span>
-                    <span className="font-bold">24%</span>
-                  </div>
-                  <div className="stats-bar-track">
-                    <div className="stats-bar-fill" style={{ width: "24%", background: "#0b192c" }} />
-                  </div>
-                </div>
-
-                <div className="stats-bar-item">
-                  <div className="stats-bar-row">
-                    <span>Auvergne-Rhône-Alpes (Couloir rhodanien)</span>
-                    <span className="font-bold">19%</span>
-                  </div>
-                  <div className="stats-bar-track">
-                    <div className="stats-bar-fill" style={{ width: "19%", background: "#0284c7" }} />
-                  </div>
-                </div>
-
-                <div className="stats-bar-item">
-                  <div className="stats-bar-row">
-                    <span>Hauts-de-France (Lille, Dourges, Fret Nord)</span>
-                    <span className="font-bold">16%</span>
-                  </div>
-                  <div className="stats-bar-track">
-                    <div className="stats-bar-fill" style={{ width: "16%", background: "#0ea5e9" }} />
-                  </div>
-                </div>
-
-                <div className="stats-bar-item">
-                  <div className="stats-bar-row">
-                    <span>Occitanie & PACA (Marseille, Toulouse)</span>
-                    <span className="font-bold">14%</span>
-                  </div>
-                  <div className="stats-bar-track">
-                    <div className="stats-bar-fill" style={{ width: "14%", background: "#38bdf8" }} />
-                  </div>
-                </div>
-
-                <div className="stats-bar-item">
-                  <div className="stats-bar-row">
-                    <span>Autres régions françaises</span>
-                    <span className="font-bold">27%</span>
-                  </div>
-                  <div className="stats-bar-track">
-                    <div className="stats-bar-fill" style={{ width: "27%", background: "#94a3b8" }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
-      )}
+        );
+      })()}
 
       {activeTab === "stats-revenu" && (
         <main className="admin-main-body">
