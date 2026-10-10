@@ -3050,14 +3050,15 @@ export default function AdminDashboardPage() {
               const priceTTC = priceHT + tva;
               return (
                 <div
-                  className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm"
+                  className="admin-modal-backdrop"
                   onClick={() => setSelectedBillingCompany(null)}
                 >
                   <div
-                    className="bg-[#0c1626] border border-[#1e324d] rounded-xl w-full max-w-lg shadow-2xl overflow-hidden"
+                    className="admin-modal-box"
+                    style={{ maxWidth: '580px' }}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="flex items-center justify-between p-4 border-b border-[#1e324d] bg-[#08101e]">
+                    <div className="admin-modal-header">
                       <div className="flex items-center gap-2">
                         <BadgeEuro size={18} className="text-emerald-400" />
                         <h3 className="font-extrabold text-white text-sm">Fiche Facturation Transporteur</h3>
@@ -3140,11 +3141,11 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
 
-                    <div className="p-3 bg-[#08101e] border-t border-[#1e324d] flex justify-end gap-2">
+                    <div className="admin-modal-footer" style={{ borderTop: '1px solid #1e324d', padding: '0.75rem 1rem' }}>
                       <button
                         type="button"
                         onClick={() => setSelectedBillingCompany(null)}
-                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs font-bold transition"
+                        className="cockpit-btn cockpit-btn-secondary"
                       >
                         Fermer
                       </button>
@@ -3650,14 +3651,15 @@ export default function AdminDashboardPage() {
               const raw = selectedContactModal.raw || {};
               return (
                 <div
-                  className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm"
+                  className="admin-modal-backdrop"
                   onClick={() => setSelectedContactModal(null)}
                 >
                   <div
-                    className="bg-[#0c1626] border border-[#1e324d] rounded-xl w-full max-w-md shadow-2xl overflow-hidden"
+                    className="admin-modal-box"
+                    style={{ maxWidth: '540px' }}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="flex items-center justify-between p-4 border-b border-[#1e324d] bg-[#08101e]">
+                    <div className="admin-modal-header">
                       <div className="flex items-center gap-2">
                         {isCand ? <Truck size={18} className="text-sky-400" /> : <Building2 size={18} className="text-emerald-400" />}
                         <h3 className="font-extrabold text-white text-sm">
@@ -3736,11 +3738,11 @@ export default function AdminDashboardPage() {
                       )}
                     </div>
 
-                    <div className="p-3 bg-[#08101e] border-t border-[#1e324d] flex justify-end">
+                    <div className="admin-modal-footer" style={{ borderTop: '1px solid #1e324d', padding: '0.75rem 1rem' }}>
                       <button
                         type="button"
                         onClick={() => setSelectedContactModal(null)}
-                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs font-bold transition"
+                        className="cockpit-btn cockpit-btn-secondary"
                       >
                         Fermer
                       </button>
