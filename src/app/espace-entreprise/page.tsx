@@ -342,7 +342,7 @@ export default function CompanyPortalPage() {
         </header>
 
         {/* Contenu principal */}
-        <main className="company-cockpit-main">
+        <main className={`company-cockpit-main ${activeNav === "profile" ? "overflow-y-auto" : ""}`}>
           {activeNav === "profile" ? (
             <div className="portal-panel-card" style={{ maxWidth: "800px" }}>
               <div className="portal-panel-card-header">

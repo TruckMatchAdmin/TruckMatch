@@ -729,82 +729,124 @@ export default function CandidatePortalPage() {
                       1. Permis de Conduire Actifs
                     </h3>
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-                      <label style={{ display: "flex", alignItems: "center", gap: "0.6rem", fontSize: "0.82rem", color: "#cbd5e1", cursor: "pointer" }}>
-                        <input
-                          type="checkbox"
-                          checked={permits.ce}
-                          onChange={(e) => setPermits({ ...permits, ce: e.target.checked })}
-                          style={{ accentColor: "#0284c7", width: 16, height: 16 }}
-                        />
-                        <span><strong>Permis CE (SPL)</strong> — Poids Lourd avec Semi-Remorque</span>
-                      </label>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.55rem" }}>
+                      <div
+                        onClick={() => setPermits({ ...permits, ce: !permits.ce })}
+                        className={`permit-checkbox-card ${permits.ce ? "checked" : ""}`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Truck size={17} className={permits.ce ? "text-sky-400" : "text-slate-500"} />
+                          <div>
+                            <div className="text-xs font-bold text-white">Permis CE (SPL)</div>
+                            <div className="text-[11px] text-slate-400">Poids Lourd avec Semi-Remorque</div>
+                          </div>
+                        </div>
+                        <span className={`permit-badge-pro ${permits.ce ? "permit-valid" : "permit-missing"}`}>
+                          {permits.ce ? "Actif" : "Non renseigné"}
+                        </span>
+                      </div>
 
-                      <label style={{ display: "flex", alignItems: "center", gap: "0.6rem", fontSize: "0.82rem", color: "#cbd5e1", cursor: "pointer" }}>
-                        <input
-                          type="checkbox"
-                          checked={permits.c}
-                          onChange={(e) => setPermits({ ...permits, c: e.target.checked })}
-                          style={{ accentColor: "#0284c7", width: 16, height: 16 }}
-                        />
-                        <span><strong>Permis C (PL)</strong> — Véhicule Porteur Rigide &gt; 3.5T</span>
-                      </label>
+                      <div
+                        onClick={() => setPermits({ ...permits, c: !permits.c })}
+                        className={`permit-checkbox-card ${permits.c ? "checked" : ""}`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Truck size={17} className={permits.c ? "text-emerald-400" : "text-slate-500"} />
+                          <div>
+                            <div className="text-xs font-bold text-white">Permis C (PL)</div>
+                            <div className="text-[11px] text-slate-400">Véhicule Porteur Rigide &gt; 3.5T</div>
+                          </div>
+                        </div>
+                        <span className={`permit-badge-pro ${permits.c ? "permit-valid" : "permit-missing"}`}>
+                          {permits.c ? "Actif" : "Non renseigné"}
+                        </span>
+                      </div>
 
-                      <label style={{ display: "flex", alignItems: "center", gap: "0.6rem", fontSize: "0.82rem", color: "#cbd5e1", cursor: "pointer" }}>
-                        <input
-                          type="checkbox"
-                          checked={permits.be}
-                          onChange={(e) => setPermits({ ...permits, be: e.target.checked })}
-                          style={{ accentColor: "#0284c7", width: 16, height: 16 }}
-                        />
-                        <span><strong>Permis BE</strong> — Véhicule Léger + Remorque lourde</span>
-                      </label>
+                      <div
+                        onClick={() => setPermits({ ...permits, be: !permits.be })}
+                        className={`permit-checkbox-card ${permits.be ? "checked" : ""}`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Award size={17} className={permits.be ? "text-amber-400" : "text-slate-500"} />
+                          <div>
+                            <div className="text-xs font-bold text-white">Permis BE</div>
+                            <div className="text-[11px] text-slate-400">Véhicule Léger + Remorque lourde</div>
+                          </div>
+                        </div>
+                        <span className={`permit-badge-pro ${permits.be ? "permit-valid" : "permit-missing"}`}>
+                          {permits.be ? "Actif" : "Non renseigné"}
+                        </span>
+                      </div>
                     </div>
 
                     <h3 style={{ fontSize: "0.85rem", fontWeight: 800, color: "#38bdf8", marginTop: "1.25rem", marginBottom: "0.75rem" }}>
                       2. Habilitations & Cartes Professionnelles
                     </h3>
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-                      <label style={{ display: "flex", alignItems: "center", gap: "0.6rem", fontSize: "0.82rem", color: "#cbd5e1", cursor: "pointer" }}>
-                        <input
-                          type="checkbox"
-                          checked={permits.chrono_card}
-                          onChange={(e) => setPermits({ ...permits, chrono_card: e.target.checked })}
-                          style={{ accentColor: "#0284c7", width: 16, height: 16 }}
-                        />
-                        <span><strong>Carte Conducteur Chronotachygraphe</strong> (Valide)</span>
-                      </label>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.55rem" }}>
+                      <div
+                        onClick={() => setPermits({ ...permits, chrono_card: !permits.chrono_card })}
+                        className={`permit-checkbox-card ${permits.chrono_card ? "checked" : ""}`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <CheckCircle2 size={17} className={permits.chrono_card ? "text-amber-400" : "text-slate-500"} />
+                          <div>
+                            <div className="text-xs font-bold text-white">Carte Chronotachygraphe</div>
+                            <div className="text-[11px] text-slate-400">Carte conducteur à puce valide</div>
+                          </div>
+                        </div>
+                        <span className={`permit-badge-pro ${permits.chrono_card ? "permit-valid" : "permit-missing"}`}>
+                          {permits.chrono_card ? "Valide" : "À renouveler"}
+                        </span>
+                      </div>
 
-                      <label style={{ display: "flex", alignItems: "center", gap: "0.6rem", fontSize: "0.82rem", color: "#cbd5e1", cursor: "pointer" }}>
-                        <input
-                          type="checkbox"
-                          checked={permits.fimo}
-                          onChange={(e) => setPermits({ ...permits, fimo: e.target.checked })}
-                          style={{ accentColor: "#0284c7", width: 16, height: 16 }}
-                        />
-                        <span><strong>FIMO Marchandises</strong> (Qualification initiale)</span>
-                      </label>
+                      <div
+                        onClick={() => setPermits({ ...permits, fimo: !permits.fimo })}
+                        className={`permit-checkbox-card ${permits.fimo ? "checked" : ""}`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <FileText size={17} className={permits.fimo ? "text-emerald-400" : "text-slate-500"} />
+                          <div>
+                            <div className="text-xs font-bold text-white">FIMO Marchandises</div>
+                            <div className="text-[11px] text-slate-400">Formation Initiale Minimale Obligatoire</div>
+                          </div>
+                        </div>
+                        <span className={`permit-badge-pro ${permits.fimo ? "permit-valid" : "permit-missing"}`}>
+                          {permits.fimo ? "Obtenu" : "Non renseigné"}
+                        </span>
+                      </div>
 
-                      <label style={{ display: "flex", alignItems: "center", gap: "0.6rem", fontSize: "0.82rem", color: "#cbd5e1", cursor: "pointer" }}>
-                        <input
-                          type="checkbox"
-                          checked={permits.fco}
-                          onChange={(e) => setPermits({ ...permits, fco: e.target.checked })}
-                          style={{ accentColor: "#0284c7", width: 16, height: 16 }}
-                        />
-                        <span><strong>FCO Continue</strong> (À jour &lt; 5 ans)</span>
-                      </label>
+                      <div
+                        onClick={() => setPermits({ ...permits, fco: !permits.fco })}
+                        className={`permit-checkbox-card ${permits.fco ? "checked" : ""}`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <RefreshCw size={17} className={permits.fco ? "text-sky-400" : "text-slate-500"} />
+                          <div>
+                            <div className="text-xs font-bold text-white">FCO Marchandises</div>
+                            <div className="text-[11px] text-slate-400">Formation Continue &lt; 5 ans</div>
+                          </div>
+                        </div>
+                        <span className={`permit-badge-pro ${permits.fco ? "permit-valid" : "permit-missing"}`}>
+                          {permits.fco ? "À jour" : "À renouveler"}
+                        </span>
+                      </div>
 
-                      <label style={{ display: "flex", alignItems: "center", gap: "0.6rem", fontSize: "0.82rem", color: "#cbd5e1", cursor: "pointer" }}>
-                        <input
-                          type="checkbox"
-                          checked={permits.adr}
-                          onChange={(e) => setPermits({ ...permits, adr: e.target.checked })}
-                          style={{ accentColor: "#0284c7", width: 16, height: 16 }}
-                        />
-                        <span><strong>Certificat ADR Colis</strong> (Matières Dangereuses)</span>
-                      </label>
+                      <div
+                        onClick={() => setPermits({ ...permits, adr: !permits.adr })}
+                        className={`permit-checkbox-card ${permits.adr ? "checked" : ""}`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <ShieldCheck size={17} className={permits.adr ? "text-purple-400" : "text-slate-500"} />
+                          <div>
+                            <div className="text-xs font-bold text-white">Certificat ADR (Matières Dangereuses)</div>
+                            <div className="text-[11px] text-slate-400">Colis et / ou Citerne</div>
+                          </div>
+                        </div>
+                        <span className={`permit-badge-pro ${permits.adr ? "permit-valid" : "permit-missing"}`}>
+                          {permits.adr ? "Actif" : "Non titulaire"}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -1108,7 +1150,7 @@ export default function CandidatePortalPage() {
           {/* ONGLET 5 : MESSAGERIE DIRECTE                                   */}
           {/* ============================================================== */}
           {activeTab === "messages" && (
-            <div style={{ display: "flex", gap: "1rem", height: "calc(100vh - 120px)" }}>
+            <div style={{ display: "flex", gap: "1rem", height: "calc(100vh - 135px)", minHeight: "460px" }}>
               {/* Liste recruteurs */}
               <div
                 style={{
