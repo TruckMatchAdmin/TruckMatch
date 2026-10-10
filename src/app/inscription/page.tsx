@@ -999,8 +999,14 @@ function InscriptionContent() {
                 <header className="form-section-header">
                   <div className="step-number-badge">1</div>
                   <div className="step-header-text">
-                    <h2 className="step-title">Identification de l'Entreprise (Registre National)</h2>
-                    <p className="step-subtitle">Recherche certifiée connectée en direct aux serveurs du gouvernement français (DINUM / INSEE).</p>
+                    <div className="step-header-title-row">
+                      <h2 className="step-title">Identification de l'Entreprise (Registre National)</h2>
+                      <span className="step-pill-badge">Vérification Officielle RNE</span>
+                    </div>
+                    <p className="step-subtitle">
+                      <span className="live-pulse-dot" />
+                      <span>Recherche certifiée connectée en direct aux serveurs du gouvernement français (DINUM / INSEE).</span>
+                    </p>
                   </div>
                 </header>
 

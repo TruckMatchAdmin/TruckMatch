@@ -4508,58 +4508,96 @@ p {
 
 .form-section-card {
   background-color: #ffffff;
-  border-radius: var(--radius-2xl);
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+  border-radius: 20px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 10px 30px -4px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03);
   overflow: hidden;
-  transition: border-color 0.2s ease;
+  transition: all 0.25s ease;
 }
 
 .form-section-card:hover {
   border-color: #cbd5e1;
+  box-shadow: 0 14px 35px -4px rgba(15, 23, 42, 0.08);
 }
 
 .form-section-header {
   display: flex;
   align-items: center;
   gap: 1.25rem;
-  padding: 1.4rem 2rem;
-  background-color: #f8fafc;
+  padding: 1.5rem 2rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   border-bottom: 1px solid #e2e8f0;
 }
 
 .step-number-badge {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: #0080ff;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0080ff 0%, #0055d4 100%);
   color: #ffffff;
   font-weight: 850;
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 128, 255, 0.3);
+  box-shadow: 0 4px 14px rgba(0, 128, 255, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.3);
 }
 
 .step-header-text {
   flex: 1;
 }
 
+.step-header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .step-title {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 850;
-  color: var(--color-navy);
+  color: #0f172a;
   margin: 0;
   line-height: 1.25;
 }
 
+.step-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #0284c7;
+  background: #e0f2fe;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(2, 132, 199, 0.2);
+}
+
 .step-subtitle {
-  font-size: 0.84rem;
-  color: var(--color-text-muted);
-  margin: 2px 0 0;
-  line-height: 1.4;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0.35rem 0 0;
+  line-height: 1.45;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  display: inline-block;
+  flex-shrink: 0;
+  animation: pulse 2s infinite;
 }
 
 .form-section-body {
@@ -4575,9 +4613,10 @@ p {
     padding: 1.25rem;
   }
   .step-number-badge {
-    width: 32px;
-    height: 32px;
-    font-size: 0.95rem;
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    border-radius: 10px;
   }
 }
 
@@ -4675,6 +4714,532 @@ p {
   font-size: 0.88rem;
   color: #166534;
   line-height: 1.35;
+}
+
+/* ==========================================================================
+   Siret & Address Autocomplete Modules (Vérification Gouvernementale RNE / INSEE)
+   ========================================================================== */
+.siret-autocomplete-wrapper,
+.address-autocomplete-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.siret-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.badge-gouv-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.28rem 0.75rem;
+  border-radius: 9999px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  font-size: 0.76rem;
+  font-weight: 750;
+  color: #1d4ed8;
+  box-shadow: 0 1px 3px rgba(30, 64, 175, 0.08);
+}
+
+.badge-gouv-flag {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.badge-gouv-title {
+  letter-spacing: -0.01em;
+}
+
+.badge-gouv-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
+  display: inline-block;
+  animation: pulse 2s infinite;
+}
+
+.input-with-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-icon-left {
+  position: absolute;
+  left: 1.15rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.form-input-pro.input-has-left-icon,
+.form-input.input-has-left-icon {
+  padding-left: 3.1rem;
+  padding-right: 3.25rem;
+  height: 52px;
+  font-size: 0.96rem;
+  border-radius: 12px;
+}
+
+.form-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 1.1rem;
+  border-radius: var(--radius-lg, 12px);
+  border: 1.5px solid #cbd5e1;
+  background-color: #ffffff;
+  font-size: 0.95rem;
+  color: var(--color-text, #0f172a);
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #0080ff;
+  box-shadow: 0 0 0 4px rgba(0, 128, 255, 0.12);
+}
+
+.form-input.input-valid-state,
+.form-input-pro.input-valid-state {
+  border-color: #10b981;
+  background-color: #f0fdf4;
+}
+
+.input-right-indicator {
+  position: absolute;
+  right: 1.1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.btn-clear-input {
+  background: #f1f5f9;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-clear-input:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.siret-helper-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.siret-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Dropdown des résultats */
+.address-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 60;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  list-style: none;
+  padding: 0.4rem 0;
+  margin: 0;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.address-dropdown-header {
+  padding: 0.6rem 1.15rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 750;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.address-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.15rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.address-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.address-dropdown-item:hover {
+  background: #f0f7ff;
+}
+
+.address-item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #e0f2fe;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.address-item-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.address-item-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 750;
+  color: #0f172a;
+  margin-bottom: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.company-result-name {
+  color: #0f172a;
+  font-weight: 750;
+}
+
+.badge-status-active {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.badge-dot-active {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16a34a;
+  display: inline-block;
+}
+
+.badge-status-closed {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.address-item-subtitle {
+  font-size: 0.82rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.siret-badge-pill {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #334155;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+}
+
+.naf-badge-pill {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.74rem;
+  font-weight: 700;
+  background: #e0e7ff;
+  color: #3730a3;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+}
+
+.address-item-arrow {
+  color: #94a3b8;
+  transition: transform 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.address-dropdown-item:hover .address-item-arrow {
+  transform: translateX(4px);
+  color: #0080ff;
+}
+
+/* Carte Entreprise Certifiée */
+.company-verified-card {
+  margin-top: 1.4rem;
+  padding: 1.5rem;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #f0fdf4 0%, #ffffff 100%);
+  border: 1.5px solid #86efac;
+  box-shadow: 0 10px 25px -5px rgba(22, 163, 74, 0.1);
+}
+
+.verified-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.verified-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.verified-shield-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #dcfce7;
+  color: #15803d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.verified-main-title {
+  font-size: 0.98rem;
+  font-weight: 850;
+  color: #14532d;
+  display: flex;
+  align-items: center;
+}
+
+.verified-sub-title {
+  font-size: 0.8rem;
+  color: #166534;
+  margin-top: 0.2rem;
+}
+
+.btn-reset-company {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-reset-company:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.verified-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .verified-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.verified-grid-card {
+  background: #ffffff;
+  border: 1px solid #dcfce7;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+}
+
+.verified-card-span-2 {
+  grid-column: span 2;
+}
+
+@media (max-width: 640px) {
+  .verified-card-span-2 {
+    grid-column: span 1;
+  }
+}
+
+.verified-label {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+.verified-val-title {
+  font-size: 1.05rem;
+  font-weight: 850;
+  color: #0f172a;
+}
+
+.verified-val-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.95rem;
+  font-weight: 750;
+  color: #1e293b;
+  letter-spacing: 0.02em;
+}
+
+.verified-val-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.verified-card-footer {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid #dcfce7;
+}
+
+/* Missing Utilities for Inscription */
+.grid-2-cols {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .grid-2-cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gap-1\.5 {
+  gap: 0.375rem;
+}
+
+.max-w-3xl {
+  max-width: 48rem;
+}
+
+.py-6 {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.mt-6 {
+  margin-top: 1.5rem;
+}
+
+.profile-card-content {
+  flex: 1;
+}
+
+.text-danger {
+  color: #ef4444;
+}
+
+.text-success {
+  color: #10b981;
+}
+
+.text-navy {
+  color: var(--color-navy, #0f172a);
+}
+
+.text-gradient-primary {
+  background: linear-gradient(135deg, #0080ff 0%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.badge-success {
+  background: #dcfce7;
+  color: #15803d;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
+.ml-1 {
+  margin-left: 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .sm\:inline {
+    display: inline !important;
+  }
 }
 
 /* ==========================================================================

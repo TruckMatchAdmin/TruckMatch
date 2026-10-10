@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { MapPin, Search, Loader2, CheckCircle2, ChevronRight } from "lucide-react";
+import { MapPin, Search, Loader2, CheckCircle2, ChevronRight, Sparkles } from "lucide-react";
 
 interface AddressResult {
   label: string;
@@ -111,17 +111,26 @@ export function AddressAutocomplete({
   };
 
   return (
-    <div className="address-autocomplete-wrapper" ref={containerRef} style={{ position: "relative" }}>
-      <label className="form-label">
-        <span className="flex items-center gap-1.5">
-          <MapPin size={15} className="text-primary" />
-          <span>{label}</span>
-          {required && <span className="text-danger">*</span>}
-        </span>
-        <span className="badge-gouv-pill">Officiel Data.gouv.fr</span>
-      </label>
+    <div className="address-autocomplete-wrapper" ref={containerRef}>
+      <div className="siret-label-row">
+        <label className="form-label-pro">
+          <span className="flex items-center gap-1.5">
+            <MapPin size={16} className="text-primary" />
+            <span>{label}</span>
+            {required && <span className="required-star">*</span>}
+          </span>
+        </label>
+        <div className="badge-gouv-pill">
+          <span className="badge-gouv-flag" aria-hidden="true">🇫🇷</span>
+          <span className="badge-gouv-title">Base Adresse Nationale (BAN)</span>
+          <span className="badge-gouv-dot" />
+        </div>
+      </div>
 
       <div className="input-with-icon-wrap">
+        <div className="input-icon-left" aria-hidden="true">
+          <MapPin size={18} className="text-primary" />
+        </div>
         <input
           type="text"
           value={query}
@@ -138,14 +147,20 @@ export function AddressAutocomplete({
           }}
           placeholder={placeholder}
           required={required}
-          className={`form-input ${selectedAddress ? "input-valid-state" : ""}`}
+          className={`form-input-pro input-has-left-icon ${selectedAddress ? "input-valid-state" : ""}`}
           autoComplete="off"
         />
         <div className="input-right-indicator">
           {loading ? (
-            <Loader2 size={16} className="animate-spin text-primary" />
+            <div className="flex items-center gap-1 text-xs text-primary font-semibold">
+              <Loader2 size={16} className="animate-spin" />
+              <span className="hidden sm:inline">Localisation...</span>
+            </div>
           ) : selectedAddress ? (
-            <CheckCircle2 size={17} className="text-success" />
+            <div className="flex items-center gap-1 text-xs text-success font-bold">
+              <CheckCircle2 size={18} />
+              <span className="hidden sm:inline">Vérifiée</span>
+            </div>
           ) : (
             <Search size={16} className="text-muted" />
           )}
@@ -155,6 +170,10 @@ export function AddressAutocomplete({
       {/* Dropdown Suggestions */}
       {isOpen && results.length > 0 && (
         <ul className="address-dropdown-menu">
+          <li className="address-dropdown-header">
+            <span>Adresses officielles certifiées ({results.length})</span>
+            <span className="text-xs text-muted">Sélectionnez votre localisation exacte</span>
+          </li>
           {results.map((item, idx) => (
             <li
               key={idx}
@@ -162,13 +181,13 @@ export function AddressAutocomplete({
               className="address-dropdown-item"
             >
               <div className="address-item-icon">
-                <MapPin size={16} />
+                <MapPin size={18} />
               </div>
               <div className="address-item-text">
                 <div className="address-item-title">{item.label}</div>
                 <div className="address-item-subtitle">{item.context}</div>
               </div>
-              <ChevronRight size={14} className="address-item-arrow" />
+              <ChevronRight size={16} className="address-item-arrow" />
             </li>
           ))}
         </ul>
