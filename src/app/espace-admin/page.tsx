@@ -1070,21 +1070,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* D. Status Ticker Fixe Bas (24px) */}
-            <div className="admin-ticker-bar">
-              <div className="ticker-left">
-                <span className="text-emerald-400 font-bold">● COCKPIT ACTIF</span>
-                <span>•</span>
-                <span>Supervision centralisée temps réel TruckMatch</span>
-                <span>•</span>
-                <span>Base connectée : Supabase Cloud (azxwqcdnwkolodxwsqoq)</span>
-              </div>
-              <div className="ticker-right">
-                <span>Latence Supabase : {supabaseLatency}ms</span>
-                <span>•</span>
-                <span>Dernière synchro : {lastSyncTime}</span>
-              </div>
-            </div>
+
           </div>
         );
       })()}
@@ -1389,18 +1375,7 @@ export default function AdminDashboardPage() {
             )}
           </div>
 
-          {/* D. Status Ticker Fixe Bas (24px) */}
-          <div className="cockpit-status-ticker">
-            <div className="ticker-left">
-              <span className="text-emerald-400 font-bold">● MODULE CANDIDATS</span>
-              <span>{filteredCandidates.length} affichés sur {drivers.length}</span>
-              <span>Base Supabase Synchronisée</span>
-            </div>
-            <div className="ticker-right">
-              <span>Clic sur disponibilité = Sauvegarde instantanée</span>
-              <span>Latence: {supabaseLatency}ms</span>
-            </div>
-          </div>
+
         </div>
       )}
 
@@ -1915,19 +1890,7 @@ export default function AdminDashboardPage() {
             )}
           </div>
 
-          {/* D. Status Ticker Fixe Bas (24px) */}
-          <div className="admin-ticker-bar">
-            <div className="ticker-left">
-              <span className="text-emerald-400 font-bold">● MODULE ENTREPRISES CONNECTÉ</span>
-              <span>•</span>
-              <span>{companies.length} transporteurs officiels vérifiés</span>
-            </div>
-            <div className="ticker-right">
-              <span>Latence : {supabaseLatency}ms</span>
-              <span>•</span>
-              <span>Supabase Direct Sync</span>
-            </div>
-          </div>
+
         </div>
       )}
 
@@ -2391,21 +2354,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* D. Status Ticker Fixe Bas (24px) */}
-            <div className="admin-ticker-bar">
-              <div className="ticker-left">
-                <span className="text-emerald-400 font-bold">● ANALYTICS AUDIENCE ACTIFS</span>
-                <span>•</span>
-                <span>Suivi d'audience et de parcours utilisateur en temps réel</span>
-                <span>•</span>
-                <span>Période : {activeData.periodTitle}</span>
-              </div>
-              <div className="ticker-right">
-                <span>Latence Supabase : {supabaseLatency}ms</span>
-                <span>•</span>
-                <span>Nginx / TruckMatch Pro Core</span>
-              </div>
-            </div>
+
           </div>
         );
       })()}
@@ -3043,21 +2992,7 @@ export default function AdminDashboardPage() {
               );
             })()}
 
-            {/* E. Status Ticker Fixe Bas (24px) */}
-            <div className="admin-ticker-bar">
-              <div className="ticker-left">
-                <span className="text-emerald-400 font-bold">● FACTURATION SAAS DIRECTE CONFORME</span>
-                <span>•</span>
-                <span>Prélèvement mensuel récurrent sans commission salariale</span>
-                <span>•</span>
-                <span>Taux de recouvrement : 98.4%</span>
-              </div>
-              <div className="ticker-right">
-                <span>Latence Supabase : {supabaseLatency}ms</span>
-                <span>•</span>
-                <span>Dernière synchro : {lastSyncTime}</span>
-              </div>
-            </div>
+
           </div>
         );
       })()}
@@ -3653,21 +3588,7 @@ export default function AdminDashboardPage() {
               );
             })()}
 
-            {/* D. Status Ticker Fixe Bas (24px) */}
-            <div className="admin-ticker-bar">
-              <div className="ticker-left">
-                <span className="text-emerald-400 font-bold">● PASSERELLE MESSAGERIE SÉCURISÉE ACTIF</span>
-                <span>•</span>
-                <span>Échanges directs avec les candidats et entreprises sans intermédiaire</span>
-                <span>•</span>
-                <span>Contact actif : {activeRecipient ? activeRecipient.name : "Aucun"}</span>
-              </div>
-              <div className="ticker-right">
-                <span>Latence Supabase : {supabaseLatency}ms</span>
-                <span>•</span>
-                <span>Dernière synchro : {lastSyncTime}</span>
-              </div>
-            </div>
+
           </div>
         );
       })()}
