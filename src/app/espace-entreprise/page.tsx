@@ -69,6 +69,7 @@ export default function CompanyPortalPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "ce" | "c" | "immediate" | "resume" | "adr">("all");
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const [activeNav, setActiveNav] = useState<"drivers" | "profile">("drivers");
 
   // Modal Déposer un besoin express
   const [isPostJobModalOpen, setIsPostJobModalOpen] = useState(false);
@@ -186,83 +187,246 @@ export default function CompanyPortalPage() {
 
   return (
     <div className="company-cockpit-wrapper">
-      {/* 1. TOPBAR COCKPIT ENTREPRISE (48px) */}
-      <header className="company-cockpit-header">
-        <div className="company-cockpit-brand">
-          <Link href="/" className="logo-text">
+      {/* ============================================================== */}
+      {/* 1. SIDEBAR GAUCHE (MENU À GAUCHE)                              */}
+      {/* ============================================================== */}
+      <aside className="portal-sidebar-left">
+        {/* Brand / Logo */}
+        <div className="portal-sidebar-brand">
+          <Link href="/" className="brand-title">
             Truck<span>Match</span>
           </Link>
-          <span className="company-cockpit-badge">
-            <ShieldCheck size={13} />
-            <span>Cockpit Recruteur Entreprise</span>
-          </span>
+          <span className="portal-role-tag tag-entreprise">Recruteur Pro</span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="company-cockpit-profile hidden md:flex">
-            <Building2 size={14} className="text-sky-400" />
-            <span>{company?.company_name || user?.name || "Entreprise de Transport"}</span>
-            <span className="text-xs text-slate-400 font-mono">
-              SIRET: {company?.siret || "Vérifié"}
-            </span>
+        {/* Profil Entreprise */}
+        <div className="portal-sidebar-user-box">
+          <div className="portal-sidebar-user-row">
+            <div className="portal-avatar-ring avatar-company">
+              <Building2 size={20} />
+              <span className="portal-avatar-dot online" title="Compte Recruteur Vérifié" />
+            </div>
+            <div className="portal-user-meta">
+              <h2 className="portal-user-name">
+                {company?.company_name || user?.name || "Entreprise de Transport"}
+              </h2>
+              <div className="portal-user-sub">
+                <ShieldCheck size={11} className="text-emerald-400" />
+                <span>SIRET: {company?.siret || "Vérifié"}</span>
+              </div>
+            </div>
           </div>
 
-          <Link href="/carte-chauffeurs" className="btn-cockpit-action" title="Voir sur carte de France">
-            <MapPin size={13} className="text-sky-400" />
-            <span className="hidden sm:inline">Carte Chauffeurs</span>
+          <div className="portal-status-toggle-btn mt-2 cursor-default">
+            <span className="flex items-center gap-1.5">
+              <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#10b981" }} />
+              <span>Flotte Active &amp; Vérifiée</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Menu Navigation Sidebar */}
+        <nav className="portal-sidebar-nav-section">
+          <span className="portal-sidebar-nav-label">MODULES RECRUTEUR</span>
+
+          <button
+            type="button"
+            onClick={() => setActiveNav("drivers")}
+            className={`portal-nav-btn ${activeNav === "drivers" ? "active-emerald" : ""}`}
+          >
+            <Users className="nav-icon" />
+            <span className="nav-title">Vivier Chauffeurs Direct</span>
+            <span className="nav-badge">{drivers.length}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsPostJobModalOpen(true)}
+            className="portal-nav-btn"
+          >
+            <Plus className="nav-icon text-emerald-400" />
+            <span className="nav-title">Publier un Besoin</span>
+          </button>
+
+          <Link href="/carte-chauffeurs" className="portal-nav-btn">
+            <MapPin className="nav-icon text-sky-400" />
+            <span className="nav-title">Carte Chauffeurs de France</span>
+            <ExternalLink size={12} className="text-slate-400 ml-auto" />
           </Link>
 
-          <Link href="/" className="btn-cockpit-action" title="Consulter le site public">
+          <button
+            type="button"
+            onClick={() => setActiveNav("profile")}
+            className={`portal-nav-btn ${activeNav === "profile" ? "active-emerald" : ""}`}
+          >
+            <Building2 className="nav-icon" />
+            <span className="nav-title">Profil Transporteur &amp; Flotte</span>
+          </button>
+        </nav>
+
+        {/* KPI Box dans Sidebar */}
+        <div className="portal-sidebar-kpi-box">
+          <div className="portal-sidebar-kpi-item">
+            <span>Permis CE (SPL) :</span>
+            <strong className="text-sky-400">{stats.ceDrivers}</strong>
+          </div>
+          <div className="portal-sidebar-kpi-item">
+            <span>Permis C (PL) :</span>
+            <strong>{stats.cDrivers}</strong>
+          </div>
+          <div className="portal-sidebar-kpi-item">
+            <span>Disponibles immédiats :</span>
+            <strong className="text-emerald-400">{stats.immediate}</strong>
+          </div>
+          <div className="portal-sidebar-kpi-item">
+            <span>Avec CV PDF :</span>
+            <strong className="text-purple-400">{stats.withResume}</strong>
+          </div>
+        </div>
+
+        {/* Footer Sidebar */}
+        <div className="portal-sidebar-footer">
+          <Link href="/" className="portal-footer-link">
             <ExternalLink size={13} />
-            <span className="hidden sm:inline">Site Public</span>
+            <span>Consulter le site public</span>
           </Link>
-
-          <button onClick={handleLogout} className="btn-logout-pro" title="Se déconnecter">
+          <button type="button" onClick={handleLogout} className="portal-footer-link logout-btn">
             <LogOut size={13} />
             <span>Sortie</span>
           </button>
         </div>
-      </header>
+      </aside>
 
-      {/* 2. CONTENU PRINCIPAL ZERO-SCROLL */}
-      <main className="company-cockpit-main">
-        {/* A. Bloc Contrôle Haut : Titre + Actions (Ligne 1) & Recherche + Filtres (Ligne 2) */}
-        <div className="candidates-header-block">
-          {/* Ligne 1 : Titre + Actions */}
-          <div className="candidates-header-row-1">
-            <div className="candidates-title-wrap">
-              <h1 className="candidates-page-title">
-                <Truck size={20} className="text-sky-400" />
-                <span>Vivier Conducteurs Disponibles en Direct</span>
-              </h1>
-              <span className="cockpit-panel-badge">
-                ● Supabase Live : {drivers.length} conducteurs certifiés
+      {/* ============================================================== */}
+      {/* 2. ZONE PRINCIPALE COCKPIT DROITE                              */}
+      {/* ============================================================== */}
+      <div className="portal-main-area">
+        {/* Topbar compacte */}
+        <header className="portal-main-topbar">
+          <div className="portal-main-topbar-left">
+            <h1 className="portal-topbar-page-title">
+              <Truck size={18} className="text-emerald-400" />
+              <span>
+                {activeNav === "drivers"
+                  ? "Vivier Conducteurs Disponibles en Direct"
+                  : "Fiche Profil Entreprise & Flotte"}
               </span>
-            </div>
-
-            <div className="candidates-header-actions">
-              <button
-                type="button"
-                onClick={() => setIsPostJobModalOpen(true)}
-                className="btn-cockpit-action btn-cockpit-action-primary"
-                title="Déposer un besoin de chauffeur pour votre flotte"
-              >
-                <Plus size={14} />
-                <span>Publier un Besoin Chauffeur</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={loadCompanyData}
-                disabled={loading}
-                className="btn-cockpit-action"
-                title="Actualiser depuis Supabase"
-              >
-                <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
-                <span>Actualiser</span>
-              </button>
-            </div>
+            </h1>
+            <span className="portal-status-live-pill">
+              ● Supabase Live : {drivers.length} conducteurs certifiés
+            </span>
           </div>
+
+          <div className="portal-main-topbar-right">
+            <button
+              type="button"
+              onClick={() => setIsPostJobModalOpen(true)}
+              className="cockpit-btn cockpit-btn-emerald cockpit-btn-sm"
+              title="Déposer un besoin de chauffeur pour votre flotte"
+            >
+              <Plus size={13} />
+              <span>Publier un Besoin</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={loadCompanyData}
+              disabled={loading}
+              className="cockpit-btn cockpit-btn-secondary cockpit-btn-sm"
+              title="Actualiser depuis Supabase"
+            >
+              <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
+              <span>Actualiser</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Contenu principal */}
+        <main className="company-cockpit-main">
+          {activeNav === "profile" ? (
+            <div className="portal-panel-card" style={{ maxWidth: "800px" }}>
+              <div className="portal-panel-card-header">
+                <h2 className="portal-panel-card-title">
+                  <Building2 size={18} className="text-emerald-400" />
+                  <span>Détails de l'Entreprise de Transport</span>
+                </h2>
+                <span className="permit-badge-pro permit-valid">SIRET Vérifié (URSSAF)</span>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1.25rem" }}>
+                <div>
+                  <div className="portal-form-group">
+                    <label className="portal-form-label">Raison Sociale</label>
+                    <input
+                      type="text"
+                      value={company?.company_name || user?.name || "Entreprise de Transport"}
+                      readOnly
+                      className="portal-form-input"
+                    />
+                  </div>
+
+                  <div className="portal-form-group">
+                    <label className="portal-form-label">Numéro SIRET</label>
+                    <input
+                      type="text"
+                      value={company?.siret || "892 451 902 00024"}
+                      readOnly
+                      className="portal-form-input"
+                    />
+                  </div>
+
+                  <div className="portal-form-group">
+                    <label className="portal-form-label">Taille de Flotte</label>
+                    <input
+                      type="text"
+                      value={company?.fleet_size || "10 - 50 Poids Lourds"}
+                      readOnly
+                      className="portal-form-input"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="portal-form-group">
+                    <label className="portal-form-label">Contact Exploitation</label>
+                    <input
+                      type="email"
+                      value={company?.email || user?.email || "exploitation@transport.fr"}
+                      readOnly
+                      className="portal-form-input"
+                    />
+                  </div>
+
+                  <div className="portal-form-group">
+                    <label className="portal-form-label">Téléphone Direction</label>
+                    <input
+                      type="tel"
+                      value={company?.phone || user?.phone || "04 78 •• •• ••"}
+                      readOnly
+                      className="portal-form-input"
+                    />
+                  </div>
+
+                  <div className="portal-form-group">
+                    <label className="portal-form-label">Siège & Dépôt Principal</label>
+                    <input
+                      type="text"
+                      value={`${company?.postal_code || ""} ${company?.city || "France"}`.trim()}
+                      readOnly
+                      className="portal-form-input"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: "1rem", padding: "0.75rem", background: "#060d17", borderRadius: "8px", border: "1px solid #14243a", fontSize: "0.78rem", color: "#94a3b8" }}>
+                ✓ Votre compte entreprise bénéficie d'un accès direct illimité au vivier de conducteurs qualifiés sans intermédiaire.
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* A. Bloc Contrôle Haut : Recherche + Filtres */}
+              <div className="candidates-header-block" style={{ padding: "0.5rem 0.75rem" }}>
 
           {/* Ligne 2 : Recherche sombre + Pilules filtres claires */}
           <div className="candidates-header-row-2">
@@ -525,22 +689,10 @@ export default function CompanyPortalPage() {
           )}
         </div>
 
-        {/* D. Status Ticker Fixe Bas (24px) */}
-        <div className="admin-ticker-bar">
-          <div className="ticker-left">
-            <span className="text-emerald-400 font-bold">● VIVIER SUPABASE ACTIF</span>
-            <span>•</span>
-            <span>{drivers.length} conducteurs certifiés prêts à l'embauche</span>
-            <span>•</span>
-            <span>0% commission sur vos recrutements</span>
-          </div>
-          <div className="ticker-right">
-            <span>Latence Supabase : 24ms</span>
-            <span>•</span>
-            <span>TruckMatch Recruteur Pro</span>
-          </div>
-        </div>
-      </main>
+            </>
+          )}
+        </main>
+      </div>
 
       {/* MODALE 1 : FICHE DOSSIER CANDIDAT COMPLET */}
       {selectedDriver && (
