@@ -68,6 +68,48 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, driver: inserted?.[0] });
     }
 
+    // 4c. APPROUVER UNE OFFRE D'EMPLOI ET LA PUBLIER DIRECTEMENT SUR LE SITE
+    if (action === "approve_job" && id) {
+      const { error } = await supabaseAdmin
+        .from("jobs")
+        .update({
+          status: "approved",
+          is_active: true,
+          published_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+      if (error) throw error;
+      return NextResponse.json({
+        success: true,
+        message: "L'offre d'emploi a été approuvée avec succès. Elle est désormais visible publiquement sur truckmatch.fr/offres-emploi.",
+      });
+    }
+
+    // 4d. REJETER OU SUSPENDRE UNE OFFRE D'EMPLOI
+    if (action === "reject_job" && id) {
+      const { error } = await supabaseAdmin
+        .from("jobs")
+        .update({
+          status: "rejected",
+          is_active: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+      if (error) throw error;
+      return NextResponse.json({
+        success: true,
+        message: "L'offre d'emploi a été rejetée/suspendue et retirée de la parution publique.",
+      });
+    }
+
+    // 4e. SUPPRIMER DÉFINITIVEMENT UNE OFFRE D'EMPLOI
+    if (action === "delete_job" && id) {
+      const { error } = await supabaseAdmin.from("jobs").delete().eq("id", id);
+      if (error) throw error;
+      return NextResponse.json({ success: true, message: "L'offre d'emploi a été supprimée." });
+    }
+
     // 5. SEED EXEMPLES DE CANDIDATS & ENTREPRISES DANS SUPABASE
     if (action === "seed") {
       const sampleDrivers = [

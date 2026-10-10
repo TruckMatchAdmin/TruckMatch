@@ -10,35 +10,72 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { action, data } = body;
 
-    // 1. Déposer un besoin de recrutement express
-    if (action === "post_job_need") {
-      const { title, permit, location, contract_type, salary, urgent, description, company_name } = data || {};
-      
-      // On peut insérer dans la table jobs ou simuler une confirmation persistée
-      try {
-        const { error: insertErr } = await supabaseAdmin.from("jobs").insert([
-          {
-            title: title || `Conducteur ${permit || "SPL"} - ${location || "France"}`,
-            permit_required: permit || "CE",
-            location: location || "National",
-            contract_type: contract_type || "CDI",
-            salary_range: salary || "2 500€ - 3 200€",
-            description: description || `Recherche urgente de conducteur ${permit} pour tournées régulières.`,
-            company_name: company_name || "Entreprise Partenaire",
-            is_active: true,
-            created_at: new Date().toISOString(),
-          },
-        ]);
-        if (insertErr) {
-          console.warn("Insert jobs warning (table might not exist yet):", insertErr.message);
-        }
-      } catch (err: any) {
-        console.warn("Jobs table exception:", err.message);
+    // 1. Déposer une offre d'emploi de conducteur (Soumise à modération Admin)
+    if (action === "post_job_need" || action === "post_job") {
+      const {
+        title,
+        permit,
+        location,
+        contract_type,
+        salary,
+        urgent,
+        description,
+        company_name,
+        category,
+        schedule,
+        benefits,
+        requirements,
+      } = data || {};
+
+      // Déduction automatique de la catégorie selon le permis
+      let cat = category;
+      if (!cat) {
+        if (permit === "CE") cat = "spl";
+        else if (permit === "C") cat = "pl";
+        else if (permit === "BE" || permit === "B") cat = "vul";
+        else cat = "spl";
+      }
+
+      // Extraction du département si mentionné dans le lieu (ex: "Lyon (69)")
+      let locCity = location || "France";
+      let locDept = "";
+      const deptMatch = locCity.match(/\b(0[1-9]|[1-8][0-9]|9[0-8]|2A|2B)\b/);
+      if (deptMatch) {
+        locDept = deptMatch[1];
+      }
+
+      const jobTitle = title || `Conducteur ${permit || "SPL"} — ${locCity}`;
+
+      const { data: inserted, error: insertErr } = await supabaseAdmin.from("jobs").insert([
+        {
+          title: jobTitle,
+          permit_required: permit || "CE",
+          category: cat,
+          location_city: locCity,
+          location_department: locDept,
+          contract_type: contract_type || "CDI",
+          salary_range: salary || "2 600€ - 3 200€ brut/mois",
+          schedule: schedule || "Retour domicile chaque soir",
+          benefits: benefits || "Paniers repas conventionnés CCNTR + mutuelle d'entreprise",
+          description: description || `Recherche de conducteur ${permit || "SPL"} qualifié pour tournées régulières.`,
+          requirements: Array.isArray(requirements) && requirements.length > 0 ? requirements : [`Permis ${permit || "CE"}`, "FCO Valide", "Carte Chrono"],
+          company_name: company_name || "Entreprise Partenaire",
+          status: "pending", // En attente de validation par l'administration
+          is_active: false, // Inactif jusqu'à approbation
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ]).select();
+
+      if (insertErr) {
+        console.error("Jobs table insert error:", insertErr);
+        throw insertErr;
       }
 
       return NextResponse.json({
         success: true,
-        message: "Votre recherche de conducteur a été publiée avec succès dans le réseau TruckMatch.",
+        job: inserted?.[0],
+        message: "Votre offre d'emploi a été enregistrée avec succès. Elle sera publiée sur le site dès approbation de l'équipe administrative.",
       });
     }
 

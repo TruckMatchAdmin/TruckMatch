@@ -43,12 +43,15 @@ import {
   Plus,
   EyeIcon,
   Award,
+  Briefcase,
+  AlertCircle,
 } from "lucide-react";
 
 type AdminTab =
   | "dashboard"
   | "candidats"
   | "entreprises"
+  | "offres"
   | "stats-site"
   | "stats-revenu"
   | "support";
@@ -68,6 +71,10 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [drivers, setDrivers] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [selectedJobPreview, setSelectedJobPreview] = useState<any | null>(null);
+  const [jobSearch, setJobSearch] = useState("");
+  const [jobFilter, setJobFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [supabaseLatency, setSupabaseLatency] = useState<number>(24);
   const [lastSyncTime, setLastSyncTime] = useState<string>("");
   const [stats, setStats] = useState({
@@ -75,6 +82,10 @@ export default function AdminDashboardPage() {
     totalCompanies: 0,
     withResume: 0,
     availableNow: 0,
+    totalJobs: 0,
+    pendingJobs: 0,
+    approvedJobs: 0,
+    rejectedJobs: 0,
   });
 
   // Recherche dans le cockpit dashboard
@@ -154,14 +165,20 @@ export default function AdminDashboardPage() {
       const data = await res.json();
       const loadedDrivers = data.drivers || [];
       const loadedCompanies = data.companies || [];
+      const loadedJobs = data.jobs || [];
       setDrivers(loadedDrivers);
       setCompanies(loadedCompanies);
+      setJobs(loadedJobs);
       setStats(
         data.stats || {
           totalDrivers: loadedDrivers.length,
           totalCompanies: loadedCompanies.length,
           withResume: loadedDrivers.filter((d: any) => d.resume_url).length,
           availableNow: loadedDrivers.filter((d: any) => d.availability === "immediate").length,
+          totalJobs: loadedJobs.length,
+          pendingJobs: loadedJobs.filter((j: any) => j.status === "pending").length,
+          approvedJobs: loadedJobs.filter((j: any) => j.status === "approved" && j.is_active).length,
+          rejectedJobs: loadedJobs.filter((j: any) => j.status === "rejected").length,
         }
       );
       setSupabaseLatency(Date.now() - startPing);
@@ -331,6 +348,92 @@ export default function AdminDashboardPage() {
       if (!res.ok) throw new Error("Erreur lors de la création du candidat.");
       setIsAddDriverModalOpen(false);
       await loadData();
+    } catch (err: any) {
+      alert("Erreur: " + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleApproveJob = async (jobId: string) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "approve_job", id: jobId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setJobs((prev) =>
+          prev.map((j) =>
+            j.id === jobId
+              ? { ...j, status: "approved", is_active: true, published_at: new Date().toISOString() }
+              : j
+          )
+        );
+        if (selectedJobPreview && selectedJobPreview.id === jobId) {
+          setSelectedJobPreview((prev: any) => ({
+            ...prev,
+            status: "approved",
+            is_active: true,
+            published_at: new Date().toISOString(),
+          }));
+        }
+      } else {
+        alert("Erreur: " + data.error);
+      }
+    } catch (err: any) {
+      alert("Erreur: " + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRejectJob = async (jobId: string) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reject_job", id: jobId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setJobs((prev) =>
+          prev.map((j) => (j.id === jobId ? { ...j, status: "rejected", is_active: false } : j))
+        );
+        if (selectedJobPreview && selectedJobPreview.id === jobId) {
+          setSelectedJobPreview((prev: any) => ({ ...prev, status: "rejected", is_active: false }));
+        }
+      } else {
+        alert("Erreur: " + data.error);
+      }
+    } catch (err: any) {
+      alert("Erreur: " + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteJob = async (jobId: string) => {
+    if (!confirm("Voulez-vous supprimer définitivement cette offre d'emploi ?")) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete_job", id: jobId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setJobs((prev) => prev.filter((j) => j.id !== jobId));
+        if (selectedJobPreview && selectedJobPreview.id === jobId) {
+          setSelectedJobPreview(null);
+        }
+      } else {
+        alert("Erreur: " + data.error);
+      }
     } catch (err: any) {
       alert("Erreur: " + err.message);
     } finally {
@@ -666,6 +769,21 @@ export default function AdminDashboardPage() {
 
           <button
             type="button"
+            onClick={() => setActiveTab("offres")}
+            className={`admin-tier-nav-item ${activeTab === "offres" ? "active" : ""}`}
+          >
+            <Briefcase size={16} />
+            <span>Offres d&apos;Emploi</span>
+            <span className="nav-count-badge">{jobs.length}</span>
+            {jobs.filter((j) => j.status === "pending").length > 0 && (
+              <span className="admin-nav-pending-badge animate-pulse">
+                {jobs.filter((j) => j.status === "pending").length} à valider
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveTab("stats-site")}
             className={`admin-tier-nav-item ${activeTab === "stats-site" ? "active" : ""}`}
           >
@@ -803,6 +921,29 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
                 <BadgeEuro size={18} className="text-purple-400" />
+              </div>
+
+              <div
+                className="candidates-kpi-item cursor-pointer"
+                onClick={() => setActiveTab("offres")}
+                title="Cliquer pour modérer les offres d'emploi"
+                style={{
+                  border: jobs.filter((j) => j.status === "pending").length > 0 ? "1px solid rgba(245, 158, 11, 0.5)" : undefined,
+                  background: jobs.filter((j) => j.status === "pending").length > 0 ? "rgba(245, 158, 11, 0.08)" : undefined,
+                }}
+              >
+                <div>
+                  <div className="candidates-kpi-lbl">Offres d&apos;Emploi</div>
+                  <div className="candidates-kpi-val text-amber-400 flex items-center gap-1.5">
+                    <span>{jobs.length}</span>
+                    {jobs.filter((j) => j.status === "pending").length > 0 && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
+                        {jobs.filter((j) => j.status === "pending").length} à valider
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <Briefcase size={18} className="text-amber-400" />
               </div>
             </div>
 
@@ -2053,6 +2194,321 @@ export default function AdminDashboardPage() {
           </div>
 
 
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* 4. RUBRIQUE OFFRES D'EMPLOI & MODÉRATION APPROBATION EN DIRECT */}
+      {/* ============================================================== */}
+      {activeTab === "offres" && (
+        <div className="companies-cockpit-view" style={{ overflowY: "auto", padding: "1.25rem 1.5rem" }}>
+          {/* Header Rubrique */}
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="portal-status-live-pill">
+                  ● MODÉRATION TEMPS RÉEL
+                </span>
+                <span className="text-slate-500 text-xs">•</span>
+                <span className="text-slate-400 text-xs font-mono">Diffusion : truckmatch.fr/offres-emploi</span>
+              </div>
+              <h2 className="text-lg font-black text-white flex items-center gap-2">
+                <Briefcase size={20} className="text-sky-400" />
+                <span>Supervision &amp; Modération des Offres d&apos;Emploi</span>
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Validez les offres déposées par les transporteurs pour activer leur publication immédiate sur le site public et notifier les chauffeurs qualifiés.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={loadData}
+                disabled={loading}
+                className="cockpit-btn cockpit-btn-secondary cockpit-btn-sm"
+              >
+                <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
+                <span>Actualiser les offres</span>
+              </button>
+            </div>
+          </div>
+
+          {/* KPI Cards Offres */}
+          <div className="grid grid-cols-4 gap-3 mb-4">
+            <div className="driver-kpi-card" style={{ padding: "0.85rem 1rem" }}>
+              <div className="driver-kpi-top">
+                <span className="driver-kpi-lbl">TOTAL OFFRES DÉPOSÉES</span>
+                <div className="driver-kpi-icon-box blue"><Briefcase size={14} /></div>
+              </div>
+              <div className="driver-kpi-val" style={{ fontSize: "1.25rem" }}>{jobs.length}</div>
+            </div>
+
+            <div className="driver-kpi-card" style={{ padding: "0.85rem 1rem" }}>
+              <div className="driver-kpi-top">
+                <span className="driver-kpi-lbl">EN ATTENTE DE VALIDATION</span>
+                <div className="driver-kpi-icon-box amber"><Clock size={14} /></div>
+              </div>
+              <div className="driver-kpi-val text-amber-400 flex items-center gap-2" style={{ fontSize: "1.25rem" }}>
+                <span>{jobs.filter((j) => j.status === "pending").length}</span>
+                {jobs.filter((j) => j.status === "pending").length > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping inline-block" />
+                )}
+              </div>
+            </div>
+
+            <div className="driver-kpi-card" style={{ padding: "0.85rem 1rem" }}>
+              <div className="driver-kpi-top">
+                <span className="driver-kpi-lbl">EN LIGNE SUR LE SITE</span>
+                <div className="driver-kpi-icon-box emerald"><CheckCircle2 size={14} /></div>
+              </div>
+              <div className="driver-kpi-val text-emerald-400" style={{ fontSize: "1.25rem" }}>
+                {jobs.filter((j) => j.status === "approved" && j.is_active).length}
+              </div>
+            </div>
+
+            <div className="driver-kpi-card" style={{ padding: "0.85rem 1rem" }}>
+              <div className="driver-kpi-top">
+                <span className="driver-kpi-lbl">SUSPENDUES / REJETÉES</span>
+                <div className="driver-kpi-icon-box purple"><AlertCircle size={14} /></div>
+              </div>
+              <div className="driver-kpi-val text-slate-400" style={{ fontSize: "1.25rem" }}>
+                {jobs.filter((j) => j.status === "rejected").length}
+              </div>
+            </div>
+          </div>
+
+          {/* Barre de Recherche et Filtres d'état */}
+          <div className="candidates-header-block mb-4" style={{ padding: "0.6rem 0.85rem" }}>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2 flex-1">
+                <div className="candidates-search-dark flex-1" style={{ maxWidth: "340px" }}>
+                  <Search size={14} className="text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Rechercher par titre, entreprise, ville..."
+                    value={jobSearch}
+                    onChange={(e) => setJobSearch(e.target.value)}
+                    className="w-full bg-transparent text-xs text-white outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setJobFilter("all")}
+                    className={`cockpit-btn cockpit-btn-sm ${jobFilter === "all" ? "cockpit-btn-sky" : "cockpit-btn-secondary"}`}
+                  >
+                    Toutes ({jobs.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setJobFilter("pending")}
+                    className={`cockpit-btn cockpit-btn-sm ${jobFilter === "pending" ? "cockpit-btn-sky" : "cockpit-btn-secondary"}`}
+                  >
+                    À Valider ({jobs.filter((j) => j.status === "pending").length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setJobFilter("approved")}
+                    className={`cockpit-btn cockpit-btn-sm ${jobFilter === "approved" ? "cockpit-btn-emerald" : "cockpit-btn-secondary"}`}
+                  >
+                    En Ligne ({jobs.filter((j) => j.status === "approved" && j.is_active).length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setJobFilter("rejected")}
+                    className={`cockpit-btn cockpit-btn-sm ${jobFilter === "rejected" ? "cockpit-btn-danger" : "cockpit-btn-secondary"}`}
+                  >
+                    Suspendues ({jobs.filter((j) => j.status === "rejected").length})
+                  </button>
+                </div>
+              </div>
+
+              <div className="text-xs text-slate-400">
+                Lien public : <Link href="/offres-emploi" target="_blank" className="text-sky-400 hover:underline">truckmatch.fr/offres-emploi ↗</Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Liste des Offres d'Emploi */}
+          {(() => {
+            const filteredJobs = jobs.filter((job) => {
+              if (jobFilter === "pending" && job.status !== "pending") return false;
+              if (jobFilter === "approved" && (job.status !== "approved" || !job.is_active)) return false;
+              if (jobFilter === "rejected" && job.status !== "rejected") return false;
+              if (jobSearch.trim()) {
+                const q = jobSearch.toLowerCase();
+                const mTitle = (job.title || "").toLowerCase().includes(q);
+                const mComp = (job.company_name || "").toLowerCase().includes(q);
+                const mCity = (job.location_city || "").toLowerCase().includes(q);
+                if (!mTitle && !mComp && !mCity) return false;
+              }
+              return true;
+            });
+
+            if (filteredJobs.length === 0) {
+              return (
+                <div className="p-12 text-center bg-slate-900/40 rounded-xl border border-slate-800">
+                  <Briefcase size={36} className="mx-auto text-slate-600 mb-3 opacity-60" />
+                  <h3 className="text-sm font-bold text-white mb-1">Aucune offre d&apos;emploi correspondante</h3>
+                  <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                    {jobFilter === "pending"
+                      ? "Aucune offre en attente de modération pour le moment. Toutes les offres soumises sont traitées !"
+                      : "Modifiez vos filtres ou effectuez une recherche différente."}
+                  </p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="flex flex-col gap-3">
+                {filteredJobs.map((job) => {
+                  const isPending = job.status === "pending";
+                  const isApproved = job.status === "approved" && job.is_active;
+                  const isRejected = job.status === "rejected";
+
+                  return (
+                    <div
+                      key={job.id}
+                      className={`admin-job-card ${
+                        isPending ? "is-pending" : isApproved ? "is-approved" : "is-rejected"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2.5 mb-1.5">
+                            <span className="font-extrabold text-white text-sm">
+                              {job.title}
+                            </span>
+                            {isPending && (
+                              <span className="job-status-pill pending">
+                                <Clock size={11} />
+                                <span>EN ATTENTE D&apos;APPROBATION</span>
+                              </span>
+                            )}
+                            {isApproved && (
+                              <span className="job-status-pill approved">
+                                <CheckCircle2 size={11} />
+                                <span>PUBLIÉE &amp; EN LIGNE</span>
+                              </span>
+                            )}
+                            {isRejected && (
+                              <span className="job-status-pill rejected">
+                                <AlertCircle size={11} />
+                                <span>SUSPENDUE / REJETÉE</span>
+                              </span>
+                            )}
+                            <span className="text-slate-500 text-xs">•</span>
+                            <span className="text-slate-400 text-xs font-semibold">
+                              Par : <strong className="text-sky-300">{job.company_name}</strong>
+                            </span>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2 mb-2 text-xs">
+                            <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-bold">
+                              Permis {job.permit_required || (job.category ? job.category.toUpperCase() : "CE")}
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-sky-950 text-sky-400 border border-sky-800 font-bold">
+                              {job.contract_type}
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                              📍 {job.location_city} {job.location_department ? `(${job.location_department})` : ""}
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-mono font-bold">
+                              💶 {job.salary_range}
+                            </span>
+                            {job.schedule && (
+                              <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400">
+                                🕒 {job.schedule}
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-xs text-slate-300 line-clamp-2 mb-2" style={{ lineHeight: 1.5 }}>
+                            {job.description}
+                          </p>
+
+                          {Array.isArray(job.requirements) && job.requirements.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 items-center">
+                              <span className="text-[10px] text-slate-500 font-bold">Critères :</span>
+                              {job.requirements.map((r: string) => (
+                                <span
+                                  key={r}
+                                  className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-900 border border-slate-800 text-slate-400"
+                                >
+                                  {r}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Actions Modération Cockpit */}
+                        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                          <div className="text-[11px] text-slate-500 font-mono">
+                            Déposée le {new Date(job.created_at).toLocaleDateString("fr-FR")}
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            {/* Bouton Approuver si pas encore approuvé */}
+                            {!isApproved && (
+                              <button
+                                type="button"
+                                onClick={() => handleApproveJob(job.id)}
+                                disabled={actionLoading}
+                                className="cockpit-btn cockpit-btn-emerald cockpit-btn-sm"
+                                title="Approuver et publier immédiatement sur le site public"
+                              >
+                                <Check size={12} />
+                                <span>Approuver &amp; Publier</span>
+                              </button>
+                            )}
+
+                            {/* Bouton Suspendre si déjà approuvé */}
+                            {isApproved && (
+                              <button
+                                type="button"
+                                onClick={() => handleRejectJob(job.id)}
+                                disabled={actionLoading}
+                                className="cockpit-btn cockpit-btn-danger cockpit-btn-sm"
+                                title="Retirer l'offre du site public"
+                              >
+                                <X size={12} />
+                                <span>Suspendre</span>
+                              </button>
+                            )}
+
+                            {/* Aperçu Fiche Complète */}
+                            <button
+                              type="button"
+                              onClick={() => setSelectedJobPreview(job)}
+                              className="cockpit-btn cockpit-btn-secondary cockpit-btn-sm"
+                              title="Voir la fiche détaillée comme sur le site"
+                            >
+                              <Eye size={12} />
+                              <span>Aperçu</span>
+                            </button>
+
+                            {/* Supprimer */}
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteJob(job.id)}
+                              disabled={actionLoading}
+                              className="cockpit-btn cockpit-btn-secondary cockpit-btn-sm text-red-400"
+                              title="Supprimer définitivement"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -3746,6 +4202,159 @@ export default function AdminDashboardPage() {
                       >
                         Fermer
                       </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* D. Modal Aperçu Public Fiche Offre d'Emploi */}
+            {selectedJobPreview && (() => {
+              const isApproved = selectedJobPreview.status === "approved" && selectedJobPreview.is_active;
+              return (
+                <div
+                  className="admin-modal-backdrop"
+                  onClick={() => setSelectedJobPreview(null)}
+                >
+                  <div
+                    className="admin-modal-box"
+                    style={{ maxWidth: '680px' }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="admin-modal-header">
+                      <div className="flex items-center gap-2">
+                        <Briefcase size={18} className="text-sky-400" />
+                        <h3 className="font-extrabold text-white text-sm">
+                          Aperçu Public Fiche Offre d&apos;Emploi
+                        </h3>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedJobPreview(null)}
+                        className="text-slate-400 hover:text-white p-1"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+
+                    <div className="p-5 space-y-4 text-xs overflow-y-auto" style={{ maxHeight: "70vh" }}>
+                      <div className="flex items-start justify-between gap-4 pb-3 border-b border-slate-800">
+                        <div>
+                          <div className="text-base font-black text-white">{selectedJobPreview.title}</div>
+                          <div className="text-slate-400 text-xs mt-0.5">
+                            Entreprise : <strong className="text-sky-300">{selectedJobPreview.company_name}</strong>
+                          </div>
+                        </div>
+
+                        <div>
+                          {selectedJobPreview.status === "pending" && (
+                            <span className="job-status-pill pending">
+                              <Clock size={11} />
+                              <span>En attente de modération</span>
+                            </span>
+                          )}
+                          {isApproved && (
+                            <span className="job-status-pill approved">
+                              <CheckCircle2 size={11} />
+                              <span>En ligne sur truckmatch.fr</span>
+                            </span>
+                          )}
+                          {selectedJobPreview.status === "rejected" && (
+                            <span className="job-status-pill rejected">
+                              <AlertCircle size={11} />
+                              <span>Suspendue</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Grille Infos Clés */}
+                      <div className="grid grid-cols-2 gap-2 bg-[#08101e] p-3 rounded-lg border border-[#1a2d47]">
+                        <div>
+                          <span className="text-slate-400 text-[11px]">Permis requis :</span>
+                          <div className="text-white font-bold">Permis {selectedJobPreview.permit_required || "CE"} ({selectedJobPreview.category?.toUpperCase() || "SPL"})</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[11px]">Type de contrat :</span>
+                          <div className="text-white font-bold">{selectedJobPreview.contract_type}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[11px]">Localisation :</span>
+                          <div className="text-white font-bold">{selectedJobPreview.location_city} {selectedJobPreview.location_department ? `(${selectedJobPreview.location_department})` : ""}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[11px]">Rémunération indicative :</span>
+                          <div className="text-emerald-400 font-bold">{selectedJobPreview.salary_range}</div>
+                        </div>
+                      </div>
+
+                      {/* Rythme & Avantages */}
+                      <div className="bg-[#08101e] p-3 rounded-lg border border-[#1a2d47] space-y-2">
+                        <div>
+                          <span className="text-slate-400 text-[11px] font-bold block mb-0.5">Rythme de travail &amp; Horaires :</span>
+                          <div className="text-slate-200">{selectedJobPreview.schedule || "Non précisé"}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[11px] font-bold block mb-0.5">Avantages &amp; Frais de déplacement :</span>
+                          <div className="text-slate-200">{selectedJobPreview.benefits || "Conventionnels"}</div>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <div>
+                        <div className="text-slate-400 font-bold mb-1">Description de la mission :</div>
+                        <div className="bg-[#08101e] p-3.5 rounded-lg border border-[#1a2d47] text-slate-200 whitespace-pre-wrap leading-relaxed">
+                          {selectedJobPreview.description}
+                        </div>
+                      </div>
+
+                      {/* Critères requis */}
+                      {Array.isArray(selectedJobPreview.requirements) && selectedJobPreview.requirements.length > 0 && (
+                        <div>
+                          <div className="text-slate-400 font-bold mb-1.5">Certifications et compétences exigées :</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {selectedJobPreview.requirements.map((r: string) => (
+                              <span key={r} className="bg-sky-500/20 text-sky-300 px-2.5 py-0.5 rounded text-xs font-bold border border-sky-500/30">
+                                ✓ {r}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="admin-modal-footer flex items-center justify-between" style={{ borderTop: '1px solid #1e324d', padding: '0.75rem 1rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedJobPreview(null)}
+                        className="cockpit-btn cockpit-btn-secondary"
+                      >
+                        Fermer
+                      </button>
+
+                      <div className="flex items-center gap-2">
+                        {!isApproved ? (
+                          <button
+                            type="button"
+                            onClick={() => handleApproveJob(selectedJobPreview.id)}
+                            disabled={actionLoading}
+                            className="cockpit-btn cockpit-btn-emerald"
+                          >
+                            <Check size={14} />
+                            <span>Approuver &amp; Mettre en Ligne</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleRejectJob(selectedJobPreview.id)}
+                            disabled={actionLoading}
+                            className="cockpit-btn cockpit-btn-danger"
+                          >
+                            <X size={14} />
+                            <span>Suspendre de la parution</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

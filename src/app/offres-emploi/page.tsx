@@ -118,7 +118,12 @@ export default function OffresEmploiPage() {
   useEffect(() => {
     async function loadJobs() {
       try {
-        let query = supabase.from("jobs").select("*").order("published_at", { ascending: false });
+        let query = supabase
+          .from("jobs")
+          .select("*")
+          .eq("is_active", true)
+          .eq("status", "approved")
+          .order("created_at", { ascending: false });
 
         if (selectedCategory !== "all") {
           query = query.eq("category", selectedCategory);
@@ -128,7 +133,7 @@ export default function OffresEmploiPage() {
         if (error || !data) {
           setDbJobs([]);
         } else {
-          setDbJobs(data as JobOffer[]);
+          setDbJobs(data as any[]);
         }
       } catch {
         setDbJobs([]);
@@ -140,9 +145,9 @@ export default function OffresEmploiPage() {
     loadJobs();
   }, [selectedCategory]);
 
-  // Fusion intelligente : offres réelles Supabase + offres de référence transport
+  // Fusion intelligente : offres réelles Supabase (approuvées) + offres de référence transport
   const allAvailableOffers = [
-    ...dbJobs.map((j) => ({
+    ...dbJobs.map((j: any) => ({
       id: j.id,
       title: j.title,
       company: j.company_name,
@@ -151,10 +156,14 @@ export default function OffresEmploiPage() {
       category: j.category,
       contract: j.contract_type,
       salary: j.salary_range || "Selon convention CCNTR",
-      frais: "Frais conventionnels inclus",
-      schedule: "Temps plein",
+      frais: j.benefits || "Frais conventionnels inclus",
+      schedule: j.schedule || "Temps plein",
       desc: j.description,
-      badges: [j.category.toUpperCase(), j.contract_type],
+      badges: [
+        `Permis ${j.permit_required || (j.category ? j.category.toUpperCase() : "CE")}`,
+        j.contract_type,
+        ...(Array.isArray(j.requirements) ? j.requirements.slice(0, 2) : []),
+      ].filter(Boolean),
     })),
     ...defaultJobOffers,
   ];

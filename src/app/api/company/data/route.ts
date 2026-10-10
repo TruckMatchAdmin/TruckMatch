@@ -41,6 +41,18 @@ export async function GET(request: Request) {
       companyProfile = comp;
     }
 
+    // 4. Récupérer les offres d'emploi de l'entreprise
+    let companyJobs: any[] = [];
+    try {
+      const { data: jobsData } = await supabaseAdmin
+        .from("jobs")
+        .select("*")
+        .order("created_at", { ascending: false });
+      companyJobs = jobsData || [];
+    } catch (jErr) {
+      console.warn("Could not load jobs in company data:", jErr);
+    }
+
     const driversList = drivers || [];
 
     const stats = {
@@ -49,11 +61,15 @@ export async function GET(request: Request) {
       cDrivers: driversList.filter((d) => d.permits?.includes("C")).length,
       withResume: driversList.filter((d) => d.resume_url).length,
       immediate: driversList.filter((d) => d.availability === "immediate").length,
+      myJobsCount: companyJobs.length,
+      myPendingJobsCount: companyJobs.filter((j) => j.status === "pending").length,
+      myActiveJobsCount: companyJobs.filter((j) => j.status === "approved" && j.is_active).length,
     };
 
     return NextResponse.json({
       success: true,
       drivers: driversList,
+      jobs: companyJobs,
       stats,
       company: companyProfile || {
         company_name: sessionUser?.name || "Transports Réunis & Logistique",
