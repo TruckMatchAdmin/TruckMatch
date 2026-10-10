@@ -27,11 +27,11 @@ export default function HomePage() {
     <div>
       <Hero />
       <PartnerMarquee />
+      <LatestJobsSection />
       <SearchDriverBar />
       <CategoryCards />
       <DriverSection />
       <CompanySection />
-      <LatestJobsSection />
 
       {/* Section Conseils & Recrutement Transport 2.0 */}
       <section className="editorial-section-modern">
