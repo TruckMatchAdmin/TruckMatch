@@ -6311,23 +6311,27 @@ p {
 }
 
 .admin-public-link {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #94a3b8;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #cbd5e1;
   text-decoration: none;
-  padding: 0.4rem 0.75rem;
+  padding: 0.35rem 0.75rem;
   border-radius: 6px;
-  border: 1px solid #1e293b;
+  border: 1px solid #1f3453;
+  background-color: #0b1524;
   transition: all 0.18s ease;
+  white-space: nowrap;
 }
 
 .admin-public-link:hover {
   color: #ffffff;
-  border-color: #475569;
-  background-color: rgba(255, 255, 255, 0.05);
+  border-color: #0284c7;
+  background-color: #12223a;
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.25);
+  transform: translateY(-1px);
 }
 
 .admin-user-badge {

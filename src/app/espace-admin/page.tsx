@@ -423,6 +423,53 @@ export default function AdminDashboardPage() {
     setActiveTab("support");
   };
 
+  // Accéder directement à l'Espace Candidat (vue simulateur chauffeur)
+  const handleOpenAsDriver = (d?: any) => {
+    if (typeof window !== "undefined") {
+      if (d) {
+        localStorage.setItem(
+          "tm_user",
+          JSON.stringify({
+            id: d.id,
+            name: `${d.first_name} ${d.last_name}`,
+            first_name: d.first_name,
+            last_name: d.last_name,
+            email: d.email,
+            phone: d.phone,
+            type: "candidat",
+            role: "driver",
+            permits: d.permits,
+            city: d.city,
+          })
+        );
+      }
+      window.open("/espace-candidat", "_blank");
+    }
+  };
+
+  // Accéder directement à l'Espace Entreprise (vue simulateur recruteur)
+  const handleOpenAsCompany = (c?: any) => {
+    if (typeof window !== "undefined") {
+      if (c) {
+        localStorage.setItem(
+          "tm_user",
+          JSON.stringify({
+            id: c.id,
+            name: c.company_name,
+            email: c.email,
+            phone: c.phone,
+            type: "entreprise",
+            role: "company",
+            siret: c.siret,
+            city: c.city,
+            fleet_size: c.fleet_size,
+          })
+        );
+      }
+      window.open("/espace-entreprise", "_blank");
+    }
+  };
+
   const handleSendMessage = (customText?: string) => {
     const textToSend = customText || messageInput.trim();
     if (!textToSend || !activeRecipient) return;
@@ -535,6 +582,30 @@ export default function AdminDashboardPage() {
 
           <div className="admin-tier-upper-actions">
             <Link
+              href="/espace-candidat"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="admin-public-link"
+              title="Accéder au portail Espace Candidat (vue chauffeur)"
+            >
+              <Truck size={13} className="text-sky-400" />
+              <span>Espace Candidat</span>
+              <ExternalLink size={11} className="text-slate-400" />
+            </Link>
+
+            <Link
+              href="/espace-entreprise"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="admin-public-link"
+              title="Accéder au portail Espace Entreprise (vue recruteur)"
+            >
+              <Building2 size={13} className="text-emerald-400" />
+              <span>Espace Entreprise</span>
+              <ExternalLink size={11} className="text-slate-400" />
+            </Link>
+
+            <Link
               href="/"
               target="_blank"
               rel="noopener noreferrer"
@@ -542,7 +613,7 @@ export default function AdminDashboardPage() {
               title="Ouvrir le site public"
             >
               <span>Site public</span>
-              <ExternalLink size={12} />
+              <ExternalLink size={11} className="text-slate-400" />
             </Link>
 
             <div className="admin-user-badge">
@@ -819,6 +890,15 @@ export default function AdminDashboardPage() {
 
                           <button
                             type="button"
+                            onClick={() => handleOpenAsDriver(d)}
+                            className="btn-cockpit-mini"
+                            title="Ouvrir son Espace Candidat"
+                          >
+                            <ExternalLink size={12} />
+                          </button>
+
+                          <button
+                            type="button"
                             onClick={() => handleOpenChatWithDriver(d)}
                             className="btn-cockpit-mini"
                             title="Ouvrir le tchat direct"
@@ -905,6 +985,15 @@ export default function AdminDashboardPage() {
                           >
                             {c.fleet_size || "1-5"} camions
                           </span>
+
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAsCompany(c)}
+                            className="btn-cockpit-mini"
+                            title="Ouvrir son Espace Entreprise"
+                          >
+                            <ExternalLink size={12} />
+                          </button>
 
                           <button
                             type="button"
@@ -1065,6 +1154,39 @@ export default function AdminDashboardPage() {
                         <span className="font-mono text-[10px] text-emerald-400">Live</span>
                       </button>
                     </div>
+
+                    {/* Accès Portails Externes */}
+                    <div className="grid grid-cols-2 gap-1.5 mt-2 pt-2 border-t border-slate-800">
+                      <a
+                        href="/espace-candidat"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="dashboard-quick-nav-btn"
+                        style={{ borderLeft: "2px solid #38bdf8" }}
+                        title="Ouvrir le portail Espace Candidat"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Truck size={12} className="text-sky-400" />
+                          <span>Espace Candidat</span>
+                        </span>
+                        <ExternalLink size={11} className="text-slate-400" />
+                      </a>
+
+                      <a
+                        href="/espace-entreprise"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="dashboard-quick-nav-btn"
+                        style={{ borderLeft: "2px solid #34d399" }}
+                        title="Ouvrir le portail Espace Entreprise"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Building2 size={12} className="text-emerald-400" />
+                          <span>Espace Entreprise</span>
+                        </span>
+                        <ExternalLink size={11} className="text-slate-400" />
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1093,6 +1215,18 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="candidates-header-actions">
+                <a
+                  href="/espace-candidat"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cockpit-btn cockpit-btn-sky"
+                  title="Accéder au portail Espace Candidat"
+                >
+                  <Truck size={13} />
+                  <span>Portail Candidat</span>
+                  <ExternalLink size={11} />
+                </a>
+
                 <button
                   type="button"
                   onClick={() => setIsAddDriverModalOpen(true)}
@@ -1349,6 +1483,14 @@ export default function AdminDashboardPage() {
                             title="Voir le dossier complet"
                           >
                             <EyeIcon size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAsDriver(d)}
+                            className="btn-cockpit-mini"
+                            title="Ouvrir son Espace Candidat"
+                          >
+                            <ExternalLink size={13} />
                           </button>
                           <button
                             type="button"
@@ -1636,6 +1778,18 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="candidates-header-actions">
+                <a
+                  href="/espace-entreprise"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cockpit-btn cockpit-btn-emerald"
+                  title="Accéder au portail Espace Entreprise"
+                >
+                  <Building2 size={13} />
+                  <span>Portail Entreprise</span>
+                  <ExternalLink size={11} />
+                </a>
+
                 <button
                   type="button"
                   onClick={handleExportData}
@@ -1863,6 +2017,14 @@ export default function AdminDashboardPage() {
                         </td>
                         <td>
                           <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenAsCompany(c)}
+                              className="btn-cockpit-mini"
+                              title="Ouvrir son Espace Entreprise"
+                            >
+                              <ExternalLink size={13} />
+                            </button>
                             <button
                               type="button"
                               onClick={() => handleOpenChatWithCompany(c)}
