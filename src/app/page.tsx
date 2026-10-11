@@ -8,6 +8,7 @@ import { CategoryCards } from "@/components/home/CategoryCards";
 import { DriverSection } from "@/components/home/DriverSection";
 import { CompanySection } from "@/components/home/CompanySection";
 import { LatestJobsSection } from "@/components/home/LatestJobsSection";
+import { AvailableDriversSection } from "@/components/home/AvailableDriversSection";
 import { ARTICLES } from "@/lib/constants/articles";
 import { ArrowRight, BookOpen, Clock } from "lucide-react";
 
@@ -28,6 +29,7 @@ export default function HomePage() {
       <Hero />
       <PartnerMarquee />
       <LatestJobsSection />
+      <AvailableDriversSection />
       <SearchDriverBar />
       <CategoryCards />
       <DriverSection />

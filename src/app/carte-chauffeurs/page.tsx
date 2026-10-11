@@ -666,6 +666,11 @@ export default function CarteChauffeursPage() {
     });
   }, [searchQuery, selectedPermit, selectedRegion, selectedAvailability]);
 
+  // Limiter le volet latéral aux 10 derniers profils inscrits
+  const displayedCandidates = useMemo(() => {
+    return filteredCandidates.slice(0, 10);
+  }, [filteredCandidates]);
+
   // Initialisation et cycle de vie de Leaflet
   useEffect(() => {
     let isMounted = true;
@@ -1146,11 +1151,11 @@ export default function CarteChauffeursPage() {
           <aside className="candidate-drawer-card">
             <div className="drawer-header">
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <h3 className="drawer-title">Profils disponibles ({filteredCandidates.length})</h3>
-                <span className="drawer-count-badge">Sourcing direct</span>
+                <h3 className="drawer-title">Profils disponibles (10 derniers inscrits)</h3>
+                <span className="drawer-count-badge">10 récents</span>
               </div>
               <p style={{ fontSize: "0.84rem", color: "var(--color-text-muted)" }}>
-                Cliquez sur « Localiser » pour centrer la carte sur la commune du chauffeur.
+                Les 10 derniers conducteurs inscrits. Cliquez sur « Localiser » pour centrer la carte.
               </p>
             </div>
 
@@ -1178,7 +1183,7 @@ export default function CarteChauffeursPage() {
                   </button>
                 </div>
               ) : (
-                filteredCandidates.map((c) => {
+                displayedCandidates.map((c) => {
                   const isSelected = selectedCandidate?.id === c.id;
                   return (
                     <div
