@@ -445,8 +445,8 @@ export default function CompanyPortalPage() {
                       <Briefcase size={22} />
                     </div>
                     <div className="create-job-banner-info">
-                      <h1 className="create-job-banner-title">
-                        <span>Publier une Nouvelle Offre d&apos;Emploi Conducteur</span>
+                      <h1 className="create-job-banner-title text-white" style={{ color: "#ffffff" }}>
+                        <span style={{ color: "#ffffff", fontWeight: 800 }}>Publier une Nouvelle Offre d&apos;Emploi Conducteur</span>
                         <span className="job-status-pill approved" style={{ fontSize: "0.7rem", padding: "0.2rem 0.55rem" }}>
                           Diffusion Réseau
                         </span>
