@@ -11799,14 +11799,15 @@ select.portal-form-input option {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  max-width: 1080px;
   width: 100%;
+  max-width: 100%;
 }
 
 .mobility-grid-2cols {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.35rem;
+  width: 100%;
 }
 
 @media (max-width: 960px) {
@@ -12327,13 +12328,15 @@ select.portal-form-input option {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1.25rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .driver-security-meta {
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  max-width: 600px;
+  max-width: 900px;
 }
 
 .driver-security-icon-circle {
