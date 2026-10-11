@@ -511,6 +511,21 @@
    Pas de header/footer du site public, interface épurée et moderne
    ========================================================================== */
 
+html:has(.espace-standalone-root),
+body:has(.espace-standalone-root),
+html:has(.admin-cockpit-screen),
+body:has(.admin-cockpit-screen),
+html:has(.company-cockpit-wrapper),
+body:has(.company-cockpit-wrapper),
+html:has(.portal-cockpit-screen),
+body:has(.portal-cockpit-screen) {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 .espace-standalone-root {
   height: 100vh;
   max-height: 100vh;
