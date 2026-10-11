@@ -13,6 +13,7 @@ import {
   FileText,
   LogOut,
   ArrowRight,
+  ArrowLeft,
   Briefcase,
   Phone,
   Mail,
@@ -69,11 +70,10 @@ export default function CompanyPortalPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "ce" | "c" | "immediate" | "resume" | "adr">("all");
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
-  const [activeNav, setActiveNav] = useState<"drivers" | "jobs" | "profile">("drivers");
+  const [activeNav, setActiveNav] = useState<"drivers" | "jobs" | "create-job" | "profile">("drivers");
   const [jobs, setJobs] = useState<any[]>([]);
 
-  // Modal Déposer une offre d'emploi
-  const [isPostJobModalOpen, setIsPostJobModalOpen] = useState(false);
+  // Déposer une offre d'emploi (Page dédiée)
   const [postJobLoading, setPostJobLoading] = useState(false);
   const [postJobSuccess, setPostJobSuccess] = useState<string | null>(null);
   const [newJob, setNewJob] = useState({
@@ -120,9 +120,42 @@ export default function CompanyPortalPage() {
           // ignore
         }
       }
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (tabParam === "create-job" || tabParam === "creer-offre") {
+        setActiveNav("create-job");
+      } else if (tabParam === "jobs") {
+        setActiveNav("jobs");
+      } else if (tabParam === "profile") {
+        setActiveNav("profile");
+      }
     }
     loadCompanyData();
+
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (tabParam === "create-job" || tabParam === "creer-offre") {
+        setActiveNav("create-job");
+      } else if (tabParam === "jobs") {
+        setActiveNav("jobs");
+      } else if (tabParam === "profile") {
+        setActiveNav("profile");
+      } else {
+        setActiveNav("drivers");
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, []);
+
+  const setNav = (nav: "drivers" | "jobs" | "create-job" | "profile") => {
+    setActiveNav(nav);
+    if (typeof window !== "undefined") {
+      const url = nav === "drivers" ? "/espace-entreprise" : `/espace-entreprise?tab=${nav}`;
+      window.history.pushState(null, "", url);
+    }
+  };
 
   const handleLogout = () => {
     document.cookie = "tm_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
@@ -150,12 +183,11 @@ export default function CompanyPortalPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setPostJobSuccess(data.message || "Votre offre a été enregistrée ! Elle sera publiée dès validation par l'administration.");
+        setPostJobSuccess(data.message || "Votre offre a été enregistrée avec succès ! Elle sera examinée et publiée dès validation par l'administration.");
         loadCompanyData();
         setTimeout(() => {
-          setIsPostJobModalOpen(false);
           setPostJobSuccess(null);
-          setActiveNav("jobs");
+          setNav("jobs");
           setNewJob({
             title: "",
             category: "spl",
@@ -170,7 +202,7 @@ export default function CompanyPortalPage() {
             description: "",
             requirements: ["Permis CE", "FCO Valide", "Carte Chrono", "Régional"],
           });
-        }, 2000);
+        }, 2200);
       } else {
         alert("Erreur: " + (data.error || "Impossible d'enregistrer l'offre"));
       }
@@ -247,7 +279,7 @@ export default function CompanyPortalPage() {
 
           <button
             type="button"
-            onClick={() => setActiveNav("drivers")}
+            onClick={() => setNav("drivers")}
             className={`portal-nav-btn ${activeNav === "drivers" ? "active-emerald" : ""}`}
           >
             <Users className="nav-icon" />
@@ -257,7 +289,7 @@ export default function CompanyPortalPage() {
 
           <button
             type="button"
-            onClick={() => setActiveNav("jobs")}
+            onClick={() => setNav("jobs")}
             className={`portal-nav-btn ${activeNav === "jobs" ? "active-emerald" : ""}`}
           >
             <Briefcase className="nav-icon text-sky-400" />
@@ -275,8 +307,8 @@ export default function CompanyPortalPage() {
 
           <button
             type="button"
-            onClick={() => setIsPostJobModalOpen(true)}
-            className="portal-nav-btn"
+            onClick={() => setNav("create-job")}
+            className={`portal-nav-btn ${activeNav === "create-job" ? "active-emerald" : ""}`}
           >
             <Plus className="nav-icon text-emerald-400" />
             <span className="nav-title">Publier une Offre</span>
@@ -290,7 +322,7 @@ export default function CompanyPortalPage() {
 
           <button
             type="button"
-            onClick={() => setActiveNav("profile")}
+            onClick={() => setNav("profile")}
             className={`portal-nav-btn ${activeNav === "profile" ? "active-emerald" : ""}`}
           >
             <Building2 className="nav-icon" />
@@ -345,6 +377,8 @@ export default function CompanyPortalPage() {
                   ? "Vivier Conducteurs Disponibles en Direct"
                   : activeNav === "jobs"
                   ? "Gestion de vos Offres d'Emploi"
+                  : activeNav === "create-job"
+                  ? "Publier une Nouvelle Offre d'Emploi"
                   : "Fiche Profil Entreprise & Flotte"}
               </span>
             </h1>
@@ -356,8 +390,8 @@ export default function CompanyPortalPage() {
           <div className="portal-main-topbar-right">
             <button
               type="button"
-              onClick={() => setIsPostJobModalOpen(true)}
-              className="cockpit-btn cockpit-btn-emerald cockpit-btn-sm"
+              onClick={() => setNav("create-job")}
+              className={`cockpit-btn cockpit-btn-sm ${activeNav === "create-job" ? "cockpit-btn-secondary" : "cockpit-btn-emerald"}`}
               title="Déposer une nouvelle offre d'emploi"
             >
               <Plus size={13} />
@@ -378,8 +412,394 @@ export default function CompanyPortalPage() {
         </header>
 
         {/* Contenu principal */}
-        <main className={`company-cockpit-main ${activeNav === "profile" || activeNav === "jobs" ? "overflow-y-auto" : ""}`}>
-          {activeNav === "profile" ? (
+        <main className={`company-cockpit-main ${activeNav === "profile" || activeNav === "jobs" || activeNav === "create-job" ? "overflow-y-auto" : ""}`}>
+          {activeNav === "create-job" ? (
+            <div className="p-6 flex flex-col gap-6" style={{ width: "100%", maxWidth: "100%" }}>
+              <div className="create-job-dedicated-view">
+                {/* Barre de navigation / Retour */}
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setNav("jobs")}
+                    className="inline-flex items-center gap-2 text-xs font-bold text-slate-300 hover:text-white transition px-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-800 hover:border-slate-700 cursor-pointer"
+                  >
+                    <ArrowLeft size={14} className="text-emerald-400" />
+                    <span>Retour à Mes Offres d&apos;Emploi</span>
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <span className="permit-badge-pro permit-valid">
+                      <ShieldCheck size={12} />
+                      <span>Formulaire Officiel Recruteur</span>
+                    </span>
+                    <span className="text-xs text-slate-400 hidden sm:inline-block">
+                      SIRET : {company?.siret || "Vérifié"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Carte d'en-tête de la page dédiée */}
+                <div className="create-job-header-card">
+                  <div className="create-job-header-left">
+                    <div className="create-job-header-icon">
+                      <Briefcase size={22} />
+                    </div>
+                    <div className="create-job-banner-info">
+                      <h1 className="create-job-banner-title">
+                        <span>Publier une Nouvelle Offre d&apos;Emploi Conducteur</span>
+                        <span className="job-status-pill approved" style={{ fontSize: "0.7rem", padding: "0.2rem 0.55rem" }}>
+                          Diffusion Réseau
+                        </span>
+                      </h1>
+                      <p className="create-job-banner-sub">
+                        Renseignez les critères clés de votre tournée. Votre annonce sera immédiatement enregistrée et transmise à l&apos;équipe administrative TruckMatch pour validation rapide (&lt; 2h ouvrées) avant diffusion aux conducteurs qualifiés de votre secteur.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Message de succès après soumission */}
+                {postJobSuccess && (
+                  <div
+                    style={{
+                      background: "rgba(16, 185, 129, 0.15)",
+                      border: "1px solid rgba(16, 185, 129, 0.4)",
+                      borderRadius: "12px",
+                      padding: "1.25rem 1.5rem",
+                      color: "#34d399",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "1rem",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <CheckCircle2 size={24} className="flex-shrink-0" />
+                      <div>
+                        <div className="font-extrabold text-sm text-white">Offre enregistrée avec succès !</div>
+                        <div className="text-xs text-emerald-200">{postJobSuccess}</div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setNav("jobs")}
+                      className="cockpit-btn cockpit-btn-emerald cockpit-btn-sm"
+                    >
+                      <span>Consulter mes offres d&apos;emploi</span>
+                      <ArrowRight size={13} />
+                    </button>
+                  </div>
+                )}
+
+                {/* Formulaire complet pleine page */}
+                <form onSubmit={handlePostJobSubmit} className="create-job-form-sheet">
+                  {/* Section 1 : Intitulé du Poste */}
+                  <div className="create-job-card-block">
+                    <div className="create-job-card-header">
+                      <h3 className="create-job-card-title">
+                        <Briefcase size={15} />
+                        <span>1. Intitulé &amp; Métier du Conducteur</span>
+                      </h3>
+                      <span className="text-[11px] font-bold text-sky-400">Champ obligatoire *</span>
+                    </div>
+
+                    <div className="job-form-field">
+                      <label className="job-form-label">
+                        <span>Intitulé précis du poste recherché</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ex: Conducteur Routier SPL Régional Frigo (H/F)"
+                        value={newJob.title}
+                        onChange={(e) => setNewJob({ ...newJob, title: e.target.value })}
+                        className="job-form-input font-bold"
+                        style={{ fontSize: "0.95rem", padding: "0.75rem 1rem" }}
+                      />
+
+                      {/* Suggestions rapides en 1 clic */}
+                      <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                        <span className="text-[11px] text-slate-400 mr-1 font-semibold">Exemples rapides :</span>
+                        {[
+                          "Conducteur SPL Régional Frigo",
+                          "Chauffeur Distribution PL 19T Messagerie",
+                          "Tractionnaire Relais de Nuit SPL",
+                          "Chauffeur Porteur Benne TP",
+                          "Conducteur Grand Routier National",
+                        ].map((sug) => (
+                          <button
+                            key={sug}
+                            type="button"
+                            onClick={() => setNewJob({ ...newJob, title: sug })}
+                            className="job-suggestion-chip"
+                          >
+                            + {sug}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 2 : Permis requis, Catégorie & Contrat */}
+                  <div className="create-job-card-block">
+                    <div className="create-job-card-header">
+                      <h3 className="create-job-card-title">
+                        <Truck size={15} />
+                        <span>2. Qualifications de Conduite &amp; Type de Contrat</span>
+                      </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="job-form-field">
+                        <label className="job-form-label">Permis requis pour la mission</label>
+                        <select
+                          value={newJob.permit}
+                          onChange={(e) => {
+                            const p = e.target.value;
+                            let cat = "spl";
+                            if (p === "C" || p === "C1") cat = "pl";
+                            else if (p === "BE" || p === "B") cat = "vul";
+                            setNewJob({ ...newJob, permit: p, category: cat });
+                          }}
+                          className="job-form-select"
+                        >
+                          <option value="CE">Permis CE (Semi-Remorque / SPL)</option>
+                          <option value="C">Permis C (Porteur / Poids Lourd PL)</option>
+                          <option value="C1">Permis C1 (Porteur léger 3.5T - 7.5T)</option>
+                          <option value="BE">Permis BE (Véhicule remorque)</option>
+                        </select>
+                      </div>
+
+                      <div className="job-form-field">
+                        <label className="job-form-label">Catégorie de véhicule</label>
+                        <select
+                          value={newJob.category}
+                          onChange={(e) => setNewJob({ ...newJob, category: e.target.value })}
+                          className="job-form-select"
+                        >
+                          <option value="spl">Semi-remorque (SPL 44T)</option>
+                          <option value="pl">Poids Lourd (Porteur PL 19T - 26T)</option>
+                          <option value="porteur">Spécifique (Benne TP / Bras de Grue)</option>
+                          <option value="vul">Utilitaire (VUL &lt; 3.5T)</option>
+                        </select>
+                      </div>
+
+                      <div className="job-form-field">
+                        <label className="job-form-label">Type de contrat proposé</label>
+                        <select
+                          value={newJob.contract_type}
+                          onChange={(e) => setNewJob({ ...newJob, contract_type: e.target.value })}
+                          className="job-form-select"
+                        >
+                          <option value="CDI">CDI - Temps plein</option>
+                          <option value="CDD">CDD - Remplacement / Renfort saisonnier</option>
+                          <option value="Intérim">Intérim - Mission longue durée</option>
+                          <option value="Traction">Traction régulière / Sous-traitance</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 3 : Localisation & Rémunération */}
+                  <div className="create-job-card-block">
+                    <div className="create-job-card-header">
+                      <h3 className="create-job-card-title">
+                        <MapPin size={15} />
+                        <span>3. Prise de Poste &amp; Rémunération</span>
+                      </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="job-form-field">
+                        <label className="job-form-label">
+                          <span>Ville / Dépôt de prise de poste</span>
+                          <span className="text-sky-400 text-[11px] font-normal">Obligatoire</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Ex: Lyon (69) / Saint-Priest, Nantes (44), Lille (59)..."
+                          value={newJob.location}
+                          onChange={(e) => setNewJob({ ...newJob, location: e.target.value })}
+                          className="job-form-input"
+                        />
+                        <span className="text-[11px] text-slate-500 mt-0.5">
+                          Point de rattachement quotidien du véhicule ou lieu de départ de la tournée.
+                        </span>
+                      </div>
+
+                      <div className="job-form-field">
+                        <label className="job-form-label">
+                          <span>Rémunération attractive proposée</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Ex: 2 700€ - 3 200€ brut/mois + frais CCNTR"
+                          value={newJob.salary}
+                          onChange={(e) => setNewJob({ ...newJob, salary: e.target.value })}
+                          className="job-form-input"
+                        />
+                        <span className="text-[11px] text-slate-500 mt-0.5">
+                          Précisez le salaire de base ou la fourchette globale avec primes.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 4 : Rythme de Travail & Matériel Fourni */}
+                  <div className="create-job-card-block">
+                    <div className="create-job-card-header">
+                      <h3 className="create-job-card-title">
+                        <Clock size={15} />
+                        <span>4. Rythme de Travail &amp; Matériel Fourni</span>
+                      </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="job-form-field">
+                        <label className="job-form-label">Rythme &amp; Découchés (Critère clé conducteurs)</label>
+                        <select
+                          value={newJob.schedule}
+                          onChange={(e) => setNewJob({ ...newJob, schedule: e.target.value })}
+                          className="job-form-select"
+                        >
+                          <option value="Retour domicile chaque soir">Retour domicile chaque soir (Régional)</option>
+                          <option value="1 à 2 découchés par semaine">1 à 2 découchés par semaine (Occasionnel)</option>
+                          <option value="Grand routier national (semaine)">Grand routier national (Lundi au Vendredi)</option>
+                          <option value="Horaires réguliers de nuit (21h-5h)">Horaires réguliers de nuit (Relais de nuit)</option>
+                          <option value="Roulement 2x8 ou 3x8">Roulement 2x8 ou 3x8</option>
+                        </select>
+                      </div>
+
+                      <div className="job-form-field">
+                        <label className="job-form-label">Matériel roulant &amp; Équipement cabine</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: Mercedes Actros 2024 / Semi Frigo bi-temp / Hayon Dhollandia"
+                          value={newJob.equipment}
+                          onChange={(e) => setNewJob({ ...newJob, equipment: e.target.value })}
+                          className="job-form-input"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="job-form-field mt-2">
+                      <label className="job-form-label">Frais conventionnels &amp; Avantages Entreprise</label>
+                      <input
+                        type="text"
+                        placeholder="Ex: Paniers repas conventionnels CCNTR, prime qualité non-accident, mutuelle 100%, intéressement..."
+                        value={newJob.benefits}
+                        onChange={(e) => setNewJob({ ...newJob, benefits: e.target.value })}
+                        className="job-form-input"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Section 5 : Description Détaillée */}
+                  <div className="create-job-card-block">
+                    <div className="create-job-card-header">
+                      <h3 className="create-job-card-title">
+                        <FileText size={15} />
+                        <span>5. Description de la Tournée &amp; Missions</span>
+                      </h3>
+                      <span className="text-[11px] font-bold text-sky-400">Requis *</span>
+                    </div>
+
+                    <div className="job-form-field">
+                      <textarea
+                        rows={5}
+                        required
+                        placeholder="Détaillez le type de marchandises transportées (alimentaire, palettes sèches, matériaux TP...), le secteur géographique, les opérations de chargement/déchargement, les horaires indicatifs..."
+                        value={newJob.description}
+                        onChange={(e) => setNewJob({ ...newJob, description: e.target.value })}
+                        className="job-form-textarea"
+                        style={{ minHeight: "120px" }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Section 6 : Certifications & Prérequis */}
+                  <div className="create-job-card-block">
+                    <div className="create-job-card-header">
+                      <h3 className="create-job-card-title">
+                        <Award size={15} />
+                        <span>6. Certifications &amp; Critères Requis (Sélection Rapide)</span>
+                      </h3>
+                      <span className="text-[11px] text-slate-400">Cliquer pour activer/désactiver</span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2.5">
+                      {[
+                        "Permis CE",
+                        "Permis C",
+                        "FCO / FIMO Valide",
+                        "Carte Chronotachygraphe",
+                        "ADR de Base",
+                        "ADR Citerne",
+                        "CACES Grue R490",
+                        "Hayon Élévateur",
+                        "Retour Domicile Soir",
+                        "Expérience Frigo",
+                      ].map((req) => {
+                        const isActive = newJob.requirements.includes(req);
+                        return (
+                          <button
+                            key={req}
+                            type="button"
+                            onClick={() => {
+                              const next = isActive
+                                ? newJob.requirements.filter((r) => r !== req)
+                                : [...newJob.requirements, req];
+                              setNewJob({ ...newJob, requirements: next });
+                            }}
+                            className={`requirement-chip-card ${isActive ? "active" : ""}`}
+                          >
+                            <Check size={12} className={isActive ? "text-emerald-400" : "opacity-30"} />
+                            <span>{req}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Pied d'action & Réassurance */}
+                  <div className="create-job-action-footer">
+                    <div className="flex items-center gap-3">
+                      <ShieldCheck size={22} className="text-emerald-400 flex-shrink-0" />
+                      <div className="text-xs text-slate-300" style={{ maxWidth: "560px", lineHeight: 1.45 }}>
+                        <strong>Agrément officiel TruckMatch :</strong> Dès votre validation, cette offre est enregistrée et transmise à notre équipe pour approbation sous 2h ouvrées, puis publiée en direct sur <strong>truckmatch.fr/offres-emploi</strong>.
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setNav("jobs")}
+                        className="cockpit-btn cockpit-btn-secondary"
+                      >
+                        Annuler
+                      </button>
+
+                      <button
+                        type="submit"
+                        disabled={postJobLoading}
+                        className="cockpit-btn cockpit-btn-emerald"
+                        style={{ padding: "0.65rem 1.4rem", fontSize: "0.85rem" }}
+                      >
+                        {postJobLoading ? (
+                          <RefreshCw size={15} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={15} className="text-amber-300" />
+                        )}
+                        <span>Soumettre l&apos;Offre à l&apos;Administration</span>
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          ) : activeNav === "profile" ? (
             <div className="portal-panel-card" style={{ maxWidth: "800px" }}>
               <div className="portal-panel-card-header">
                 <h2 className="portal-panel-card-title">
@@ -473,7 +893,7 @@ export default function CompanyPortalPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setIsPostJobModalOpen(true)}
+                  onClick={() => setNav("create-job")}
                   className="cockpit-btn cockpit-btn-emerald cockpit-btn-sm"
                 >
                   <Plus size={13} />
@@ -522,7 +942,7 @@ export default function CompanyPortalPage() {
                   </p>
                   <button
                     type="button"
-                    onClick={() => setIsPostJobModalOpen(true)}
+                    onClick={() => setNav("create-job")}
                     className="cockpit-btn cockpit-btn-emerald cockpit-btn-sm"
                   >
                     <Plus size={13} />
@@ -1008,285 +1428,7 @@ export default function CompanyPortalPage() {
         </div>
       )}
 
-      {/* MODALE 2 : PUBLIER UNE OFFRE D'EMPLOI COMPLETE (Soumise à modération admin) */}
-      {isPostJobModalOpen && (
-        <div className="admin-modal-backdrop" onClick={() => setIsPostJobModalOpen(false)}>
-          <div className="job-modal-box" onClick={(e) => e.stopPropagation()}>
-            <form onSubmit={handlePostJobSubmit}>
-              {/* En-tête Modale Haut de Gamme */}
-              <div className="admin-modal-header" style={{ padding: "1.1rem 1.4rem" }}>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="job-status-pill pending" style={{ fontSize: "0.68rem" }}>
-                      <Sparkles size={11} className="text-amber-400" />
-                      <span>RECRUTEMENT PRO DIRECT</span>
-                    </span>
-                    <span className="text-slate-500 text-xs">•</span>
-                    <span className="text-slate-400 text-xs font-mono">truckmatch.fr/offres-emploi</span>
-                  </div>
-                  <h3 className="font-black text-white text-base flex items-center gap-2">
-                    <Briefcase size={18} className="text-sky-400" />
-                    <span>Créer une Offre d&apos;Emploi Conducteur</span>
-                  </h3>
-                  <p className="text-slate-400 text-xs mt-0.5">
-                    Renseignez les détails du poste. L&apos;offre sera examinée par l&apos;administration puis publiée directement sur le site public.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsPostJobModalOpen(false)}
-                  className="text-slate-400 hover:text-white p-1"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="job-modal-form-grid">
-                {postJobSuccess && (
-                  <div className="p-3.5 bg-emerald-950/80 border border-emerald-600 text-emerald-200 rounded-lg text-xs font-bold flex items-center gap-2.5 animate-pulse">
-                    <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0" />
-                    <span>{postJobSuccess}</span>
-                  </div>
-                )}
-
-                {/* Section 1 : Intitulé du Poste */}
-                <div className="job-form-field">
-                  <div className="job-form-label">
-                    <span>Intitulé du Poste / Mission</span>
-                    <span className="text-sky-400 text-[11px] font-normal">Requis</span>
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ex: Conducteur Routier SPL Régional Frigo (H/F)"
-                    value={newJob.title}
-                    onChange={(e) => setNewJob({ ...newJob, title: e.target.value })}
-                    className="job-form-input font-bold"
-                  />
-                  {/* Suggestions rapides */}
-                  <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                    <span className="text-[11px] text-slate-400 mr-1">Suggestions rapides :</span>
-                    {[
-                      "Conducteur SPL Régional Frigo",
-                      "Chauffeur Distribution PL 19T Messagerie",
-                      "Tractionnaire Relais de Nuit SPL",
-                      "Chauffeur Porteur Benne TP",
-                    ].map((sug) => (
-                      <button
-                        key={sug}
-                        type="button"
-                        onClick={() => setNewJob({ ...newJob, title: sug })}
-                        className="job-suggestion-chip"
-                      >
-                        + {sug}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Section 2 : Catégorie & Permis & Type de Contrat */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="job-form-field">
-                    <label className="job-form-label">Permis requis</label>
-                    <select
-                      value={newJob.permit}
-                      onChange={(e) => {
-                        const p = e.target.value;
-                        let cat = "spl";
-                        if (p === "C" || p === "C1") cat = "pl";
-                        else if (p === "BE" || p === "B") cat = "vul";
-                        setNewJob({ ...newJob, permit: p, category: cat });
-                      }}
-                      className="job-form-select"
-                    >
-                      <option value="CE">Permis CE (Semi / SPL)</option>
-                      <option value="C">Permis C (Porteur / PL)</option>
-                      <option value="C1">Permis C1 (Porteur léger)</option>
-                      <option value="BE">Permis BE (Remorque)</option>
-                    </select>
-                  </div>
-
-                  <div className="job-form-field">
-                    <label className="job-form-label">Catégorie Véhicule</label>
-                    <select
-                      value={newJob.category}
-                      onChange={(e) => setNewJob({ ...newJob, category: e.target.value })}
-                      className="job-form-select"
-                    >
-                      <option value="spl">Semi-remorque (SPL)</option>
-                      <option value="pl">Poids Lourd (PL)</option>
-                      <option value="porteur">Porteur / Grue / TP</option>
-                      <option value="vul">Utilitaire (VUL)</option>
-                    </select>
-                  </div>
-
-                  <div className="job-form-field">
-                    <label className="job-form-label">Type de contrat</label>
-                    <select
-                      value={newJob.contract_type}
-                      onChange={(e) => setNewJob({ ...newJob, contract_type: e.target.value })}
-                      className="job-form-select"
-                    >
-                      <option value="CDI">CDI - Temps plein</option>
-                      <option value="CDD">CDD - Remplacement / Renfort</option>
-                      <option value="Intérim">Intérim - Mission longue</option>
-                      <option value="Traction">Traction régulière</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Section 3 : Localisation & Rémunération */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="job-form-field">
-                    <label className="job-form-label">Ville / Dépôt de prise de poste</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ex: Lyon (69), Nantes (44), Lille (59)..."
-                      value={newJob.location}
-                      onChange={(e) => setNewJob({ ...newJob, location: e.target.value })}
-                      className="job-form-input"
-                    />
-                  </div>
-
-                  <div className="job-form-field">
-                    <label className="job-form-label">Rémunération indicative</label>
-                    <input
-                      type="text"
-                      placeholder="Ex: 2 700€ - 3 200€ brut/mois + paniers"
-                      value={newJob.salary}
-                      onChange={(e) => setNewJob({ ...newJob, salary: e.target.value })}
-                      className="job-form-input"
-                    />
-                  </div>
-                </div>
-
-                {/* Section 4 : Rythme / Découchés & Matériel */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="job-form-field">
-                    <label className="job-form-label">Rythme & Découchés</label>
-                    <select
-                      value={newJob.schedule}
-                      onChange={(e) => setNewJob({ ...newJob, schedule: e.target.value })}
-                      className="job-form-select"
-                    >
-                      <option value="Retour domicile chaque soir">Retour domicile chaque soir</option>
-                      <option value="1 à 2 découchés par semaine">1 à 2 découchés par semaine</option>
-                      <option value="Grand routier national (semaine)">Grand routier national (semaine)</option>
-                      <option value="Horaires réguliers de nuit (21h-5h)">Horaires réguliers de nuit (21h-5h)</option>
-                      <option value="2x8 ou 3x8">Roulement 2x8 ou 3x8</option>
-                    </select>
-                  </div>
-
-                  <div className="job-form-field">
-                    <label className="job-form-label">Matériel roulant</label>
-                    <input
-                      type="text"
-                      placeholder="Ex: Semi Frigo bi-température, Tautliner Euro 6, Benne TP..."
-                      value={newJob.equipment}
-                      onChange={(e) => setNewJob({ ...newJob, equipment: e.target.value })}
-                      className="job-form-input"
-                    />
-                  </div>
-                </div>
-
-                {/* Section 5 : Frais & Avantages CCNTR */}
-                <div className="job-form-field">
-                  <label className="job-form-label">Frais conventionnels &amp; Avantages</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Paniers repas conventionnels CCNTR, prime non-accident, mutuelle d'entreprise 100%..."
-                    value={newJob.benefits}
-                    onChange={(e) => setNewJob({ ...newJob, benefits: e.target.value })}
-                    className="job-form-input"
-                  />
-                </div>
-
-                {/* Section 6 : Description de la Mission */}
-                <div className="job-form-field">
-                  <label className="job-form-label">Description détaillée de la tournée &amp; missions</label>
-                  <textarea
-                    rows={4}
-                    required
-                    placeholder="Détaillez les types de marchandises, le secteur géographique, les opérations de chargement/déchargement, les équipements fournis..."
-                    value={newJob.description}
-                    onChange={(e) => setNewJob({ ...newJob, description: e.target.value })}
-                    className="job-form-textarea"
-                  />
-                </div>
-
-                {/* Section 7 : Qualifications & Prérequis (Chips Interactifs) */}
-                <div className="job-form-field">
-                  <label className="job-form-label mb-1">Certifications &amp; Critères requis (Cliquer pour activer)</label>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      "Permis CE",
-                      "Permis C",
-                      "FCO / FIMO Valide",
-                      "Carte Chronotachygraphe",
-                      "ADR de Base",
-                      "ADR Citerne",
-                      "CACES Grue R490",
-                      "Hayon Élévateur",
-                      "Retour Domicile Soir",
-                      "Expérience Frigo",
-                    ].map((req) => {
-                      const isActive = newJob.requirements.includes(req);
-                      return (
-                        <button
-                          key={req}
-                          type="button"
-                          onClick={() => {
-                            const next = isActive
-                              ? newJob.requirements.filter((r) => r !== req)
-                              : [...newJob.requirements, req];
-                            setNewJob({ ...newJob, requirements: next });
-                          }}
-                          className={`requirement-chip-card ${isActive ? "active" : ""}`}
-                        >
-                          <Check size={12} className={isActive ? "text-emerald-400" : "opacity-30"} />
-                          <span>{req}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Boîte Info Modération */}
-                <div className="p-3 bg-slate-900/80 rounded-lg border border-slate-800 flex items-center gap-3">
-                  <ShieldCheck size={20} className="text-emerald-400 flex-shrink-0" />
-                  <p className="text-slate-300 text-xs" style={{ lineHeight: 1.4 }}>
-                    <strong>Processus d&apos;approbation rapide :</strong> Dès la soumission, votre offre est envoyée à l&apos;équipe administrative de TruckMatch. Après validation sous 2h ouvrées, elle sera automatiquement publiée sur le site public <strong>truckmatch.fr/offres-emploi</strong>.
-                  </p>
-                </div>
-              </div>
-
-              {/* Pied de Page */}
-              <div className="admin-modal-footer">
-                <button
-                  type="button"
-                  onClick={() => setIsPostJobModalOpen(false)}
-                  className="cockpit-btn cockpit-btn-secondary"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={postJobLoading}
-                  className="cockpit-btn cockpit-btn-emerald"
-                >
-                  {postJobLoading ? (
-                    <RefreshCw size={14} className="animate-spin" />
-                  ) : (
-                    <Sparkles size={14} className="text-amber-300" />
-                  )}
-                  <span>Soumettre l&apos;Offre d&apos;Emploi</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Fin espace entreprise */}
     </div>
   );
 }

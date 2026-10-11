@@ -12387,3 +12387,114 @@ select.portal-form-input option {
   box-shadow: 0 6px 24px rgba(56, 189, 248, 0.5);
   transform: translateY(-1px);
 }
+
+/* ==========================================================================
+   ESPACE ENTREPRISE : PAGE DÉDIÉE PUBLIER UNE OFFRE D'EMPLOI
+   ========================================================================== */
+
+.company-cockpit-wrapper {
+  height: 100vh;
+  max-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  background: #060b13;
+  color: #ffffff;
+}
+
+.create-job-dedicated-view {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+}
+
+.create-job-header-card {
+  background: linear-gradient(135deg, #091526 0%, #0d1e36 100%);
+  border: 1px solid #1a3150;
+  border-radius: 14px;
+  padding: 1.35rem 1.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.create-job-header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.create-job-header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.create-job-form-sheet {
+  background: #091322;
+  border: 1px solid #16263f;
+  border-radius: 14px;
+  padding: 1.5rem 1.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.create-job-card-block {
+  background: #060e18;
+  border: 1px solid #14243a;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.create-job-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid #101d2f;
+}
+
+.create-job-card-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.create-job-action-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  background: #060d17;
+  border: 1px solid #16273f;
+  border-radius: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
