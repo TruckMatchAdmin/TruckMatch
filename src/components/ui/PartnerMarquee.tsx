@@ -47,10 +47,10 @@ export function PartnerMarquee() {
 
           {/* Deuxième série pour le défilement infini fluide */}
           {PARTNER_LOGOS.map((logo, idx) => (
-            <div key={`logo-2-${idx}`} className="partner-marquee-card">
+            <div key={`logo-2-${idx}`} className="partner-marquee-card" aria-hidden="true">
               <Image
                 src={logo.src}
-                alt={logo.name}
+                alt=""
                 width={logo.width}
                 height={logo.height}
                 className="partner-marquee-logo-img"

@@ -22,6 +22,21 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Menu mobile : fermeture par Échap et blocage du scroll de la page
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileMenuOpen]);
+
   return (
     <>
       <header className={`site-header ${scrolled ? "header-scrolled" : ""}`}>
@@ -30,7 +45,7 @@ export function Header() {
           <Link href="/" className="logo-link" aria-label="TruckMatch Accueil">
             <Image
               src="/images/logo.png"
-              alt="TruckMatch - Les entreprises trouvent leurs chauffeurs. Les chauffeurs trouvent leur route."
+              alt="TruckMatch"
               width={280}
               height={70}
               priority
@@ -80,6 +95,7 @@ export function Header() {
             className="mobile-menu-btn"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation"
             aria-label={mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -88,7 +104,7 @@ export function Header() {
 
         {/* Menu Mobile Déroulant Pro */}
         {mobileMenuOpen && (
-          <div className="mobile-menu-overlay">
+          <div className="mobile-menu-overlay" id="mobile-navigation">
             <nav className="mobile-nav" aria-label="Navigation mobile">
               <ul className="mobile-nav-list">
                 {MAIN_NAV.map((item) => {

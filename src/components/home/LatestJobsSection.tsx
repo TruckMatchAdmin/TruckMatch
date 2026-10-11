@@ -243,10 +243,11 @@ export function LatestJobsSection() {
         </div>
 
         {/* Barre de filtres rapides cliquables */}
-        <div className="jobs-filter-chips-row">
+        <div className="jobs-filter-chips-row" role="group" aria-label="Filtrer les offres par type de poste">
           <button
             type="button"
             onClick={() => setActiveFilter("all")}
+            aria-pressed={activeFilter === "all"}
             className={`job-filter-chip ${activeFilter === "all" ? "active" : ""}`}
           >
             Tous les postes ({jobs.length})
@@ -254,6 +255,7 @@ export function LatestJobsSection() {
           <button
             type="button"
             onClick={() => setActiveFilter("spl")}
+            aria-pressed={activeFilter === "spl"}
             className={`job-filter-chip ${activeFilter === "spl" ? "active" : ""}`}
           >
             Conducteur SPL (Semi)
@@ -261,6 +263,7 @@ export function LatestJobsSection() {
           <button
             type="button"
             onClick={() => setActiveFilter("pl")}
+            aria-pressed={activeFilter === "pl"}
             className={`job-filter-chip ${activeFilter === "pl" ? "active" : ""}`}
           >
             Chauffeur PL (Distribution)
@@ -268,6 +271,7 @@ export function LatestJobsSection() {
           <button
             type="button"
             onClick={() => setActiveFilter("benne")}
+            aria-pressed={activeFilter === "benne"}
             className={`job-filter-chip ${activeFilter === "benne" ? "active" : ""}`}
           >
             Benne TP & Grue
@@ -275,6 +279,7 @@ export function LatestJobsSection() {
           <button
             type="button"
             onClick={() => setActiveFilter("vul")}
+            aria-pressed={activeFilter === "vul"}
             className={`job-filter-chip ${activeFilter === "vul" ? "active" : ""}`}
           >
             Livreur VUL Express

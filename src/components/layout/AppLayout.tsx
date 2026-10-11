@@ -21,8 +21,9 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <>
+      <a href="#contenu" className="skip-link">Aller au contenu principal</a>
       <Header />
-      <main style={{ minHeight: "calc(100vh - 160px)" }}>{children}</main>
+      <main id="contenu" style={{ minHeight: "calc(100vh - 160px)" }}>{children}</main>
       <Footer />
     </>
   );
