@@ -414,8 +414,8 @@ export default function CompanyPortalPage() {
         {/* Contenu principal */}
         <main className={`company-cockpit-main ${activeNav === "profile" || activeNav === "jobs" || activeNav === "create-job" ? "overflow-y-auto" : ""}`}>
           {activeNav === "create-job" ? (
-            <div className="p-6 flex flex-col gap-6" style={{ width: "100%", maxWidth: "100%" }}>
-              <div className="create-job-dedicated-view">
+            <div className="w-full flex flex-col gap-6" style={{ width: "100%", maxWidth: "100%" }}>
+              <div className="create-job-dedicated-view" style={{ width: "100%", maxWidth: "100%" }}>
                 {/* Barre de navigation / Retour */}
                 <div className="flex items-center justify-between">
                   <button
@@ -800,87 +800,91 @@ export default function CompanyPortalPage() {
               </div>
             </div>
           ) : activeNav === "profile" ? (
-            <div className="portal-panel-card" style={{ maxWidth: "800px" }}>
-              <div className="portal-panel-card-header">
-                <h2 className="portal-panel-card-title">
-                  <Building2 size={18} className="text-emerald-400" />
-                  <span>Détails de l'Entreprise de Transport</span>
-                </h2>
-                <span className="permit-badge-pro permit-valid">SIRET Vérifié (URSSAF)</span>
-              </div>
+            <div className="w-full flex flex-col gap-6" style={{ width: "100%", maxWidth: "100%" }}>
+              <div className="portal-panel-card w-full" style={{ width: "100%", maxWidth: "100%" }}>
+                <div className="portal-panel-card-header">
+                  <h2 className="portal-panel-card-title text-white">
+                    <Building2 size={18} className="text-emerald-400" />
+                    <span>Détails de l&apos;Entreprise de Transport</span>
+                  </h2>
+                  <span className="permit-badge-pro permit-valid">SIRET Vérifié (URSSAF)</span>
+                </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1.25rem" }}>
-                <div>
-                  <div className="portal-form-group">
-                    <label className="portal-form-label">Raison Sociale</label>
-                    <input
-                      type="text"
-                      value={company?.company_name || user?.name || "Entreprise de Transport"}
-                      readOnly
-                      className="portal-form-input"
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div>
+                    <div className="portal-form-group">
+                      <label className="portal-form-label">Raison Sociale</label>
+                      <input
+                        type="text"
+                        value={company?.company_name || user?.name || "Entreprise de Transport"}
+                        readOnly
+                        className="portal-form-input"
+                      />
+                    </div>
+
+                    <div className="portal-form-group">
+                      <label className="portal-form-label">Numéro SIRET</label>
+                      <input
+                        type="text"
+                        value={company?.siret || "892 451 902 00024"}
+                        readOnly
+                        className="portal-form-input"
+                      />
+                    </div>
                   </div>
 
-                  <div className="portal-form-group">
-                    <label className="portal-form-label">Numéro SIRET</label>
-                    <input
-                      type="text"
-                      value={company?.siret || "892 451 902 00024"}
-                      readOnly
-                      className="portal-form-input"
-                    />
+                  <div>
+                    <div className="portal-form-group">
+                      <label className="portal-form-label">Taille de Flotte</label>
+                      <input
+                        type="text"
+                        value={company?.fleet_size || "10 - 50 Poids Lourds"}
+                        readOnly
+                        className="portal-form-input"
+                      />
+                    </div>
+
+                    <div className="portal-form-group">
+                      <label className="portal-form-label">Contact Exploitation</label>
+                      <input
+                        type="email"
+                        value={company?.email || user?.email || "exploitation@transport.fr"}
+                        readOnly
+                        className="portal-form-input"
+                      />
+                    </div>
                   </div>
 
-                  <div className="portal-form-group">
-                    <label className="portal-form-label">Taille de Flotte</label>
-                    <input
-                      type="text"
-                      value={company?.fleet_size || "10 - 50 Poids Lourds"}
-                      readOnly
-                      className="portal-form-input"
-                    />
+                  <div>
+                    <div className="portal-form-group">
+                      <label className="portal-form-label">Téléphone Direction</label>
+                      <input
+                        type="tel"
+                        value={company?.phone || user?.phone || "04 78 •• •• ••"}
+                        readOnly
+                        className="portal-form-input"
+                      />
+                    </div>
+
+                    <div className="portal-form-group">
+                      <label className="portal-form-label">Siège &amp; Dépôt Principal</label>
+                      <input
+                        type="text"
+                        value={`${company?.postal_code || ""} ${company?.city || "France"}`.trim()}
+                        readOnly
+                        className="portal-form-input"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <div className="portal-form-group">
-                    <label className="portal-form-label">Contact Exploitation</label>
-                    <input
-                      type="email"
-                      value={company?.email || user?.email || "exploitation@transport.fr"}
-                      readOnly
-                      className="portal-form-input"
-                    />
-                  </div>
-
-                  <div className="portal-form-group">
-                    <label className="portal-form-label">Téléphone Direction</label>
-                    <input
-                      type="tel"
-                      value={company?.phone || user?.phone || "04 78 •• •• ••"}
-                      readOnly
-                      className="portal-form-input"
-                    />
-                  </div>
-
-                  <div className="portal-form-group">
-                    <label className="portal-form-label">Siège & Dépôt Principal</label>
-                    <input
-                      type="text"
-                      value={`${company?.postal_code || ""} ${company?.city || "France"}`.trim()}
-                      readOnly
-                      className="portal-form-input"
-                    />
-                  </div>
+                <div style={{ marginTop: "1.25rem", padding: "0.85rem 1rem", background: "#060d17", borderRadius: "8px", border: "1px solid #14243a", fontSize: "0.82rem", color: "#94a3b8" }}>
+                  ✓ Votre compte entreprise bénéficie d&apos;un accès direct illimité au vivier de conducteurs qualifiés sans intermédiaire sur tout le territoire.
                 </div>
-              </div>
-
-              <div style={{ marginTop: "1rem", padding: "0.75rem", background: "#060d17", borderRadius: "8px", border: "1px solid #14243a", fontSize: "0.78rem", color: "#94a3b8" }}>
-                ✓ Votre compte entreprise bénéficie d'un accès direct illimité au vivier de conducteurs qualifiés sans intermédiaire.
               </div>
             </div>
           ) : activeNav === "jobs" ? (
-            <div className="p-6 flex flex-col gap-6" style={{ maxWidth: "1050px", width: "100%" }}>
+            <div className="w-full flex flex-col gap-6" style={{ width: "100%", maxWidth: "100%" }}>
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-black text-white flex items-center gap-2">

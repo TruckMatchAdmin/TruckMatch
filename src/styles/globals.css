@@ -12534,3 +12534,15 @@ select.portal-form-input option {
   width: 100%;
   box-sizing: border-box;
 }
+
+/* Pleine largeur absolue pour tous les modules de l'Espace Entreprise */
+.company-cockpit-main,
+.company-cockpit-main > div,
+.company-cockpit-main .portal-panel-card,
+.company-cockpit-main .create-job-dedicated-view,
+.company-cockpit-main .create-job-form-sheet,
+.company-cockpit-main .company-job-card {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
