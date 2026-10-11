@@ -29,6 +29,11 @@ import {
   RefreshCw,
   ChevronRight,
   UserCheck,
+  Compass,
+  Home,
+  Moon,
+  Repeat,
+  Sliders,
 } from "lucide-react";
 
 interface JobOffer {
@@ -71,9 +76,27 @@ export default function CandidatePortalPage() {
   const [experienceYears, setExperienceYears] = useState("3-5");
   const [mobilityPref, setMobilityPref] = useState("regional");
   const [driverCity, setDriverCity] = useState("Lyon (69) / Auvergne-Rhône-Alpes");
+  const [driverPostalCode, setDriverPostalCode] = useState("69007");
+  const [driverFirstName, setDriverFirstName] = useState("Jean");
+  const [driverLastName, setDriverLastName] = useState("Dupont");
   const [driverPhone, setDriverPhone] = useState("06 12 34 56 78");
   const [driverEmail, setDriverEmail] = useState("");
+  const [contactPref, setContactPref] = useState<"phone_sms" | "sms_only" | "platform">("phone_sms");
+  const [mobilityRadius, setMobilityRadius] = useState<number>(45);
+  const [isFranceEntire, setIsFranceEntire] = useState<boolean>(false);
+  const [overnightPref, setOvernightPref] = useState<"none" | "occasional" | "national" | "relay_night">("none");
+  const [desiredContracts, setDesiredContracts] = useState<string[]>(["CDI Temps plein"]);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
+
+  const toggleContract = (contract: string) => {
+    if (desiredContracts.includes(contract)) {
+      if (desiredContracts.length > 1) {
+        setDesiredContracts(desiredContracts.filter((c) => c !== contract));
+      }
+    } else {
+      setDesiredContracts([...desiredContracts, contract]);
+    }
+  };
 
   // Recherche & filtrage offres d'emploi
   const [jobSearch, setJobSearch] = useState("");
@@ -193,9 +216,30 @@ export default function CandidatePortalPage() {
         try {
           const parsed = JSON.parse(stored);
           setUser(parsed);
+          if (parsed.first_name) setDriverFirstName(parsed.first_name);
+          if (parsed.last_name) setDriverLastName(parsed.last_name);
+          if (parsed.name && !parsed.first_name) {
+            const parts = parsed.name.trim().split(" ");
+            setDriverFirstName(parts[0] || "Jean");
+            setDriverLastName(parts.slice(1).join(" ") || "Dupont");
+          }
           if (parsed.email) setDriverEmail(parsed.email);
           if (parsed.phone) setDriverPhone(parsed.phone);
           if (parsed.city) setDriverCity(parsed.city);
+          if (parsed.postal_code) setDriverPostalCode(parsed.postal_code);
+          if (parsed.contact_preference) setContactPref(parsed.contact_preference);
+          if (parsed.mobility_radius) {
+            if (parsed.mobility_radius === "france_entiere") {
+              setIsFranceEntire(true);
+              setMobilityRadius(150);
+            } else {
+              setMobilityRadius(Number(parsed.mobility_radius) || 45);
+              setIsFranceEntire(false);
+            }
+          }
+          if (parsed.overnight_preference) setOvernightPref(parsed.overnight_preference);
+          if (parsed.availability) setAvailability(parsed.availability);
+          if (Array.isArray(parsed.desired_contracts)) setDesiredContracts(parsed.desired_contracts);
         } catch {
           // ignore
         }
@@ -218,14 +262,23 @@ export default function CandidatePortalPage() {
     else setAvailability("immediate");
   };
 
-  const handleSaveProfile = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveProfile = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (typeof window !== "undefined") {
       const updated = {
         ...(user || {}),
+        name: `${driverFirstName} ${driverLastName}`.trim(),
+        first_name: driverFirstName,
+        last_name: driverLastName,
         phone: driverPhone,
         email: driverEmail,
         city: driverCity,
+        postal_code: driverPostalCode,
+        contact_preference: contactPref,
+        mobility_radius: isFranceEntire ? "france_entiere" : mobilityRadius,
+        overnight_preference: overnightPref,
+        availability: availability,
+        desired_contracts: desiredContracts,
         permits: [
           permits.ce && "CE",
           permits.c && "C",
@@ -236,8 +289,8 @@ export default function CandidatePortalPage() {
       localStorage.setItem("tm_user", JSON.stringify(updated));
       setUser(updated);
     }
-    setSaveSuccessMsg("Profil et permis mis à jour avec succès.");
-    setTimeout(() => setSaveSuccessMsg(null), 3000);
+    setSaveSuccessMsg("Vos coordonnées directes et votre rayon de mobilité pro ont été enregistrés avec succès !");
+    setTimeout(() => setSaveSuccessMsg(null), 3500);
   };
 
   const handleApplyToJob = (job: JobOffer) => {
@@ -280,6 +333,9 @@ export default function CandidatePortalPage() {
   });
 
   const getDriverDisplayName = () => {
+    if (driverFirstName || driverLastName) {
+      return `${driverFirstName} ${driverLastName}`.trim();
+    }
     if (user?.name) return user.name;
     if (user?.first_name || user?.last_name) {
       return `${user.first_name || ""} ${user.last_name || ""}`.trim();
@@ -415,8 +471,8 @@ export default function CandidatePortalPage() {
             onClick={() => setActiveTab("settings")}
             className={`portal-nav-btn ${activeTab === "settings" ? "active" : ""}`}
           >
-            <Settings className="nav-icon" />
-            <span className="nav-title">Mes Coordonnées</span>
+            <Compass className="nav-icon" />
+            <span className="nav-title">Coordonnées & Mobilité</span>
           </button>
         </nav>
 
@@ -489,8 +545,8 @@ export default function CandidatePortalPage() {
               )}
               {activeTab === "settings" && (
                 <>
-                  <Settings size={18} className="text-sky-400" />
-                  <span>Mes Coordonnées Directes & Rayon de Mobilité</span>
+                  <Compass size={18} className="text-sky-400" />
+                  <span>Mes Coordonnées Directes & Rayon de Mobilité Pro</span>
                 </>
               )}
             </h1>
@@ -1342,70 +1398,477 @@ export default function CandidatePortalPage() {
           )}
 
           {/* ============================================================== */}
-          {/* ONGLET 6 : MES COORDONNÉES                                      */}
+          {/* ============================================================== */}
+          {/* ONGLET 6 : MES COORDONNÉES DIRECTES & RAYON DE MOBILITÉ PRO    */}
           {/* ============================================================== */}
           {activeTab === "settings" && (
-            <div className="portal-panel-card" style={{ maxWidth: "700px" }}>
-              <div className="portal-panel-card-header">
-                <h2 className="portal-panel-card-title">
-                  <Settings size={18} className="text-sky-400" />
-                  <span>Mes Informations Personnelles de Contact</span>
-                </h2>
-                <span className="permit-badge-pro permit-valid">Protégé RGPD</span>
-              </div>
+            <div className="mobility-portal-wrapper">
+              <form onSubmit={handleSaveProfile} style={{ display: "contents" }}>
+                <div className="mobility-grid-2cols">
+                  {/* -------------------------------------------------------- */}
+                  {/* COLONNE GAUCHE : MES COORDONNÉES DIRECTES DE CONTACT    */}
+                  {/* -------------------------------------------------------- */}
+                  <div className="driver-card-panel">
+                    <div className="driver-panel-header">
+                      <div className="driver-panel-title-group">
+                        <div className="driver-panel-icon">
+                          <Phone size={19} />
+                        </div>
+                        <div>
+                          <h2 className="driver-panel-title">Mes Coordonnées Directes</h2>
+                          <div className="driver-panel-subtitle">
+                            Comment les transporteurs de votre région vous contactent
+                          </div>
+                        </div>
+                      </div>
+                      <span className="permit-badge-pro permit-valid">Protégé RGPD</span>
+                    </div>
 
-              <form onSubmit={handleSaveProfile}>
-                <div className="portal-form-group">
-                  <label className="portal-form-label">Nom complet / Identité</label>
-                  <input
-                    type="text"
-                    value={getDriverDisplayName()}
-                    readOnly
-                    className="portal-form-input"
-                    style={{ opacity: 0.8, cursor: "not-allowed" }}
-                  />
-                </div>
+                    {/* Nom & Prénom */}
+                    <div className="driver-input-row">
+                      <div className="driver-input-field">
+                        <label className="driver-input-label">Prénom</label>
+                        <input
+                          type="text"
+                          value={driverFirstName}
+                          onChange={(e) => setDriverFirstName(e.target.value)}
+                          placeholder="Jean"
+                          className="driver-input-box"
+                          required
+                        />
+                      </div>
+                      <div className="driver-input-field">
+                        <label className="driver-input-label">Nom</label>
+                        <input
+                          type="text"
+                          value={driverLastName}
+                          onChange={(e) => setDriverLastName(e.target.value)}
+                          placeholder="Dupont"
+                          className="driver-input-box"
+                          required
+                        />
+                      </div>
+                    </div>
 
-                <div className="portal-form-group">
-                  <label className="portal-form-label">Numéro de Téléphone Direct</label>
-                  <input
-                    type="tel"
-                    value={driverPhone}
-                    onChange={(e) => setDriverPhone(e.target.value)}
-                    className="portal-form-input"
-                    placeholder="06 •• •• •• ••"
-                  />
-                  <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: "0.3rem" }}>
-                    Les exploitants autorisés pourront vous joindre directement par appel ou SMS.
+                    {/* Téléphone direct */}
+                    <div className="driver-input-field">
+                      <label className="driver-input-label">
+                        <Phone size={13} className="text-sky-400" />
+                        <span>Numéro de Téléphone Mobile (Direct)</span>
+                      </label>
+                      <input
+                        type="tel"
+                        value={driverPhone}
+                        onChange={(e) => setDriverPhone(e.target.value)}
+                        placeholder="06 12 34 56 78"
+                        className="driver-input-box"
+                        required
+                      />
+                      <div className="driver-input-hint">
+                        Format français direct : permet aux exploitants de vous joindre pour une prise de poste rapide.
+                      </div>
+                    </div>
+
+                    {/* Canal de contact privilégié */}
+                    <div>
+                      <div className="contact-pref-title">
+                        <MessageSquare size={13} className="text-sky-400" />
+                        <span>Canal de Contact Privilégié (1 Clic)</span>
+                      </div>
+                      <div className="contact-pref-options">
+                        <div
+                          onClick={() => setContactPref("phone_sms")}
+                          className={`contact-pref-card ${contactPref === "phone_sms" ? "active" : ""}`}
+                        >
+                          <div className="contact-pref-content">
+                            <div className="contact-pref-icon-circle">
+                              <Phone size={16} />
+                            </div>
+                            <div>
+                              <div className="contact-pref-main-title">Appel Direct & SMS (Recommandé)</div>
+                              <div className="contact-pref-sub-text">
+                                Idéal pour décrocher rapidement les meilleures missions
+                              </div>
+                            </div>
+                          </div>
+                          <div className="contact-pref-check">
+                            {contactPref === "phone_sms" && <Check size={12} />}
+                          </div>
+                        </div>
+
+                        <div
+                          onClick={() => setContactPref("sms_only")}
+                          className={`contact-pref-card ${contactPref === "sms_only" ? "active" : ""}`}
+                        >
+                          <div className="contact-pref-content">
+                            <div className="contact-pref-icon-circle">
+                              <MessageSquare size={16} />
+                            </div>
+                            <div>
+                              <div className="contact-pref-main-title">SMS & WhatsApp Uniquement</div>
+                              <div className="contact-pref-sub-text">
+                                Pratique pour me contacter pendant mes pauses ou coupures
+                              </div>
+                            </div>
+                          </div>
+                          <div className="contact-pref-check">
+                            {contactPref === "sms_only" && <Check size={12} />}
+                          </div>
+                        </div>
+
+                        <div
+                          onClick={() => setContactPref("platform")}
+                          className={`contact-pref-card ${contactPref === "platform" ? "active" : ""}`}
+                        >
+                          <div className="contact-pref-content">
+                            <div className="contact-pref-icon-circle">
+                              <ShieldCheck size={16} />
+                            </div>
+                            <div>
+                              <div className="contact-pref-main-title">Messagerie TruckMatch Uniquement</div>
+                              <div className="contact-pref-sub-text">
+                                Mes coordonnées restent masquées tant que je n'accepte pas l'échange
+                              </div>
+                            </div>
+                          </div>
+                          <div className="contact-pref-check">
+                            {contactPref === "platform" && <Check size={12} />}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Email */}
+                    <div className="driver-input-field">
+                      <label className="driver-input-label">
+                        <Mail size={13} className="text-slate-400" />
+                        <span>Adresse Email Personnelle</span>
+                      </label>
+                      <input
+                        type="email"
+                        value={driverEmail}
+                        onChange={(e) => setDriverEmail(e.target.value)}
+                        placeholder="jean.dupont@conducteur-pro.fr"
+                        className="driver-input-box"
+                      />
+                    </div>
+
+                    {/* Ville & Code postal de départ */}
+                    <div className="driver-input-row">
+                      <div className="driver-input-field" style={{ flex: 2 }}>
+                        <label className="driver-input-label">
+                          <MapPin size={13} className="text-sky-400" />
+                          <span>Ville de Domicile / Départ</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={driverCity}
+                          onChange={(e) => setDriverCity(e.target.value)}
+                          placeholder="Lyon (69) ou Villefranche"
+                          className="driver-input-box"
+                          required
+                        />
+                      </div>
+                      <div className="driver-input-field" style={{ flex: 1 }}>
+                        <label className="driver-input-label">Code Postal</label>
+                        <input
+                          type="text"
+                          value={driverPostalCode}
+                          onChange={(e) => setDriverPostalCode(e.target.value)}
+                          placeholder="69007"
+                          className="driver-input-box"
+                        />
+                      </div>
+                    </div>
+                    <div className="driver-input-hint" style={{ marginTop: "-0.5rem" }}>
+                      📍 C'est le point de référence central utilisé pour calculer vos kilomètres jusqu'au dépôt de l'entreprise.
+                    </div>
+                  </div>
+
+                  {/* -------------------------------------------------------- */}
+                  {/* COLONNE DROITE : RAYON DE MOBILITÉ & CRITÈRES DE ROUTE  */}
+                  {/* -------------------------------------------------------- */}
+                  <div className="driver-card-panel">
+                    <div className="driver-panel-header">
+                      <div className="driver-panel-title-group">
+                        <div className="driver-panel-icon emerald">
+                          <Compass size={19} />
+                        </div>
+                        <div>
+                          <h2 className="driver-panel-title">Rayon de Mobilité & Périmètre Pro</h2>
+                          <div className="driver-panel-subtitle">
+                            Distance acceptée pour rejoindre le dépôt ou rouler
+                          </div>
+                        </div>
+                      </div>
+                      <span className="permit-badge-pro permit-valid">Temps Réel</span>
+                    </div>
+
+                    {/* Curseur Rayon Kilométrique */}
+                    <div className="mobility-slider-box">
+                      <div className="mobility-distance-header">
+                        <div>
+                          <div style={{ fontSize: "0.72rem", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>
+                            Distance maximale acceptée
+                          </div>
+                          <div className="mobility-value-display">
+                            {isFranceEntire ? (
+                              <span className="mobility-value-number" style={{ fontSize: "1.7rem", color: "#34d399" }}>
+                                🇫🇷 France Entière
+                              </span>
+                            ) : (
+                              <>
+                                <span className="mobility-value-number">{mobilityRadius}</span>
+                                <span className="mobility-value-unit">km autour de chez moi</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        <span className={`mobility-badge-status ${isFranceEntire ? "national" : ""}`}>
+                          {isFranceEntire
+                            ? "Grand Routier National"
+                            : mobilityRadius <= 25
+                            ? "Très local / Messagerie"
+                            : mobilityRadius <= 60
+                            ? "Régional standard"
+                            : "Interdépartemental"}
+                        </span>
+                      </div>
+
+                      {/* Slider Input */}
+                      <input
+                        type="range"
+                        min="10"
+                        max="150"
+                        step="5"
+                        value={isFranceEntire ? 150 : mobilityRadius}
+                        disabled={isFranceEntire}
+                        onChange={(e) => {
+                          setMobilityRadius(Number(e.target.value));
+                          setIsFranceEntire(false);
+                        }}
+                        className="mobility-range-slider"
+                        style={{ opacity: isFranceEntire ? 0.4 : 1 }}
+                      />
+
+                      {/* Puces de sélection rapide */}
+                      <div>
+                        <div style={{ fontSize: "0.71rem", color: "#64748b", marginBottom: "0.4rem" }}>
+                          Raccourcis rapides en 1 clic :
+                        </div>
+                        <div className="mobility-quick-presets">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMobilityRadius(20);
+                              setIsFranceEntire(false);
+                            }}
+                            className={`mobility-preset-pill ${!isFranceEntire && mobilityRadius === 20 ? "active" : ""}`}
+                          >
+                            20 km (Local)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMobilityRadius(40);
+                              setIsFranceEntire(false);
+                            }}
+                            className={`mobility-preset-pill ${!isFranceEntire && mobilityRadius === 40 ? "active" : ""}`}
+                          >
+                            40 km (Régional)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMobilityRadius(60);
+                              setIsFranceEntire(false);
+                            }}
+                            className={`mobility-preset-pill ${!isFranceEntire && mobilityRadius === 60 ? "active" : ""}`}
+                          >
+                            60 km (Inter-dépôt)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMobilityRadius(100);
+                              setIsFranceEntire(false);
+                            }}
+                            className={`mobility-preset-pill ${!isFranceEntire && mobilityRadius === 100 ? "active" : ""}`}
+                          >
+                            100 km (Grande région)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsFranceEntire(!isFranceEntire)}
+                            className={`mobility-preset-pill ${isFranceEntire ? "active" : ""}`}
+                          >
+                            🇫🇷 France entière
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Critère Découchés (Nuits en cabine) */}
+                    <div>
+                      <div className="contact-pref-title">
+                        <Moon size={13} className="text-amber-400" />
+                        <span>Découchés & Nuits Hors Domicile (Critère Clé)</span>
+                      </div>
+                      <div className="overnight-grid">
+                        <div
+                          onClick={() => setOvernightPref("none")}
+                          className={`overnight-card ${overnightPref === "none" ? "active" : ""}`}
+                        >
+                          <div className="overnight-card-top">
+                            <span className="overnight-card-title">
+                              <Home size={15} className="text-emerald-400" />
+                              <span>0 découché (Chaque soir)</span>
+                            </span>
+                            <span className="overnight-badge-popular">Top Choix</span>
+                          </div>
+                          <div className="overnight-card-desc">
+                            Retour impératif au domicile tous les soirs (Régional, benne ou distribution).
+                          </div>
+                        </div>
+
+                        <div
+                          onClick={() => setOvernightPref("occasional")}
+                          className={`overnight-card ${overnightPref === "occasional" ? "active" : ""}`}
+                        >
+                          <div className="overnight-card-top">
+                            <span className="overnight-card-title">
+                              <Moon size={15} className="text-sky-400" />
+                              <span>1 à 2 découchés / sem</span>
+                            </span>
+                          </div>
+                          <div className="overnight-card-desc">
+                            Découchés occasionnels acceptés selon les impératifs de planning.
+                          </div>
+                        </div>
+
+                        <div
+                          onClick={() => setOvernightPref("national")}
+                          className={`overnight-card ${overnightPref === "national" ? "active" : ""}`}
+                        >
+                          <div className="overnight-card-top">
+                            <span className="overnight-card-title">
+                              <Truck size={15} className="text-purple-400" />
+                              <span>Grand Routier (Semaine)</span>
+                            </span>
+                          </div>
+                          <div className="overnight-card-desc">
+                            Partie à la semaine (Lundi au Vendredi) en France ou zone limitrophe.
+                          </div>
+                        </div>
+
+                        <div
+                          onClick={() => setOvernightPref("relay_night")}
+                          className={`overnight-card ${overnightPref === "relay_night" ? "active" : ""}`}
+                        >
+                          <div className="overnight-card-top">
+                            <span className="overnight-card-title">
+                              <Repeat size={15} className="text-amber-400" />
+                              <span>Relais de nuit</span>
+                            </span>
+                          </div>
+                          <div className="overnight-card-desc">
+                            Traction de nuit régulière entre plateformes avec retour au matin.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Ma Disponibilité immédiate */}
+                    <div>
+                      <div className="contact-pref-title">
+                        <Clock size={13} className="text-emerald-400" />
+                        <span>Ma Disponibilité pour Prise de Poste</span>
+                      </div>
+                      <div className="availability-driver-grid">
+                        <div
+                          onClick={() => setAvailability("immediate")}
+                          className={`availability-driver-card ${availability === "immediate" ? "active" : ""}`}
+                        >
+                          <span className="availability-status-dot" style={{ background: "#10b981" }} />
+                          <div>
+                            <div className="availability-driver-title">Disponible sous 48h</div>
+                            <div className="availability-driver-sub">Immédiat / Sans délai</div>
+                          </div>
+                        </div>
+
+                        <div
+                          onClick={() => setAvailability("flexible")}
+                          className={`availability-driver-card ${availability === "flexible" ? "active" : ""}`}
+                        >
+                          <span className="availability-status-dot" style={{ background: "#f59e0b" }} />
+                          <div>
+                            <div className="availability-driver-title">Sous préavis</div>
+                            <div className="availability-driver-sub">15 jours à 1 mois</div>
+                          </div>
+                        </div>
+
+                        <div
+                          onClick={() => setAvailability("busy")}
+                          className={`availability-driver-card ${availability === "busy" ? "active" : ""}`}
+                        >
+                          <span className="availability-status-dot" style={{ background: "#38bdf8" }} />
+                          <div>
+                            <div className="availability-driver-title">À l'écoute</div>
+                            <div className="availability-driver-sub">En poste / Veille</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Contrats souhaités */}
+                    <div>
+                      <div className="contact-pref-title">
+                        <Briefcase size={13} className="text-sky-400" />
+                        <span>Contrat(s) Souhaité(s)</span>
+                      </div>
+                      <div className="contract-pills-row">
+                        {["CDI Temps plein", "CDD / Remplacement", "Intérim / Missions", "Temps partiel / Week-end"].map(
+                          (contract) => {
+                            const isSelected = desiredContracts.includes(contract);
+                            return (
+                              <button
+                                key={contract}
+                                type="button"
+                                onClick={() => toggleContract(contract)}
+                                className={`contract-toggle-pill ${isSelected ? "active" : ""}`}
+                              >
+                                {isSelected ? <Check size={13} /> : <span style={{ opacity: 0.5 }}>+</span>}
+                                <span>{contract}</span>
+                              </button>
+                            );
+                          }
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="portal-form-group">
-                  <label className="portal-form-label">Adresse Email</label>
-                  <input
-                    type="email"
-                    value={driverEmail}
-                    onChange={(e) => setDriverEmail(e.target.value)}
-                    className="portal-form-input"
-                    placeholder="conducteur@truckmatch.fr"
-                  />
-                </div>
+                {/* -------------------------------------------------------- */}
+                {/* BLOC BAS : RÉASSURANCE RGPD & BOUTON SAUVEGARDE GÉANT    */}
+                {/* -------------------------------------------------------- */}
+                <div className="driver-security-box">
+                  <div className="driver-security-meta">
+                    <div className="driver-security-icon-circle">
+                      <ShieldCheck size={22} />
+                    </div>
+                    <div>
+                      <div className="driver-security-title">Protection & Confidentialité Chauffeur</div>
+                      <div className="driver-security-text">
+                        Vos coordonnées directes ne sont visibles que par les entreprises de transport vérifiées avec SIRET certifié,
+                        disposant d'une opportunité d'embauche dans votre rayon de mobilité ({isFranceEntire ? "National" : `${mobilityRadius} km`}).
+                      </div>
+                    </div>
+                  </div>
 
-                <div className="portal-form-group">
-                  <label className="portal-form-label">Ville & Région de Domiciliation</label>
-                  <input
-                    type="text"
-                    value={driverCity}
-                    onChange={(e) => setDriverCity(e.target.value)}
-                    className="portal-form-input"
-                    placeholder="Ex: Lyon (69)"
-                  />
-                </div>
-
-                <div style={{ marginTop: "1.5rem" }}>
-                  <button type="submit" className="cockpit-btn cockpit-btn-sky">
-                    <CheckCircle2 size={16} />
-                    <span>Sauvegarder mes coordonnées</span>
+                  <button type="submit" className="driver-save-cta-btn">
+                    <CheckCircle2 size={18} />
+                    <span>Enregistrer mes coordonnées & mobilité</span>
                   </button>
                 </div>
               </form>
