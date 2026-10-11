@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getSession } from "@/lib/auth/session";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://azxwqcdnwkolodxwsqoq.supabase.co";
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
@@ -7,18 +8,8 @@ const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
 export async function GET(request: Request) {
   try {
-    // Vérification cookie de session
-    const cookieHeader = request.headers.get("cookie") || "";
-    const sessionMatch = cookieHeader.match(/tm_session=([^;]+)/);
-    let sessionUser: any = null;
-
-    if (sessionMatch) {
-      try {
-        sessionUser = JSON.parse(decodeURIComponent(sessionMatch[1]));
-      } catch {
-        sessionUser = null;
-      }
-    }
+    // Vérification de la session signée
+    const sessionUser = getSession(request);
 
     if (!sessionUser || sessionUser.role !== "admin") {
       return NextResponse.json({ error: "Accès refusé. Réservé à l'administration." }, { status: 403 });

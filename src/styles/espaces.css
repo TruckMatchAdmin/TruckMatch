@@ -512,10 +512,36 @@
    ========================================================================== */
 
 .espace-standalone-root {
-  min-height: 100vh;
-  background-color: #f8fafc;
+  height: 100vh;
+  max-height: 100vh;
+  width: 100vw;
+  max-width: 100vw;
+  overflow: hidden;
+  background-color: #060b13;
   display: flex;
   flex-direction: column;
+}
+
+.admin-cockpit-screen {
+  height: 100vh;
+  max-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #060b13;
+  color: #ffffff;
+}
+
+.company-cockpit-wrapper {
+  height: 100vh;
+  max-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  background: #060b13;
+  color: #ffffff;
 }
 
 /* Standalone topbar for Candidat & Entreprise */

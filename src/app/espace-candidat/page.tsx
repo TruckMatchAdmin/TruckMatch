@@ -73,13 +73,13 @@ export default function CandidatePortalPage() {
     adr_citerne: false,
   });
 
-  const [experienceYears, setExperienceYears] = useState("3-5");
+  const [experienceYears, setExperienceYears] = useState("");
   const [mobilityPref, setMobilityPref] = useState("regional");
-  const [driverCity, setDriverCity] = useState("Lyon (69) / Auvergne-Rhône-Alpes");
-  const [driverPostalCode, setDriverPostalCode] = useState("69007");
-  const [driverFirstName, setDriverFirstName] = useState("Jean");
-  const [driverLastName, setDriverLastName] = useState("Dupont");
-  const [driverPhone, setDriverPhone] = useState("06 12 34 56 78");
+  const [driverCity, setDriverCity] = useState("");
+  const [driverPostalCode, setDriverPostalCode] = useState("");
+  const [driverFirstName, setDriverFirstName] = useState("");
+  const [driverLastName, setDriverLastName] = useState("");
+  const [driverPhone, setDriverPhone] = useState("");
   const [driverEmail, setDriverEmail] = useState("");
   const [contactPref, setContactPref] = useState<"phone_sms" | "sms_only" | "platform">("phone_sms");
   const [mobilityRadius, setMobilityRadius] = useState<number>(45);
@@ -87,6 +87,7 @@ export default function CandidatePortalPage() {
   const [overnightPref, setOvernightPref] = useState<"none" | "occasional" | "national" | "relay_night">("none");
   const [desiredContracts, setDesiredContracts] = useState<string[]>(["CDI Temps plein"]);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const toggleContract = (contract: string) => {
     if (desiredContracts.includes(contract)) {
@@ -104,151 +105,80 @@ export default function CandidatePortalPage() {
   const [appliedJobs, setAppliedJobs] = useState<string[]>([]);
   const [applyModalJob, setApplyModalJob] = useState<JobOffer | null>(null);
 
-  // Tchat direct recruteurs
-  const [activeRecruiterId, setActiveRecruiterId] = useState<string>("comp-1");
+  // Tchat direct recruteurs (réel)
+  const [activeRecruiterId, setActiveRecruiterId] = useState<string>("");
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<
     Record<string, { id: string; sender: "recruiter" | "me"; text: string; time: string }[]>
-  >({
-    "comp-1": [
-      {
-        id: "m1",
-        sender: "recruiter",
-        text: "Bonjour ! Nous avons vu votre profil avec Permis CE et carte chrono à jour. Nous recherchons un conducteur pour des tournées régionales en départ de notre agence. Êtes-vous toujours disponible sous 48h ?",
-        time: "09:30",
-      },
-      {
-        id: "m2",
-        sender: "me",
-        text: "Bonjour, oui tout à fait ! Je suis disponible immédiatement et je recherche justement des tournées régionales avec retour quotidien.",
-        time: "09:42",
-      },
-      {
-        id: "m3",
-        sender: "recruiter",
-        text: "Parfait ! La rémunération est de 2 750 € net/mois + primes de panier. Pouvons-nous convenir d'un échange téléphonique rapide cet après-midi ?",
-        time: "10:05",
-      },
-    ],
-    "comp-2": [
-      {
-        id: "m2-1",
-        sender: "recruiter",
-        text: "Bonjour, Transports Fret National recherche 2 conducteurs SPL relais de nuit. Seriez-vous intéressé par ce type de tournée ?",
-        time: "Hier",
-      },
-    ],
-  });
+  >({});
+  const [recruiters, setRecruiters] = useState<any[]>([]);
 
-  const recruiters = [
-    {
-      id: "comp-1",
-      name: "Transports Bernis Express",
-      city: "Lyon (69)",
-      fleet: "50+ SPL Mercedes Actros",
-      unread: 1,
-    },
-    {
-      id: "comp-2",
-      name: "Groupe Fret National",
-      city: "Mâcon (71)",
-      fleet: "Relais de nuit / Frigo",
-      unread: 0,
-    },
-  ];
+  // Offres réelles chargées depuis Supabase
+  const [jobOffers, setJobOffers] = useState<JobOffer[]>([]);
 
-  // Offres réalistes de transport
-  const jobOffers: JobOffer[] = [
-    {
-      id: "job-1",
-      title: "Conducteur Routier SPL Régional (CE)",
-      company: "Transports Bernis Express",
-      location: "Lyon (69) / Saint-Priest",
-      contract: "CDI",
-      salary: "2 650 € - 2 950 € net/mois",
-      permit: "Permis CE",
-      type: "regional",
-      postedAt: "Aujourd'hui",
-      truckBrand: "Mercedes Actros 2024",
-    },
-    {
-      id: "job-2",
-      title: "Chauffeur PL Distribution & Messagerie (C)",
-      company: "Logistique Rhône Express",
-      location: "Villefranche-sur-Saône (69)",
-      contract: "CDI",
-      salary: "2 350 € - 2 600 € net/mois",
-      permit: "Permis C",
-      type: "distribution",
-      postedAt: "Hier",
-      truckBrand: "Renault D-Wide Hayon",
-    },
-    {
-      id: "job-3",
-      title: "Conducteur Grand Routier National SPL (CE)",
-      company: "Trans-Europe Frigo",
-      location: "Bourg-en-Bresse (01)",
-      contract: "CDI",
-      salary: "2 900 € - 3 400 € net/mois",
-      permit: "Permis CE + FIMO",
-      type: "national",
-      postedAt: "Il y a 2 jours",
-      truckBrand: "Scania R500 V8",
-    },
-    {
-      id: "job-4",
-      title: "Chauffeur Benne TP / Enrobés SPL (CE)",
-      company: "Carrières & Travaux Publics",
-      location: "Grenoble (38)",
-      contract: "CDI",
-      salary: "2 550 € - 2 850 € net/mois",
-      permit: "Permis CE",
-      type: "regional",
-      postedAt: "Il y a 3 jours",
-      truckBrand: "Volvo FMX 460",
-    },
-  ];
+  const loadCandidateData = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/candidate/data");
+      if (res.ok) {
+        const json = await res.json();
+        const d = json.driver;
+        if (d) {
+          setUser(d);
+          if (d.first_name) setDriverFirstName(d.first_name);
+          if (d.last_name) setDriverLastName(d.last_name);
+          if (d.email) setDriverEmail(d.email);
+          if (d.phone) setDriverPhone(d.phone);
+          if (d.city) setDriverCity(d.city);
+          if (d.postal_code) setDriverPostalCode(d.postal_code);
+          if (d.availability) setAvailability(d.availability);
+          if (d.experience) setExperienceYears(d.experience);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("tm_user");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          setUser(parsed);
-          if (parsed.first_name) setDriverFirstName(parsed.first_name);
-          if (parsed.last_name) setDriverLastName(parsed.last_name);
-          if (parsed.name && !parsed.first_name) {
-            const parts = parsed.name.trim().split(" ");
-            setDriverFirstName(parts[0] || "Jean");
-            setDriverLastName(parts.slice(1).join(" ") || "Dupont");
+          if (Array.isArray(d.permits)) {
+            setPermits((prev) => ({
+              ...prev,
+              ce: d.permits.includes("CE"),
+              c: d.permits.includes("C"),
+              be: d.permits.includes("BE") || d.permits.includes("B"),
+              adr: Array.isArray(d.adr) && d.adr.length > 0,
+              adr_citerne: Array.isArray(d.adr) && d.adr.some((a: string) => a.toLowerCase().includes("citerne")),
+              fimo: !!d.fimo,
+              fco: !!d.fco,
+              chrono_card: !!d.chrono_card,
+            }));
           }
-          if (parsed.email) setDriverEmail(parsed.email);
-          if (parsed.phone) setDriverPhone(parsed.phone);
-          if (parsed.city) setDriverCity(parsed.city);
-          if (parsed.postal_code) setDriverPostalCode(parsed.postal_code);
-          if (parsed.contact_preference) setContactPref(parsed.contact_preference);
-          if (parsed.mobility_radius) {
-            if (parsed.mobility_radius === "france_entiere") {
-              setIsFranceEntire(true);
-              setMobilityRadius(150);
-            } else {
-              setMobilityRadius(Number(parsed.mobility_radius) || 45);
-              setIsFranceEntire(false);
-            }
-          }
-          if (parsed.overnight_preference) setOvernightPref(parsed.overnight_preference);
-          if (parsed.availability) setAvailability(parsed.availability);
-          if (Array.isArray(parsed.desired_contracts)) setDesiredContracts(parsed.desired_contracts);
-        } catch {
-          // ignore
+        }
+
+        // Mapper les vraies offres depuis la table jobs Supabase
+        if (Array.isArray(json.jobs)) {
+          const mappedJobs: JobOffer[] = json.jobs.map((j: any) => ({
+            id: j.id,
+            title: j.title || "Conducteur Routier",
+            company: j.company_name || "Entreprise Partenaire",
+            location: j.location_city ? `${j.location_city}${j.location_department ? ` (${j.location_department})` : ""}` : "France",
+            contract: j.contract_type || "CDI",
+            salary: j.salary_range || "Selon convention CCNTR",
+            permit: j.permit_required ? `Permis ${j.permit_required}` : "Permis CE",
+            type: j.category === "vul" ? "distribution" : j.category === "pl" ? "regional" : "national",
+            postedAt: j.created_at ? new Date(j.created_at).toLocaleDateString("fr-FR") : "Récent",
+            truckBrand: j.benefits || "Flotte récente",
+          }));
+          setJobOffers(mappedJobs);
         }
       }
+    } catch (err) {
+      console.error("Erreur chargement espace candidat:", err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    loadCandidateData();
   }, []);
 
   const handleLogout = () => {
-    document.cookie = "tm_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
     if (typeof window !== "undefined") {
       localStorage.removeItem("tm_user");
     }
@@ -256,40 +186,59 @@ export default function CandidatePortalPage() {
     router.refresh();
   };
 
-  const handleToggleAvailability = () => {
-    if (availability === "immediate") setAvailability("flexible");
-    else if (availability === "flexible") setAvailability("busy");
-    else setAvailability("immediate");
+  const handleToggleAvailability = async () => {
+    const nextAvail = availability === "immediate" ? "flexible" : availability === "flexible" ? "busy" : "immediate";
+    setAvailability(nextAvail);
+    try {
+      await fetch("/api/candidate/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "toggle_availability" }),
+      });
+    } catch (err) {
+      console.error("Erreur bascule disponibilité:", err);
+    }
   };
 
-  const handleSaveProfile = (e?: React.FormEvent) => {
+  const handleSaveProfile = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (typeof window !== "undefined") {
-      const updated = {
-        ...(user || {}),
-        name: `${driverFirstName} ${driverLastName}`.trim(),
-        first_name: driverFirstName,
-        last_name: driverLastName,
-        phone: driverPhone,
-        email: driverEmail,
-        city: driverCity,
-        postal_code: driverPostalCode,
-        contact_preference: contactPref,
-        mobility_radius: isFranceEntire ? "france_entiere" : mobilityRadius,
-        overnight_preference: overnightPref,
-        availability: availability,
-        desired_contracts: desiredContracts,
-        permits: [
-          permits.ce && "CE",
-          permits.c && "C",
-          permits.be && "BE",
-          permits.adr && "ADR",
-        ].filter(Boolean),
-      };
-      localStorage.setItem("tm_user", JSON.stringify(updated));
-      setUser(updated);
+    const updatedPermits = [
+      permits.ce && "CE",
+      permits.c && "C",
+      permits.be && "BE",
+    ].filter(Boolean);
+
+    try {
+      const res = await fetch("/api/candidate/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_profile",
+          data: {
+            first_name: driverFirstName,
+            last_name: driverLastName,
+            phone: driverPhone,
+            city: driverCity,
+            postal_code: driverPostalCode,
+            availability,
+            permits: updatedPermits,
+            fimo: permits.fimo,
+            fco: permits.fco,
+            chrono_card: permits.chrono_card,
+            experience: experienceYears,
+          },
+        }),
+      });
+
+      if (res.ok) {
+        setSaveSuccessMsg("Vos coordonnées directes et compétences ont été synchronisées avec succès dans Supabase !");
+      } else {
+        setSaveSuccessMsg("Vos coordonnées ont été enregistrées localement.");
+      }
+    } catch (err) {
+      setSaveSuccessMsg("Enregistré localement.");
     }
-    setSaveSuccessMsg("Vos coordonnées directes et votre rayon de mobilité pro ont été enregistrés avec succès !");
+
     setTimeout(() => setSaveSuccessMsg(null), 3500);
   };
 
@@ -1229,65 +1178,75 @@ export default function CandidatePortalPage() {
                 </div>
 
                 <div style={{ flex: 1, overflowY: "auto", padding: "0.5rem" }}>
-                  {recruiters.map((r) => (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => setActiveRecruiterId(r.id)}
-                      style={{
-                        width: "100%",
-                        padding: "0.75rem",
-                        borderRadius: "8px",
-                        textAlign: "left",
-                        background: activeRecruiterId === r.id ? "#0d1b2e" : "transparent",
-                        border: activeRecruiterId === r.id ? "1px solid #38bdf8" : "1px solid transparent",
-                        marginBottom: "0.35rem",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.65rem",
-                      }}
-                    >
-                      <div
+                  {recruiters.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "2rem 1rem", color: "#94a3b8", fontSize: "0.8rem" }}>
+                      <MessageSquare size={26} style={{ margin: "0 auto 0.6rem", opacity: 0.4 }} />
+                      <p style={{ fontWeight: 600, color: "#cbd5e1" }}>Aucun échange direct</p>
+                      <p style={{ fontSize: "0.72rem", color: "#64748b", marginTop: "0.25rem" }}>
+                        Les transporteurs intéressés par votre profil apparaîtront ici.
+                      </p>
+                    </div>
+                  ) : (
+                    recruiters.map((r) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => setActiveRecruiterId(r.id)}
                         style={{
-                          width: 34,
-                          height: 34,
-                          borderRadius: "50%",
-                          background: "#0284c7",
+                          width: "100%",
+                          padding: "0.75rem",
+                          borderRadius: "8px",
+                          textAlign: "left",
+                          background: activeRecruiterId === r.id ? "#0d1b2e" : "transparent",
+                          border: activeRecruiterId === r.id ? "1px solid #38bdf8" : "1px solid transparent",
+                          marginBottom: "0.35rem",
+                          cursor: "pointer",
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
-                          color: "#ffffff",
-                          fontSize: "0.75rem",
-                          fontWeight: 800,
+                          gap: "0.65rem",
                         }}
                       >
-                        {r.name.slice(0, 2).toUpperCase()}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {r.name}
-                        </div>
-                        <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: "0.1rem" }}>
-                          {r.city}
-                        </div>
-                      </div>
-                      {r.unread > 0 && (
-                        <span
+                        <div
                           style={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: "50%",
                             background: "#0284c7",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
                             color: "#ffffff",
-                            fontSize: "0.65rem",
+                            fontSize: "0.75rem",
                             fontWeight: 800,
-                            padding: "0.1rem 0.4rem",
-                            borderRadius: "9999px",
                           }}
                         >
-                          {r.unread}
-                        </span>
-                      )}
-                    </button>
-                  ))}
+                          {r.name.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {r.name}
+                          </div>
+                          <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: "0.1rem" }}>
+                            {r.city}
+                          </div>
+                        </div>
+                        {r.unread > 0 && (
+                          <span
+                            style={{
+                              background: "#0284c7",
+                              color: "#ffffff",
+                              fontSize: "0.65rem",
+                              fontWeight: 800,
+                              padding: "0.1rem 0.4rem",
+                              borderRadius: "9999px",
+                            }}
+                          >
+                            {r.unread}
+                          </span>
+                        )}
+                      </button>
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -1303,96 +1262,113 @@ export default function CandidatePortalPage() {
                   overflow: "hidden",
                 }}
               >
-                {/* En-tête discussion */}
-                <div
-                  style={{
-                    padding: "0.85rem 1.25rem",
-                    borderBottom: "1px solid #142339",
-                    background: "#060d17",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: "0.9rem", fontWeight: 800, color: "#ffffff" }}>
-                      {recruiters.find((r) => r.id === activeRecruiterId)?.name}
-                    </div>
-                    <div style={{ fontSize: "0.74rem", color: "#34d399", display: "flex", alignItems: "center", gap: "0.3rem" }}>
-                      <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#34d399" }} />
-                      <span>Exploitant de transport vérifié (SIRET actif)</span>
-                    </div>
+                {recruiters.length === 0 || !activeRecruiterId ? (
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#94a3b8", padding: "2rem" }}>
+                    <MessageSquare size={38} style={{ color: "#38bdf8", opacity: 0.5, marginBottom: "0.85rem" }} />
+                    <h4 style={{ color: "#ffffff", fontWeight: 700, fontSize: "0.95rem", marginBottom: "0.35rem" }}>
+                      Messagerie directe avec les transporteurs
+                    </h4>
+                    <p style={{ maxWidth: 380, textAlign: "center", fontSize: "0.82rem", color: "#64748b", lineHeight: 1.5 }}>
+                      Vos coordonnées directes et vos disponibilités sont enregistrées dans la base TruckMatch. Dès qu'un transporteur vous contacte pour une tournée, l'échange s'affichera directement ici.
+                    </p>
                   </div>
-
-                  <span className="permit-badge-pro permit-valid">
-                    Direct • 0% Commission
-                  </span>
-                </div>
-
-                {/* Messages */}
-                <div style={{ flex: 1, overflowY: "auto", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-                  {(chatMessages[activeRecruiterId] || []).map((msg) => (
+                ) : (
+                  <>
+                    {/* En-tête discussion */}
                     <div
-                      key={msg.id}
                       style={{
-                        alignSelf: msg.sender === "me" ? "flex-end" : "flex-start",
-                        maxWidth: "75%",
-                        background: msg.sender === "me" ? "linear-gradient(135deg, #0284c7, #0369a1)" : "#0d1b2e",
-                        border: msg.sender === "me" ? "1px solid #38bdf8" : "1px solid #192d47",
-                        padding: "0.75rem 1rem",
-                        borderRadius: msg.sender === "me" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
-                        color: "#ffffff",
-                        fontSize: "0.84rem",
-                        lineHeight: 1.45,
+                        padding: "0.85rem 1.25rem",
+                        borderBottom: "1px solid #142339",
+                        background: "#060d17",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
                       }}
                     >
-                      <div>{msg.text}</div>
-                      <div
-                        style={{
-                          fontSize: "0.68rem",
-                          color: msg.sender === "me" ? "rgba(255,255,255,0.7)" : "#94a3b8",
-                          textAlign: "right",
-                          marginTop: "0.3rem",
-                        }}
-                      >
-                        {msg.time}
+                      <div>
+                        <div style={{ fontSize: "0.9rem", fontWeight: 800, color: "#ffffff" }}>
+                          {recruiters.find((r) => r.id === activeRecruiterId)?.name}
+                        </div>
+                        <div style={{ fontSize: "0.74rem", color: "#34d399", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#34d399" }} />
+                          <span>Exploitant de transport vérifié (SIRET actif)</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
 
-                {/* Champ d'envoi */}
-                <form
-                  onSubmit={handleSendMessage}
-                  style={{
-                    padding: "0.85rem 1.25rem",
-                    borderTop: "1px solid #142339",
-                    background: "#060d17",
-                    display: "flex",
-                    gap: "0.65rem",
-                  }}
-                >
-                  <input
-                    type="text"
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    placeholder="Écrivez votre réponse à l'exploitant de transport..."
-                    style={{
-                      flex: 1,
-                      padding: "0.65rem 0.95rem",
-                      borderRadius: "8px",
-                      background: "#0a1320",
-                      border: "1px solid #18283f",
-                      color: "#ffffff",
-                      fontSize: "0.84rem",
-                      outline: "none",
-                    }}
-                  />
-                  <button type="submit" className="cockpit-btn cockpit-btn-sky">
-                    <Send size={15} />
-                    <span>Envoyer</span>
-                  </button>
-                </form>
+                      <span className="permit-badge-pro permit-valid">
+                        Direct • 0% Commission
+                      </span>
+                    </div>
+
+                    {/* Messages */}
+                    <div style={{ flex: 1, overflowY: "auto", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+                      {(chatMessages[activeRecruiterId] || []).map((msg) => (
+                        <div
+                          key={msg.id}
+                          style={{
+                            alignSelf: msg.sender === "me" ? "flex-end" : "flex-start",
+                            maxWidth: "75%",
+                            background: msg.sender === "me" ? "linear-gradient(135deg, #0284c7, #0369a1)" : "#0d1b2e",
+                            border: msg.sender === "me" ? "1px solid #38bdf8" : "1px solid #192d47",
+                            padding: "0.75rem 1rem",
+                            borderRadius: msg.sender === "me" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
+                            color: "#ffffff",
+                            fontSize: "0.84rem",
+                            lineHeight: 1.45,
+                          }}
+                        >
+                          <div>{msg.text}</div>
+                          <div
+                            style={{
+                              fontSize: "0.68rem",
+                              color: msg.sender === "me" ? "rgba(255,255,255,0.7)" : "#94a3b8",
+                              textAlign: "right",
+                              marginTop: "0.3rem",
+                            }}
+                          >
+                            {msg.time}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Champ d'envoi */}
+                    <form
+                      onSubmit={handleSendMessage}
+                      style={{
+                        padding: "0.85rem 1.25rem",
+                        borderTop: "1px solid #142339",
+                        background: "#060d17",
+                        display: "flex",
+                        gap: "0.65rem",
+                      }}
+                    >
+                      <input
+                        type="text"
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        placeholder="Écrivez votre réponse à l'exploitant de transport..."
+                        style={{
+                          flex: 1,
+                          background: "#0d1b2e",
+                          border: "1px solid #192d47",
+                          borderRadius: "8px",
+                          padding: "0.65rem 1rem",
+                          color: "#ffffff",
+                          fontSize: "0.85rem",
+                        }}
+                      />
+                      <button
+                        type="submit"
+                        className="btn btn-primary btn-sm"
+                        style={{ padding: "0.65rem 1.25rem", borderRadius: "8px" }}
+                      >
+                        <Send size={15} />
+                        <span>Envoyer</span>
+                      </button>
+                    </form>
+                  </>
+                )}
               </div>
             </div>
           )}

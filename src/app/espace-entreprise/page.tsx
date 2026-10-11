@@ -82,13 +82,13 @@ export default function CompanyPortalPage() {
     permit: "CE",
     location: "",
     contract_type: "CDI",
-    salary: "2 700€ - 3 200€ brut/mois",
-    schedule: "Retour domicile chaque soir",
-    benefits: "Paniers repas conventionnés CCNTR + mutuelle 100% + prime qualité",
-    equipment: "Semi Frigo / Tautliner Euro 6",
-    urgent: true,
+    salary: "",
+    schedule: "",
+    benefits: "",
+    equipment: "",
+    urgent: false,
     description: "",
-    requirements: ["Permis CE", "FCO Valide", "Carte Chrono", "Régional"],
+    requirements: [] as string[],
   });
 
   // Charger profil et vivier de conducteurs Supabase
@@ -158,7 +158,7 @@ export default function CompanyPortalPage() {
   };
 
   const handleLogout = () => {
-    document.cookie = "tm_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
     if (typeof window !== "undefined") {
       localStorage.removeItem("tm_user");
     }
@@ -194,13 +194,13 @@ export default function CompanyPortalPage() {
             permit: "CE",
             location: "",
             contract_type: "CDI",
-            salary: "2 700€ - 3 200€ brut/mois",
-            schedule: "Retour domicile chaque soir",
-            benefits: "Paniers repas conventionnés CCNTR + mutuelle 100% + prime qualité",
-            equipment: "Semi Frigo / Tautliner Euro 6",
-            urgent: true,
+            salary: "",
+            schedule: "",
+            benefits: "",
+            equipment: "",
+            urgent: false,
             description: "",
-            requirements: ["Permis CE", "FCO Valide", "Carte Chrono", "Régional"],
+            requirements: [] as string[],
           });
         }, 2200);
       } else {
