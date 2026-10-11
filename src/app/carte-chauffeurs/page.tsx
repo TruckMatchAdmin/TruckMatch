@@ -736,24 +736,18 @@ export default function CarteChauffeursPage() {
     layer.clearLayers();
 
     candidates.forEach((candidate) => {
-      // Pin circulaire avec pulse dot et étiquette de commune
-      const pulseHtml =
-        candidate.availability === "immediat"
-          ? `<span class="truck-pin-pulse-dot"></span>`
-          : "";
-
+      // Point balise clignotant épuré selon la couleur du lexique (sans texte ni nom de ville pour éviter la saturation)
       const customIcon = L.divIcon({
-        className: "truck-map-pin",
+        className: "truck-beacon-icon",
         html: `
-          <div class="truck-pin-circle ${candidate.colorType}">
-            ${pulseHtml}
-            <span>${candidate.permit}</span>
+          <div class="truck-beacon-wrapper ${candidate.colorType}">
+            <span class="beacon-pulse-ring"></span>
+            <span class="beacon-core-dot"></span>
           </div>
-          <div class="truck-pin-label">${candidate.city}</div>
         `,
-        iconSize: [60, 54],
-        iconAnchor: [30, 24],
-        popupAnchor: [0, -26],
+        iconSize: [22, 22],
+        iconAnchor: [11, 11],
+        popupAnchor: [0, -14],
       });
 
       const marker = L.marker([candidate.lat, candidate.lng], { icon: customIcon });

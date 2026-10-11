@@ -3916,81 +3916,116 @@ p {
   }
 }
 
-.truck-map-pin {
+.truck-beacon-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.truck-beacon-wrapper {
+  position: relative;
+  width: 22px;
+  height: 22px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.truck-map-pin:hover {
-  transform: scale(1.25) translateY(-4px);
+.truck-beacon-wrapper:hover {
+  transform: scale(1.45);
   z-index: 99999 !important;
 }
 
-.truck-map-pin.active {
-  transform: scale(1.3) translateY(-6px);
+.truck-beacon-wrapper.active {
+  transform: scale(1.5);
   z-index: 99999 !important;
 }
 
-.truck-pin-circle {
-  width: 36px;
-  height: 36px;
+.truck-beacon-wrapper .beacon-core-dot {
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 900;
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(11, 25, 44, 0.35);
   border: 2px solid #ffffff;
   position: relative;
-  letter-spacing: -0.02em;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  animation: beaconCoreFlash 1.6s ease-in-out infinite;
 }
 
-.truck-pin-circle.spl {
-  background: #0080ff;
-}
-
-.truck-pin-circle.pl {
-  background: #0b192c;
-}
-
-.truck-pin-circle.special {
-  background: #10b981;
-}
-
-.truck-pin-circle.vul {
-  background: #ea580c;
-}
-
-.truck-pin-label {
-  margin-top: 3px;
-  font-size: 10px;
-  font-weight: 800;
-  color: var(--color-navy);
-  background: rgba(255, 255, 255, 0.95);
-  padding: 1px 6px;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.truck-pin-pulse-dot {
+.truck-beacon-wrapper .beacon-pulse-ring {
   position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 10px;
-  height: 10px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  background: #10b981;
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 8px #10b981;
-  animation: pulse 1.8s infinite;
+  z-index: 1;
+  pointer-events: none;
+  animation: beaconRingExpand 1.6s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+@keyframes beaconRingExpand {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.95;
+  }
+  60% {
+    transform: scale(1.6);
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(2.3);
+    opacity: 0;
+  }
+}
+
+@keyframes beaconCoreFlash {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.18);
+    filter: brightness(1.3);
+  }
+}
+
+/* Couleurs exactes correspondant au lexique */
+
+/* 1. Permis CE (SPL) : Bleu */
+.truck-beacon-wrapper.spl .beacon-core-dot {
+  background-color: #0080ff;
+  box-shadow: 0 0 8px rgba(0, 128, 255, 0.85), 0 2px 5px rgba(0, 0, 0, 0.35);
+}
+.truck-beacon-wrapper.spl .beacon-pulse-ring {
+  background-color: rgba(0, 128, 255, 0.45);
+}
+
+/* 2. Permis C (PL) : Bleu nuit / Noir avec cerclage blanc net */
+.truck-beacon-wrapper.pl .beacon-core-dot {
+  background-color: #0b192c;
+  border-color: #ffffff;
+  box-shadow: 0 0 8px rgba(11, 25, 44, 0.95), 0 2px 5px rgba(0, 0, 0, 0.45);
+}
+.truck-beacon-wrapper.pl .beacon-pulse-ring {
+  background-color: rgba(11, 25, 44, 0.55);
+}
+
+/* 3. Spécialités ADR / Frigo / CACES : Vert émeraude */
+.truck-beacon-wrapper.special .beacon-core-dot {
+  background-color: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.85), 0 2px 5px rgba(0, 0, 0, 0.35);
+}
+.truck-beacon-wrapper.special .beacon-pulse-ring {
+  background-color: rgba(16, 185, 129, 0.45);
+}
+
+/* 4. Permis B (VUL) : Orange */
+.truck-beacon-wrapper.vul .beacon-core-dot {
+  background-color: #ea580c;
+  box-shadow: 0 0 8px rgba(234, 88, 12, 0.85), 0 2px 5px rgba(0, 0, 0, 0.35);
+}
+.truck-beacon-wrapper.vul .beacon-pulse-ring {
+  background-color: rgba(234, 88, 12, 0.45);
 }
 
 .map-quick-actions {
