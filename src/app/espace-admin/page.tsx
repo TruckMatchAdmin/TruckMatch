@@ -2806,46 +2806,6 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
             </div>
-
-            {/* D. Journal des Dernières Visites en Direct (Live Stream Supabase) */}
-            <div className="mt-2.5 bg-slate-900/80 rounded-xl border border-slate-800/80 p-2.5">
-              <div className="flex items-center justify-between mb-1.5 px-1">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-xs font-bold text-slate-200">Flux des Dernières Visites en Direct (Temps Réel)</span>
-                </div>
-                <span className="text-[11px] text-slate-400 font-mono">
-                  {recentEvents.length} événements récents
-                </span>
-              </div>
-
-              {recentEvents.length === 0 ? (
-                <div className="text-center py-3 text-xs text-slate-500">
-                  Aucune visite enregistrée pour le moment. Naviguez sur une page du site pour voir apparaître votre visite instantanément !
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1.5 max-h-[92px] overflow-y-auto pr-1">
-                  {recentEvents.slice(0, 6).map((ev: any) => (
-                    <div key={ev.id} className="bg-slate-950/70 border border-slate-800/70 rounded-lg p-1.5 flex items-center justify-between text-xs">
-                      <div className="min-w-0 pr-2">
-                        <div className="font-semibold text-white truncate max-w-[170px]" title={ev.pageTitle}>
-                          {ev.pageTitle}
-                        </div>
-                        <div className="text-[10px] text-slate-400 flex items-center gap-1">
-                          <span className="text-sky-400 font-mono">{ev.pagePath}</span>
-                          <span>•</span>
-                          <span>{ev.device === "mobile" ? "📱 Mobile" : "💻 Desktop"}</span>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className="text-[10px] font-mono text-emerald-400 font-bold">{ev.time}</span>
-                        <div className="text-[9px] text-slate-500">{ev.source}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
         );
       })()}
