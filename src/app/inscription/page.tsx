@@ -1134,7 +1134,7 @@ function InscriptionContent() {
                         <Mail size={16} className="text-muted" />
                       </div>
                     </div>
-                    <span className="helper-text-pro">Sert d'identifiant administrateur pour votre espace entreprise.</span>
+                    <span className="helper-text-pro">Sert d'identifiant principal pour votre espace entreprise.</span>
                   </div>
                 </div>
               </section>

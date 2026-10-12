@@ -139,9 +139,9 @@ export function AvailableDriversSection() {
                 <Users size={16} />
                 <span>Je suis conducteur — Déposer mon profil</span>
               </Link>
-              <Link href="/espace-admin" className="btn btn-outline">
-                <ShieldCheck size={16} />
-                <span>Espace Admin — Valider les inscrits</span>
+              <Link href="/entreprises" className="btn btn-outline">
+                <Truck size={16} />
+                <span>Espace Transporteurs</span>
               </Link>
             </div>
           </div>

@@ -20,6 +20,8 @@ import {
   Briefcase,
 } from "lucide-react";
 
+import { QualifiedDriversSection } from "@/components/entreprises/QualifiedDriversSection";
+
 export const metadata: Metadata = {
   title: "Trouver un Chauffeur Routier — Recrutement Direct SPL, PL, Porteur & VUL",
   description:
@@ -46,57 +48,6 @@ export default function EntreprisesPage() {
     { label: "Traction de nuit / Relais", href: "/offres-emploi" },
     { label: "Frigo & Distribution", href: "/offres-emploi" },
     { label: "CACES Grue R490", href: "/conseils/comment-recruter-un-chauffeur-spl" },
-  ];
-
-  const driverProfiles = [
-    {
-      id: "SPL-5901",
-      initials: "ML",
-      role: "Conducteur Routier SPL",
-      permit: "Permis CE",
-      exp: "14 ans d'expérience",
-      location: "Nord (59) — Lille / Douai",
-      availability: "Disponible immédiatement",
-      availColor: "badge-green",
-      desc: "Spécialiste de la traction semi-remorque en régional et national. Maîtrise des ensembles tautliner, frigo et benne. Ponctuel et autonome sur la gestion des temps de service (RSE).",
-      badges: ["ADR Citerne étendue", "FCO Valide 2028", "Carte Chrono à jour", "Frigo / Temp. Dirigée"],
-    },
-    {
-      id: "PL-6902",
-      initials: "KD",
-      role: "Chauffeur Distribution PL",
-      permit: "Permis C",
-      exp: "8 ans d'expérience",
-      location: "Rhône (69) — Lyon / Saint-Priest",
-      availability: "Disponible sous 48h",
-      availColor: "badge-green",
-      desc: "Expérience confirmée en messagerie et distribution palettes multi-points avec hayon élévateur. Excellente connaissance de l'agglomération lyonnaise et sens du contact client.",
-      badges: ["FIMO / FCO à jour", "Transpalette élec.", "Éco-conduite certifiée", "Carte BTP"],
-    },
-    {
-      id: "PRT-3803",
-      initials: "TR",
-      role: "Conducteur Porteur TP & Grue",
-      permit: "Permis C",
-      exp: "6 ans d'expérience",
-      location: "Isère (38) — Grenoble / Voiron",
-      availability: "Disponible immédiatement",
-      availColor: "badge-green",
-      desc: "Spécialisé en approvisionnement chantiers BTP, benne enrochée et livraison matériaux avec grue auxiliaire. Rigueur sécurité et contrôle des charges.",
-      badges: ["CACES Grue R490", "FIMO Valide", "Travaux Publics", "Carte Chrono à jour"],
-    },
-    {
-      id: "SPL-3504",
-      initials: "YM",
-      role: "Conducteur SPL Relais de Nuit",
-      permit: "Permis CE",
-      exp: "11 ans d'expérience",
-      location: "Ille-et-Vilaine (35) — Rennes",
-      availability: "Disponible immédiatement",
-      availColor: "badge-green",
-      desc: "Habitué aux tractions inter-plateformes de nuit sur liaisons Bretagne - Île-de-France et Normandie. Respect strict des horaires de relais et traçabilité.",
-      badges: ["ADR Base", "Liaison Nuit", "FCO 2027", "Attelage / Décrochage rapide"],
-    },
   ];
 
   return (
@@ -204,140 +155,8 @@ export default function EntreprisesPage() {
         </div>
       </section>
 
-      {/* 2. Moteur de Recherche & Filtres Rapides */}
-      <section className="recruiter-filter-section" id="recherche-chauffeurs">
-        <div className="container">
-          <div className="recruiter-filter-box">
-            <div className="filter-header-wrap">
-              <h2 className="filter-title">Filtrer les conducteurs disponibles</h2>
-              <p className="filter-subtitle">
-                Ciblez précisément les compétences et la zone d'intervention souhaitées pour vos camions.
-              </p>
-            </div>
-
-            <div className="filter-controls-grid">
-              <div className="filter-field">
-                <label>Permis requis</label>
-                <select defaultValue="all">
-                  <option value="all">Tous les permis (SPL, PL, VUL)</option>
-                  <option value="spl">Permis CE — Super Lourd (SPL)</option>
-                  <option value="pl">Permis C — Poids Lourd (PL)</option>
-                  <option value="vul">Permis B — VUL / Utilitaire</option>
-                </select>
-              </div>
-
-              <div className="filter-field">
-                <label>Région / Dépôt</label>
-                <select defaultValue="all">
-                  <option value="all">Toute la France</option>
-                  <option value="hdf">Hauts-de-France (59, 62, 80)</option>
-                  <option value="idf">Île-de-France (75, 77, 91, 93, 95)</option>
-                  <option value="ara">Auvergne-Rhône-Alpes (69, 38, 01, 42)</option>
-                  <option value="ge">Grand Est (67, 68, 54, 57)</option>
-                  <option value="paca">PACA (13, 83, 06, 84)</option>
-                  <option value="na">Nouvelle-Aquitaine (33, 40, 64)</option>
-                  <option value="bzh">Bretagne & Pays de la Loire (35, 44)</option>
-                </select>
-              </div>
-
-              <div className="filter-field">
-                <label>Spécialité / Habilitation</label>
-                <select defaultValue="all">
-                  <option value="all">Toutes habilitations</option>
-                  <option value="adr">ADR Citerne ou Colis</option>
-                  <option value="grue">CACES Grue R490</option>
-                  <option value="frigo">Température dirigée (Frigo)</option>
-                  <option value="nuit">Tractions régulières de nuit</option>
-                  <option value="benne">Benne TP / Travaux publics</option>
-                </select>
-              </div>
-
-              <div className="filter-field">
-                <label>Disponibilité</label>
-                <select defaultValue="immediat">
-                  <option value="immediat">Disponible immédiatement</option>
-                  <option value="48h">Sous 48h à 7 jours</option>
-                  <option value="preavis">Sous préavis (1 mois)</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="filter-tags-quick">
-              <span className="quick-tag-label">Filtres rapides :</span>
-              <button type="button" className="quick-filter-btn active">Tous les profils</button>
-              <button type="button" className="quick-filter-btn">Conducteurs SPL CE</button>
-              <button type="button" className="quick-filter-btn">Chauffeurs PL C</button>
-              <button type="button" className="quick-filter-btn">ADR Citerne</button>
-              <button type="button" className="quick-filter-btn">CACES Grue</button>
-              <button type="button" className="quick-filter-btn">Lignes de Nuit</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. Aperçu des Profils Chauffeurs Vérifiés */}
-      <section className="driver-profiles-section" id="profils-chauffeurs">
-        <div className="container">
-          <div className="section-head-modern">
-            <span className="badge badge-navy">Base de Chauffeurs Actifs</span>
-            <h2>Conducteurs qualifiés prêts à prendre la route</h2>
-            <p>
-              Consultez des exemples de dossiers de compétences vérifiés disponibles sur notre réseau de transporteurs.
-            </p>
-          </div>
-
-          <div className="driver-profiles-grid">
-            {driverProfiles.map((driver) => (
-              <div key={driver.id} className="driver-profile-card">
-                <div className="driver-card-top">
-                  <div className="driver-avatar-info">
-                    <div className="driver-avatar-circle">{driver.initials}</div>
-                    <div>
-                      <h3 className="driver-card-title">{driver.role}</h3>
-                      <div className="driver-card-meta">
-                        <span className="driver-meta-item">
-                          <MapPin size={14} />
-                          <span>{driver.location}</span>
-                        </span>
-                        <span className="badge badge-blue">{driver.permit}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <span className={`badge ${driver.availColor}`}>{driver.availability}</span>
-                </div>
-
-                <div className="driver-card-badges">
-                  {driver.badges.map((b, idx) => (
-                    <span key={idx} className="permit-pill-modern">
-                      <CheckCircle2 size={12} style={{ color: "var(--color-primary)" }} />
-                      <span>{b}</span>
-                    </span>
-                  ))}
-                </div>
-
-                <p className="driver-card-desc">{driver.desc}</p>
-
-                <div className="driver-card-footer">
-                  <span className="driver-experience-badge">
-                    <Award size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} />
-                    {driver.exp}
-                  </span>
-
-                  <div className="btn-group">
-                    <a href="#demande-recrutement" className="btn btn-primary btn-sm">
-                      <Briefcase size={14} />
-                      <span>Demander le profil</span>
-                    </a>
-                    <a href="#demande-recrutement" className="btn btn-outline btn-sm">
-                      <span>Contacter</span>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* 2 & 3. Filtres et Vivier de Conducteurs Qualifiés Réels */}
+      <QualifiedDriversSection />
 
       {/* 4. Avantages Modèle Direct vs Intérim */}
       <section className="recruiter-advantages-section">
