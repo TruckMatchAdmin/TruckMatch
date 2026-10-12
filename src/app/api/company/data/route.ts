@@ -28,10 +28,11 @@ export async function GET(request: Request) {
       companyProfile = comp;
     }
 
-    // 3. Vivier de conducteurs (sans les champs privés)
+    // 3. Vivier de conducteurs validés par l'administration (sans les champs privés)
     const { data: drivers, error: driverErr } = await supabaseAdmin
       .from("drivers")
       .select("*")
+      .or("status.eq.approved,is_approved.eq.true")
       .order("created_at", { ascending: false });
 
     if (driverErr) {

@@ -32,142 +32,8 @@ interface HomeDriver {
   is_verified?: boolean;
 }
 
-// 10 Derniers conducteurs qualifiés de référence
-const FALLBACK_DRIVERS: HomeDriver[] = [
-  {
-    id: "CH-5901",
-    initials: "ML",
-    name: "Michel L.",
-    role: "Conducteur Routier SPL",
-    permit: "CE",
-    city: "Lille",
-    department: "59",
-    availability: "Immédiat",
-    experienceYears: 14,
-    specialties: ["ADR Citerne", "Tautliner", "Frigo", "FCO 2028"],
-    bio: "Conducteur grand routier confirmé. Expérience sur semi-remorques bâchées et frigo.",
-  },
-  {
-    id: "CH-5902",
-    initials: "YB",
-    name: "Yassine B.",
-    role: "Chauffeur Distribution PL",
-    permit: "C",
-    city: "Dunkerque",
-    department: "59",
-    availability: "Immédiat",
-    experienceYears: 7,
-    specialties: ["Hayon élévateur", "Distribution urbaine", "Transpalette élec."],
-    bio: "Spécialiste messagerie et livraisons palettes littoral nord. Rigueur et ponctualité.",
-  },
-  {
-    id: "CH-5903",
-    initials: "FD",
-    name: "Frédéric D.",
-    role: "Conducteur SPL Relais Nuit",
-    permit: "CE",
-    city: "Douai",
-    department: "59",
-    availability: "Sous 48h",
-    experienceYears: 11,
-    specialties: ["Traction de nuit", "Décrochage rapide", "ADR Colis"],
-    bio: "Habitué aux tractions inter-hubs logistiques de nuit. Respect strict des cadences.",
-  },
-  {
-    id: "CH-7501",
-    initials: "KM",
-    name: "Kevin M.",
-    role: "Conducteur SPL Porte-Conteneur",
-    permit: "CE",
-    city: "Roissy-en-France",
-    department: "95",
-    availability: "Immédiat",
-    experienceYears: 9,
-    specialties: ["Fret Aérien", "ADR Base", "Porte-conteneur", "Badge Cargo CDG"],
-    bio: "Opère sur la zone cargo de Roissy CDG et liaison Le Havre. Protocoles sûreté maîtrisés.",
-  },
-  {
-    id: "CH-9401",
-    initials: "DP",
-    name: "Damien P.",
-    role: "Chauffeur PL Frigo Rungis",
-    permit: "C",
-    city: "Rungis",
-    department: "94",
-    availability: "Immédiat",
-    experienceYears: 6,
-    specialties: ["Température Dirigée", "Prise de poste 4h", "Certificat ATP"],
-    bio: "Approvisionnement grande distribution et métiers de bouche au départ du MIN Rungis.",
-  },
-  {
-    id: "CH-7801",
-    initials: "ST",
-    name: "Sofiane T.",
-    role: "Conducteur Porteur Benne TP",
-    permit: "Porteur",
-    city: "Trappes",
-    department: "78",
-    availability: "Immédiat",
-    experienceYears: 5,
-    specialties: ["Benne Enrochée", "Chantiers BTP", "Carte BTP valide"],
-    bio: "Grands chantiers franciliens du Grand Paris. Conduite sur terrains difficiles.",
-  },
-  {
-    id: "CH-6901",
-    initials: "KD",
-    name: "Karim D.",
-    role: "Conducteur Routier SPL",
-    permit: "CE",
-    city: "Saint-Priest",
-    department: "69",
-    availability: "Immédiat",
-    experienceYears: 12,
-    specialties: ["ADR Citerne", "Tautliner", "Éco-conduite", "FCO 2029"],
-    bio: "Ensembles 44T. Spécialiste couloir rhodanien et plateformes Plaine de l'Ain.",
-  },
-  {
-    id: "CH-6902",
-    initials: "AG",
-    name: "Alexandre G.",
-    role: "Chauffeur Distribution PL",
-    permit: "C",
-    city: "Lyon",
-    department: "69",
-    availability: "Sous 48h",
-    experienceYears: 8,
-    specialties: ["Distribution Centre-Ville", "Hayon", "Sens du service"],
-    bio: "Parfaite maîtrise des contraintes urbaines lyonnaises (accès ZFE, restrictions tonnage).",
-  },
-  {
-    id: "CH-3801",
-    initials: "TR",
-    name: "Thierry R.",
-    role: "Conducteur Porteur Grue Auxiliaire",
-    permit: "Porteur",
-    city: "Grenoble",
-    department: "38",
-    availability: "Immédiat",
-    experienceYears: 9,
-    specialties: ["CACES Grue R490", "Télécommande", "Négoce Matériaux"],
-    bio: "Livraisons chantiers de montagne et négoce matériaux avec grue auxiliaire télécommandée.",
-  },
-  {
-    id: "CH-1301",
-    initials: "RB",
-    name: "Rachid B.",
-    role: "Conducteur SPL Citerne Hydrocarbures",
-    permit: "CE",
-    city: "Fos-sur-Mer",
-    department: "13",
-    availability: "Immédiat",
-    experienceYears: 16,
-    specialties: ["ADR Citerne Pétrole", "Protocoles Raffinerie", "GPL"],
-    bio: "Habilité sur l'ensemble des dépôts pétroliers et raffineries du golfe de Fos.",
-  },
-];
-
 export function AvailableDriversSection() {
-  const [drivers, setDrivers] = useState<HomeDriver[]>(FALLBACK_DRIVERS);
+  const [drivers, setDrivers] = useState<HomeDriver[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -176,6 +42,7 @@ export function AvailableDriversSection() {
         const { data, error } = await supabase
           .from("drivers")
           .select("*")
+          .or("status.eq.approved,is_approved.eq.true")
           .order("created_at", { ascending: false })
           .limit(10);
 
@@ -193,29 +60,21 @@ export function AvailableDriversSection() {
             city: d.city || "France",
             department: d.postal_code?.slice(0, 2) || "Région",
             availability: d.availability === "immediate" ? "Immédiat" : "Sous 48h",
-            experienceYears: parseInt(d.experience_years) || 6,
+            experienceYears: parseInt(d.experience_years) || (d.experience === "5+" ? 7 : d.experience === "3-5" ? 4 : 2),
             specialties: Array.isArray(d.specialties) && d.specialties.length > 0
               ? d.specialties
               : ["FCO Valide", "Carte Chrono", "Ponctuel"],
-            bio: d.bio || "Conducteur vérifié disponible pour missions régionales et nationales.",
+            bio: d.bio || "Conducteur qualifié disponible pour missions de transport.",
             is_verified: true,
           }));
 
-          // Compléter jusqu'à 10 avec les profils de référence si nécessaire
-          const combined = [...dbDrivers];
-          for (const fallback of FALLBACK_DRIVERS) {
-            if (combined.length >= 10) break;
-            if (!combined.some((item) => item.name === fallback.name)) {
-              combined.push(fallback);
-            }
-          }
-          setDrivers(combined.slice(0, 10));
+          setDrivers(dbDrivers);
         } else {
-          setDrivers(FALLBACK_DRIVERS);
+          setDrivers([]);
         }
       } catch (err) {
         console.error("Erreur chargement conducteurs récents:", err);
-        setDrivers(FALLBACK_DRIVERS);
+        setDrivers([]);
       } finally {
         setLoading(false);
       }
@@ -255,7 +114,39 @@ export function AvailableDriversSection() {
         </div>
 
         {/* Grille des 10 derniers profils */}
-        <div className="drivers-showcase-grid">
+        {loading ? (
+          <div style={{ padding: "3rem 1rem", textAlign: "center", color: "#94a3b8" }}>
+            Chargement des conducteurs en direct...
+          </div>
+        ) : drivers.length === 0 ? (
+          <div style={{
+            background: "#ffffff",
+            borderRadius: "14px",
+            border: "1px solid #e2e8f0",
+            padding: "3.5rem 2rem",
+            textAlign: "center",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.03)"
+          }}>
+            <ShieldCheck size={48} style={{ color: "#2563eb", margin: "0 auto 1rem" }} />
+            <h3 style={{ fontSize: "1.25rem", fontWeight: "800", color: "#0f172a", marginBottom: "0.5rem" }}>
+              Nouveaux profils conducteurs en cours de validation
+            </h3>
+            <p style={{ color: "#64748b", maxWidth: "560px", margin: "0 auto 1.5rem", fontSize: "0.95rem", lineHeight: "1.6" }}>
+              Pour garantir une qualification irréprochable aux transporteurs, chaque nouveau profil inscrit est vérifié manuellement (titres professionnels, validité FCO/Chrono) avant parution sur le site.
+            </p>
+            <div style={{ display: "flex", gap: "0.85rem", justifyContent: "center", flexWrap: "wrap" }}>
+              <Link href="/inscription" className="btn btn-primary">
+                <Users size={16} />
+                <span>Je suis conducteur — Déposer mon profil</span>
+              </Link>
+              <Link href="/espace-admin" className="btn btn-outline">
+                <ShieldCheck size={16} />
+                <span>Espace Admin — Valider les inscrits</span>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="drivers-showcase-grid">
           {drivers.map((driver) => (
             <div key={driver.id} className="driver-showcase-card">
               <div className="driver-showcase-card-top">
@@ -325,6 +216,7 @@ export function AvailableDriversSection() {
             </div>
           ))}
         </div>
+      )}
 
         {/* Bannière de réassurance bas de section */}
         <div className="drivers-showcase-cta-bar">

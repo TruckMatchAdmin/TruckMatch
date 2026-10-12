@@ -92,7 +92,7 @@ export default function AdminDashboardPage() {
 
   // Filtres onglet Candidats
   const [driverSearch, setDriverSearch] = useState("");
-  const [driverFilter, setDriverFilter] = useState<"all" | "ce" | "c" | "resume" | "immediate" | "adr">("all");
+  const [driverFilter, setDriverFilter] = useState<"all" | "pending" | "approved" | "rejected" | "ce" | "c" | "resume" | "immediate" | "adr">("all");
 
   // Modale création candidat
   const [isAddDriverModalOpen, setIsAddDriverModalOpen] = useState(false);
@@ -270,6 +270,66 @@ export default function AdminDashboardPage() {
         setDrivers((prev) => prev.filter((d) => d.id !== driverId));
         if (selectedDriverDetail?.id === driverId) {
           setSelectedDriverDetail(null);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleApproveDriver = async (driverId: string) => {
+    try {
+      const res = await fetch("/api/admin/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "approve_driver", id: driverId }),
+      });
+      if (res.ok) {
+        setDrivers((prev) =>
+          prev.map((d) => (d.id === driverId ? { ...d, status: "approved", is_approved: true } : d))
+        );
+        if (selectedDriverDetail?.id === driverId) {
+          setSelectedDriverDetail((prev: any) => ({ ...prev, status: "approved", is_approved: true }));
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRejectDriver = async (driverId: string) => {
+    try {
+      const res = await fetch("/api/admin/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reject_driver", id: driverId }),
+      });
+      if (res.ok) {
+        setDrivers((prev) =>
+          prev.map((d) => (d.id === driverId ? { ...d, status: "rejected", is_approved: false } : d))
+        );
+        if (selectedDriverDetail?.id === driverId) {
+          setSelectedDriverDetail((prev: any) => ({ ...prev, status: "rejected", is_approved: false }));
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleResetDriver = async (driverId: string) => {
+    try {
+      const res = await fetch("/api/admin/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reset_driver", id: driverId }),
+      });
+      if (res.ok) {
+        setDrivers((prev) =>
+          prev.map((d) => (d.id === driverId ? { ...d, status: "pending", is_approved: false } : d))
+        );
+        if (selectedDriverDetail?.id === driverId) {
+          setSelectedDriverDetail((prev: any) => ({ ...prev, status: "pending", is_approved: false }));
         }
       }
     } catch (err) {

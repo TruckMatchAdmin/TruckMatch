@@ -45,6 +45,58 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
+    // 3b. VALIDER ET PUBLIER UN CONDUCTEUR SUR LE SITE PUBLIC
+    if (action === "approve_driver" && id) {
+      const { error } = await supabaseAdmin
+        .from("drivers")
+        .update({
+          status: "approved",
+          is_approved: true,
+          approved_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+      if (error) throw error;
+      return NextResponse.json({
+        success: true,
+        status: "approved",
+        message: "Profil candidat validé avec succès. Il est maintenant visible sur le site public (carte et profils disponibles).",
+      });
+    }
+
+    // 3c. REFUSER / MASQUER UN CONDUCTEUR DU SITE PUBLIC
+    if (action === "reject_driver" && id) {
+      const { error } = await supabaseAdmin
+        .from("drivers")
+        .update({
+          status: "rejected",
+          is_approved: false,
+        })
+        .eq("id", id);
+      if (error) throw error;
+      return NextResponse.json({
+        success: true,
+        status: "rejected",
+        message: "Profil candidat refusé et retiré du site public.",
+      });
+    }
+
+    // 3d. REMETTRE UN CONDUCTEUR EN ATTENTE DE VALIDATION
+    if (action === "reset_driver" && id) {
+      const { error } = await supabaseAdmin
+        .from("drivers")
+        .update({
+          status: "pending",
+          is_approved: false,
+        })
+        .eq("id", id);
+      if (error) throw error;
+      return NextResponse.json({
+        success: true,
+        status: "pending",
+        message: "Profil candidat remis en attente de vérification.",
+      });
+    }
+
     // 4. SUPPRIMER ENTREPRISE
     if (action === "delete_company" && id) {
       const { error } = await supabaseAdmin.from("companies").delete().eq("id", id);

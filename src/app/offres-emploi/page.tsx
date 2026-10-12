@@ -41,80 +41,6 @@ export default function OffresEmploiPage() {
     { label: "Salaires & Paniers Repas", href: "/chauffeurs#salaires-transport" },
   ];
 
-  // Offres de transport de référence qualifiées (affichées pour enrichir le référencement naturel et guider les candidats)
-  const defaultJobOffers = [
-    {
-      id: "ref-spl-59",
-      title: "Conducteur Routier SPL — Tractions Régionales",
-      company: "Transports Dubois & Logistique",
-      city: "Lille",
-      dept: "59",
-      category: "spl",
-      contract: "CDI",
-      salary: "2 600 € — 3 100 € net / mois",
-      frais: "Paniers repas conventionnés + primes de non-accident",
-      schedule: "Retour domicile chaque soir",
-      desc: "Recherche conducteur SPL pour tractions semi-remorque Tautliner sur les axes Hauts-de-France et Belgique limitrophe. Matériel récent Euro 6, respect scrupuleux de la RSE et des temps de repos.",
-      badges: ["Permis CE", "FCO Valide", "Carte Chrono", "Tautliner"],
-    },
-    {
-      id: "ref-pl-69",
-      title: "Chauffeur Distribution PL — Messagerie Palettes",
-      company: "Rhône Alpes Fret Express",
-      city: "Lyon / Saint-Priest",
-      dept: "69",
-      category: "pl",
-      contract: "CDI",
-      salary: "2 150 € — 2 600 € net / mois",
-      frais: "Paniers repas journaliers inclus",
-      schedule: "Horaires de journée réguliers (7h - 16h)",
-      desc: "Livraisons et ramasses régulières de 15 à 20 points sur l'agglomération lyonnaise. Porteur 19T récent avec hayon élévateur et transpalette électrique. Tournée sectorisée fixe.",
-      badges: ["Permis C", "FIMO / FCO", "Hayon élévateur", "Journée"],
-    },
-    {
-      id: "ref-spl-35",
-      title: "Conducteur SPL Ligne & Relais de Nuit",
-      company: "Traction Ouest Messagerie",
-      city: "Rennes",
-      dept: "35",
-      category: "spl",
-      contract: "CDI",
-      salary: "2 850 € — 3 350 € net / mois",
-      frais: "Majoration de nuit + repas unique + découché éventuel",
-      schedule: "Horaires réguliers de nuit (21h - 5h)",
-      desc: "Traction inter-plateformes logistiques Bretagne — Normandie / Île-de-France. Attelage et décrochage rapide de semi fourgon, aucune manutention de charge, confort cabine optimal.",
-      badges: ["Permis CE", "ADR de base", "Liaison Nuit", "Zéro manutention"],
-    },
-    {
-      id: "ref-tp-38",
-      title: "Chauffeur Porteur Grue Auxiliaire R490 & Benne TP",
-      company: "Matériaux Dauphiné Travaux",
-      city: "Grenoble",
-      dept: "38",
-      category: "porteur",
-      contract: "CDI",
-      salary: "2 300 € — 2 800 € net / mois",
-      frais: "Prime de technicité CACES + paniers BTP",
-      schedule: "Retour domicile chaque soir",
-      desc: "Approvisionnement de chantiers en matériaux et enrochement. Porteur 6x4 et 8x4 équipé d'une grue auxiliaire de manutention télécommandée. Chauffeur autonome et rigoureux sur la sécurité.",
-      badges: ["Permis C", "CACES Grue R490", "Benne TP", "Carte BTP"],
-    },
-    {
-      id: "ref-vul-75",
-      title: "Chauffeur Livreur VUL — Distribution Express",
-      company: "Île-de-France Express Logistique",
-      city: "Paris / Roissy CDG",
-      dept: "93",
-      category: "vul",
-      contract: "CDD / CDI",
-      salary: "1 800 € — 2 200 € net / mois",
-      frais: "Primes assiduité & qualité",
-      schedule: "Du lundi au vendredi",
-      desc: "Tournées de livraison de colis express sur le nord francilien au départ du hub aéroportuaire. Véhicule utilitaire récent fourni (Iveco Daily 14m3). Possibilité d'évolution permis C.",
-      badges: ["Permis B", "Messagerie", "Smartphone pro fourni"],
-    },
-  ];
-
   useEffect(() => {
     async function loadJobs() {
       try {
@@ -145,28 +71,25 @@ export default function OffresEmploiPage() {
     loadJobs();
   }, [selectedCategory]);
 
-  // Fusion intelligente : offres réelles Supabase (approuvées) + offres de référence transport
-  const allAvailableOffers = [
-    ...dbJobs.map((j: any) => ({
-      id: j.id,
-      title: j.title,
-      company: j.company_name,
-      city: j.location_city,
-      dept: j.location_department,
-      category: j.category,
-      contract: j.contract_type,
-      salary: j.salary_range || "Selon convention CCNTR",
-      frais: j.benefits || "Frais conventionnels inclus",
-      schedule: j.schedule || "Temps plein",
-      desc: j.description,
-      badges: [
-        `Permis ${j.permit_required || (j.category ? j.category.toUpperCase() : "CE")}`,
-        j.contract_type,
-        ...(Array.isArray(j.requirements) ? j.requirements.slice(0, 2) : []),
-      ].filter(Boolean),
-    })),
-    ...defaultJobOffers,
-  ];
+  // Offres réelles Supabase uniquement (approuvées par l'administrateur et actives)
+  const allAvailableOffers = dbJobs.map((j: any) => ({
+    id: j.id,
+    title: j.title,
+    company: j.company_name,
+    city: j.location_city,
+    dept: j.location_department,
+    category: j.category,
+    contract: j.contract_type,
+    salary: j.salary_range || "Selon convention CCNTR",
+    frais: j.benefits || "Frais conventionnels inclus",
+    schedule: j.schedule || "Temps plein",
+    desc: j.description,
+    badges: [
+      `Permis ${j.permit_required || (j.category ? j.category.toUpperCase() : "CE")}`,
+      j.contract_type,
+      ...(Array.isArray(j.requirements) ? j.requirements.slice(0, 2) : []),
+    ].filter(Boolean),
+  }));
 
   const filteredJobs = allAvailableOffers.filter((j) => {
     // Filtre catégorie

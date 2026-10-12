@@ -42,6 +42,9 @@ export async function GET(request: Request) {
       jobs: jobsList,
       stats: {
         totalDrivers: drivers?.length || 0,
+        pendingDrivers: drivers?.filter((d) => d.status === "pending" || (!d.status && !d.is_approved))?.length || 0,
+        approvedDrivers: drivers?.filter((d) => d.status === "approved" || d.is_approved)?.length || 0,
+        rejectedDrivers: drivers?.filter((d) => d.status === "rejected")?.length || 0,
         totalCompanies: companies?.length || 0,
         withResume: drivers?.filter((d) => d.resume_url)?.length || 0,
         availableNow: drivers?.filter((d) => d.availability === "immediate")?.length || 0,
