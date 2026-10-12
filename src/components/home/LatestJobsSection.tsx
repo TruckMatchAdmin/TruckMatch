@@ -36,88 +36,6 @@ interface HomeJob {
   published_at?: string;
 }
 
-// 6 Offres certifiées de référence du secteur du transport
-const FALLBACK_JOBS: HomeJob[] = [
-  {
-    id: "ref-spl-59",
-    title: "Conducteur SPL Régional — Frigo / Tautliner",
-    company_name: "Transports Express Nord",
-    location_city: "Lille",
-    location_department: "59",
-    category: "spl",
-    contract_type: "CDI",
-    salary_range: "2 600€ — 3 100€ net/mois",
-    schedule: "Retour domicile chaque soir",
-    benefits: "Paniers repas conventionnés CCNTR + prime non-accident",
-    requirements: ["Permis CE", "FCO Valide", "Carte Chrono", "Tautliner"],
-  },
-  {
-    id: "ref-pl-69",
-    title: "Chauffeur Distribution PL — Messagerie Palettes",
-    company_name: "Rhône Alpes Fret Express",
-    location_city: "Lyon",
-    location_department: "69",
-    category: "pl",
-    contract_type: "CDI",
-    salary_range: "2 150€ — 2 600€ net/mois",
-    schedule: "Horaires réguliers de journée (7h - 16h)",
-    benefits: "Paniers repas journaliers inclus + mutuelle pro",
-    requirements: ["Permis C", "FIMO / FCO", "Hayon élévateur", "Journée"],
-  },
-  {
-    id: "ref-spl-35",
-    title: "Conducteur SPL Ligne & Relais de Nuit",
-    company_name: "Traction Ouest Messagerie",
-    location_city: "Rennes",
-    location_department: "35",
-    category: "spl",
-    contract_type: "CDI",
-    salary_range: "2 850€ — 3 350€ net/mois",
-    schedule: "Horaires réguliers de nuit (21h - 5h)",
-    benefits: "Majoration de nuit + repas unique + cabine grand confort",
-    requirements: ["Permis CE", "ADR de base", "Liaison Nuit", "Zéro manutention"],
-  },
-  {
-    id: "ref-tp-38",
-    title: "Chauffeur Porteur Benne TP & Grue R490",
-    company_name: "Matériaux Dauphiné Travaux",
-    location_city: "Grenoble",
-    location_department: "38",
-    category: "porteur",
-    contract_type: "CDI",
-    salary_range: "2 300€ — 2 800€ net/mois",
-    schedule: "Retour domicile chaque soir",
-    benefits: "Prime de technicité CACES + paniers BTP",
-    requirements: ["Permis C", "CACES Grue R490", "Benne TP", "Carte BTP"],
-  },
-  {
-    id: "ref-cit-76",
-    title: "Conducteur SPL Citerne Chimique / ADR",
-    company_name: "Euro Trans Chimie",
-    location_city: "Rouen",
-    location_department: "76",
-    category: "spl",
-    contract_type: "CDI",
-    salary_range: "2 900€ — 3 450€ net/mois",
-    schedule: "Tournée régionale & relais",
-    benefits: "Primes matières dangereuses + indemnités découchés",
-    requirements: ["Permis CE", "ADR Citerne", "Citerne", "RSE stricte"],
-  },
-  {
-    id: "ref-vul-93",
-    title: "Chauffeur Livreur VUL — Distribution Express",
-    company_name: "Île-de-France Express Logistique",
-    location_city: "Paris / Roissy",
-    location_department: "93",
-    category: "vul",
-    contract_type: "CDI",
-    salary_range: "1 850€ — 2 250€ net/mois",
-    schedule: "Du lundi au vendredi (8h - 17h)",
-    benefits: "Véhicule utilitaire récent fourni + smartphone pro",
-    requirements: ["Permis B", "Messagerie", "Smartphone pro"],
-  },
-];
-
 // Helper nettoyage affichage département
 function formatLocation(city: string, dept?: string) {
   const cleanCity = city ? city.trim() : "France";
@@ -152,7 +70,7 @@ export function LatestJobsSection() {
           .eq("is_active", true)
           .eq("status", "approved")
           .order("created_at", { ascending: false })
-          .limit(6);
+          .limit(3);
 
         if (!error && data && data.length > 0) {
           const dbItems: HomeJob[] = data.map((d: any) => ({
@@ -161,12 +79,12 @@ export function LatestJobsSection() {
             company_name:
               d.company_name && d.company_name.toLowerCase() !== "administrateur"
                 ? d.company_name
-                : "Transporteur Vérifié TruckMatch",
+                : "Transporteur Vérifié",
             location_city: d.location_city || "France",
-            location_department: d.location_department || (d.location_city?.toLowerCase().includes("laon") ? "02" : undefined),
+            location_department: d.location_department || undefined,
             category: d.category || "spl",
             contract_type: d.contract_type || "CDI",
-            salary_range: d.salary_range || "2 600€ — 3 200€ brut/mois",
+            salary_range: d.salary_range || "Selon convention CCNTR",
             schedule: d.schedule || "Tournée régionale",
             benefits: d.benefits || "Paniers repas conventionnés CCNTR",
             requirements: Array.isArray(d.requirements) && d.requirements.length > 0
@@ -177,21 +95,13 @@ export function LatestJobsSection() {
             published_at: d.published_at || d.created_at,
           }));
 
-          // Compléter jusqu'à 6 avec les offres de référence
-          const combined = [...dbItems];
-          for (const fallback of FALLBACK_JOBS) {
-            if (combined.length >= 6) break;
-            if (!combined.some((j) => j.title === fallback.title)) {
-              combined.push(fallback);
-            }
-          }
-          setJobs(combined);
+          setJobs(dbItems);
         } else {
-          setJobs(FALLBACK_JOBS);
+          setJobs([]);
         }
       } catch (err) {
         console.error("Erreur chargement dernières offres:", err);
-        setJobs(FALLBACK_JOBS);
+        setJobs([]);
       } finally {
         setLoading(false);
       }
@@ -225,12 +135,12 @@ export function LatestJobsSection() {
               </span>
               <span className="live-pulse-badge">
                 <span className="live-pulse-dot" />
-                <span>Postes vérifiés</span>
+                <span>3 Dernières Offres</span>
               </span>
             </div>
-            <h2 className="jobs-section-title">Les dernières offres d'emploi dans le transport</h2>
+            <h2 className="jobs-section-title">Les 3 dernières offres d'emploi dans le transport</h2>
             <p className="jobs-section-subtitle">
-              Tournées régionales et nationales publiées directement par des transporteurs certifiés partout en France.
+              Tournées et postes récemment validés, synchronisés en direct avec la bourse d'emploi.
             </p>
           </div>
 
