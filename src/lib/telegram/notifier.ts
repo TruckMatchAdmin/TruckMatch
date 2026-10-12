@@ -283,3 +283,120 @@ export async function notifyServerError(params: {
 
   await sendTelegramMessage(text, { parseMode: "HTML" });
 }
+
+/**
+ * Notification : Nouvel achat commercial confirmé sur TruckMatch
+ */
+export async function notifyCommercialPurchase(order: {
+  orderNumber: string;
+  orderType: "subscription" | "credits" | "job_post" | "job_boost" | "ad_campaign" | "search_mission" | string;
+  companyName: string;
+  companyEmail: string;
+  productName: string;
+  amountEur: number;
+  paidAt?: string | Date;
+  subscriptionDetails?: {
+    planName: string;
+    period?: string;
+    startedAt?: string;
+    expiresAt?: string;
+  };
+  searchMissionDetails?: {
+    missionType: string;
+    driverCount: number;
+    regions?: string[];
+  };
+}) {
+  const idempotencyKey = `purchase_${order.orderNumber}`;
+  const shouldSend = await canSendNotification(idempotencyKey, "commercial_purchase", {
+    order_number: order.orderNumber,
+    company_name: order.companyName,
+    amount_eur: order.amountEur,
+  });
+  if (!shouldSend) return;
+
+  const dateStr = formatParisDate(order.paidAt ? new Date(order.paidAt) : new Date());
+  const amountFormatted = Number(order.amountEur).toFixed(2).replace(".", ",");
+
+  let typeLabel = "Achat commercial";
+  if (order.orderType === "subscription") typeLabel = "Nouvel abonnement payant";
+  else if (order.orderType === "credits") typeLabel = "Achat de crédits";
+  else if (order.orderType === "job_post") typeLabel = "Publication d'offre d'emploi";
+  else if (order.orderType === "job_boost") typeLabel = "Mise en avant d'offre";
+  else if (order.orderType === "ad_campaign") typeLabel = "Campagne publicitaire";
+  else if (order.orderType === "search_mission") typeLabel = "Mission de recherche de chauffeurs";
+
+  const lines = [
+    `🟢 <b>NOUVEL ACHAT TRUCKMATCH</b>`,
+    ``,
+    `<b>Type :</b> ${escapeHtml(typeLabel)}`,
+    `<b>Entreprise :</b> <b>${escapeHtml(order.companyName)}</b>`,
+    `<b>Compte :</b> <code>${escapeHtml(order.companyEmail)}</code>`,
+    `<b>Produit :</b> <b>${escapeHtml(order.productName)}</b>`,
+    `<b>Montant encaissé :</b> <b>${escapeHtml(amountFormatted)} €</b>`,
+    `<b>Référence :</b> <code>${escapeHtml(order.orderNumber)}</code>`,
+    `<b>Date :</b> ${escapeHtml(dateStr)} (Paris)`,
+    `<b>Statut :</b> ✅ Paiement confirmé`,
+  ];
+
+  if (order.subscriptionDetails) {
+    lines.push(
+      ``,
+      `📋 <i>Détails de l'abonnement :</i>`,
+      `• <b>Forfait :</b> ${escapeHtml(order.subscriptionDetails.planName)}`,
+      `• <b>Périodicité :</b> ${escapeHtml(order.subscriptionDetails.period || "Mensuel")}`,
+      order.subscriptionDetails.startedAt ? `• <b>Début :</b> ${escapeHtml(order.subscriptionDetails.startedAt)}` : "",
+      order.subscriptionDetails.expiresAt ? `• <b>Prochaine échéance :</b> ${escapeHtml(order.subscriptionDetails.expiresAt)}` : ""
+    );
+  }
+
+  if (order.searchMissionDetails) {
+    const regStr = (order.searchMissionDetails.regions || []).join(", ") || "Toute France";
+    lines.push(
+      ``,
+      `🎯 <i>Détails de la mission de recherche :</i>`,
+      `• <b>Type de mission :</b> ${escapeHtml(order.searchMissionDetails.missionType)}`,
+      `• <b>Conducteurs demandés :</b> ${order.searchMissionDetails.driverCount}`,
+      `• <b>Régions concernées :</b> ${escapeHtml(regStr)}`
+    );
+  }
+
+  lines.push(
+    ``,
+    `🔗 <a href="https://truckmatch.fr/espace-admin?tab=commercial">Accéder au tableau commercial</a>`
+  );
+
+  const text = lines.filter(Boolean).join("\n");
+  await sendTelegramMessage(text, { parseMode: "HTML" });
+}
+
+/**
+ * Notification : Attribution d'un abonnement offert par l'administration (0 € de CA)
+ */
+export async function notifyGiftedSubscription(params: {
+  companyName: string;
+  companyEmail: string;
+  planName: string;
+  reason: string;
+  durationDays: number;
+  adminEmail: string;
+}) {
+  const dateStr = formatParisDate();
+  const text = [
+    `🎁 <b>ABONNEMENT OFFERT PAR L'ADMINISTRATION</b>`,
+    `<i>(Attention : non comptabilisé en vente ni en chiffre d'affaires)</i>`,
+    ``,
+    `<b>Entreprise :</b> <b>${escapeHtml(params.companyName)}</b>`,
+    `<b>Compte :</b> <code>${escapeHtml(params.companyEmail)}</code>`,
+    `<b>Forfait attribué :</b> <b>${escapeHtml(params.planName)}</b>`,
+    `<b>Motif administratif :</b> ${escapeHtml(params.reason)}`,
+    `<b>Durée accordée :</b> ${params.durationDays} jours`,
+    `<b>Attribué par :</b> <code>${escapeHtml(params.adminEmail)}</code>`,
+    `<b>Date :</b> ${escapeHtml(dateStr)} (Paris)`,
+    `<b>Statut :</b> Offert par TruckMatch`,
+    ``,
+    `🔗 <a href="https://truckmatch.fr/espace-admin?tab=commercial">Voir dans l'espace administration</a>`,
+  ].join("\n");
+
+  await sendTelegramMessage(text, { parseMode: "HTML" });
+}

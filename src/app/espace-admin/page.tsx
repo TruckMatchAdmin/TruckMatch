@@ -47,6 +47,7 @@ import {
   AlertCircle,
   KeyRound,
 } from "lucide-react";
+import { AdminCommercialModule } from "@/components/admin/AdminCommercialModule";
 
 type AdminTab =
   | "dashboard"
@@ -54,6 +55,7 @@ type AdminTab =
   | "entreprises"
   | "offres"
   | "stats-site"
+  | "commercial"
   | "support";
 
 interface ChatMessage {
@@ -899,6 +901,15 @@ export default function AdminDashboardPage() {
           >
             <BarChart3 size={16} />
             <span>Stats Site</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("commercial")}
+            className={`admin-tier-nav-item ${activeTab === "commercial" ? "active" : ""}`}
+          >
+            <BadgeEuro size={16} />
+            <span>Gestion Commerciale</span>
           </button>
 
           <button
@@ -3616,6 +3627,11 @@ export default function AdminDashboardPage() {
           </div>
         );
       })()}
+
+      {/* ============================================================== */}
+      {/* 7. RUBRIQUE GESTION COMMERCIALE (ABONNEMENTS, CRÉDITS & VENTES)*/}
+      {/* ============================================================== */}
+      {activeTab === "commercial" && <AdminCommercialModule />}
 
       {/* Modale de Vérification 2FA Sécurisée Administrateur */}
       {is2FAModalOpen && (

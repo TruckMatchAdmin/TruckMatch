@@ -30,7 +30,14 @@ import {
   X,
   AlertCircle,
   Zap,
+  CreditCard,
+  MessageSquare,
+  Unlock,
+  Lock,
 } from "lucide-react";
+import { CompanyBillingModule } from "@/components/company/CompanyBillingModule";
+import { DriverUnlockModal } from "@/components/company/DriverUnlockModal";
+import { CompanyChatModal } from "@/components/company/CompanyChatModal";
 
 interface Driver {
   id: string;
@@ -70,8 +77,13 @@ export default function CompanyPortalPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "ce" | "c" | "immediate" | "resume" | "adr">("all");
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
-  const [activeNav, setActiveNav] = useState<"drivers" | "jobs" | "create-job" | "profile">("drivers");
+  const [activeNav, setActiveNav] = useState<"drivers" | "jobs" | "create-job" | "profile" | "billing">("drivers");
   const [jobs, setJobs] = useState<any[]>([]);
+
+  // Déblocage profils et tchat commercial
+  const [unlockedDriverIds, setUnlockedDriverIds] = useState<string[]>([]);
+  const [unlockDriverTarget, setUnlockDriverTarget] = useState<Driver | null>(null);
+  const [chatDriverTarget, setChatDriverTarget] = useState<Driver | null>(null);
 
   // Déposer une offre d'emploi (Page dédiée)
   const [postJobLoading, setPostJobLoading] = useState(false);
@@ -101,12 +113,30 @@ export default function CompanyPortalPage() {
         setDrivers(json.drivers || []);
         if (json.jobs) setJobs(json.jobs);
         if (json.stats) setStats(json.stats);
-        if (json.company) setCompany(json.company);
+        if (json.company) setCompany((prev: any) => ({ ...prev, ...json.company }));
       }
     } catch (err) {
       console.error("Erreur chargement vivier entreprise:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Charger statut commercial (abonnements, crédits, profils débloqués)
+  const loadCommercialData = async () => {
+    try {
+      const res = await fetch("/api/company/commercial");
+      if (res.ok) {
+        const json = await res.json();
+        if (json.company) {
+          setCompany((prev: any) => ({ ...prev, ...json.company }));
+        }
+        if (Array.isArray(json.unlockedProfiles)) {
+          setUnlockedDriverIds(json.unlockedProfiles.map((p: any) => p.driver_id));
+        }
+      }
+    } catch (err) {
+      console.error("Erreur chargement commercial entreprise:", err);
     }
   };
 
@@ -128,9 +158,12 @@ export default function CompanyPortalPage() {
         setActiveNav("jobs");
       } else if (tabParam === "profile") {
         setActiveNav("profile");
+      } else if (tabParam === "billing" || tabParam === "abonnements" || tabParam === "credits") {
+        setActiveNav("billing");
       }
     }
     loadCompanyData();
+    loadCommercialData();
 
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
@@ -141,6 +174,8 @@ export default function CompanyPortalPage() {
         setActiveNav("jobs");
       } else if (tabParam === "profile") {
         setActiveNav("profile");
+      } else if (tabParam === "billing" || tabParam === "abonnements" || tabParam === "credits") {
+        setActiveNav("billing");
       } else {
         setActiveNav("drivers");
       }
@@ -149,7 +184,7 @@ export default function CompanyPortalPage() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  const setNav = (nav: "drivers" | "jobs" | "create-job" | "profile") => {
+  const setNav = (nav: "drivers" | "jobs" | "create-job" | "profile" | "billing") => {
     setActiveNav(nav);
     if (typeof window !== "undefined") {
       const url = nav === "drivers" ? "/espace-entreprise" : `/espace-entreprise?tab=${nav}`;
@@ -328,6 +363,25 @@ export default function CompanyPortalPage() {
             <Building2 className="nav-icon" />
             <span className="nav-title">Profil Transporteur &amp; Flotte</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setNav("billing")}
+            className={`portal-nav-btn ${activeNav === "billing" ? "active-emerald" : ""}`}
+          >
+            <CreditCard className="nav-icon text-amber-400" />
+            <span className="nav-title font-bold">Abonnement &amp; Crédits</span>
+            <span
+              className="nav-badge"
+              style={{
+                backgroundColor: "#059669",
+                color: "#ffffff",
+                fontWeight: 800,
+              }}
+            >
+              {company?.credits_balance ?? 0} cr.
+            </span>
+          </button>
         </nav>
 
         {/* KPI Box dans Sidebar */}
@@ -379,11 +433,13 @@ export default function CompanyPortalPage() {
                   ? "Gestion de vos Offres d'Emploi"
                   : activeNav === "create-job"
                   ? "Publier une Nouvelle Offre d'Emploi"
+                  : activeNav === "billing"
+                  ? "Abonnement, Crédits & Gestion Commerciale"
                   : "Fiche Profil Entreprise & Flotte"}
               </span>
             </h1>
             <span className="portal-status-live-pill">
-              ● Supabase Live : {activeNav === "jobs" ? `${jobs.length} offres créées` : `${drivers.length} conducteurs certifiés`}
+              ● Supabase Live : {activeNav === "jobs" ? `${jobs.length} offres créées` : activeNav === "billing" ? `${company?.credits_balance ?? 0} crédits disponibles` : `${drivers.length} conducteurs certifiés`}
             </span>
           </div>
 
@@ -412,7 +468,7 @@ export default function CompanyPortalPage() {
         </header>
 
         {/* Contenu principal */}
-        <main className={`company-cockpit-main ${activeNav === "profile" || activeNav === "jobs" || activeNav === "create-job" ? "overflow-y-auto" : ""}`}>
+        <main className={`company-cockpit-main ${activeNav === "profile" || activeNav === "jobs" || activeNav === "create-job" || activeNav === "billing" ? "overflow-y-auto" : ""}`}>
           {activeNav === "create-job" ? (
             <div className="w-full flex flex-col gap-6" style={{ width: "100%", maxWidth: "100%" }}>
               <div className="create-job-dedicated-view" style={{ width: "100%", maxWidth: "100%" }}>
@@ -1029,6 +1085,18 @@ export default function CompanyPortalPage() {
                 </div>
               )}
             </div>
+          ) : activeNav === "billing" ? (
+            <CompanyBillingModule
+              company={company}
+              onRefreshCompany={() => {
+                loadCompanyData();
+                loadCommercialData();
+              }}
+              onOpenChatWithDriver={(driverId) => {
+                const found = drivers.find((x) => x.id === driverId);
+                if (found) setChatDriverTarget(found);
+              }}
+            />
           ) : (
             <>
               {/* A. Bloc Contrôle Haut : Recherche + Filtres */}
@@ -1159,8 +1227,8 @@ export default function CompanyPortalPage() {
                 <tr>
                   <th>Conducteur Routier</th>
                   <th>Contact Direct</th>
-                  <th>Localisation & Dépôt</th>
-                  <th>Permis & Titres Pro</th>
+                  <th>Localisation &amp; Dépôt</th>
+                  <th>Permis &amp; Titres Pro</th>
                   <th>Document CV</th>
                   <th>Disponibilité</th>
                   <th>Date Inscription</th>
@@ -1168,128 +1236,207 @@ export default function CompanyPortalPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredDrivers.map((d) => (
-                  <tr key={d.id}>
-                    <td>
-                      <div className="font-bold text-white text-sm tracking-tight mb-1">
-                        {d.first_name} {d.last_name}
-                      </div>
-                      <div className="text-xs text-slate-400">
-                        {d.birth_date
-                          ? `Né(e) le ${new Date(d.birth_date).toLocaleDateString("fr-FR")}`
-                          : "Conducteur Professionnel"}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="flex items-center gap-1.5 text-xs mb-1">
-                        <Phone size={12} className="text-sky-400 shrink-0" />
-                        <a href={`tel:${d.phone}`} className="hover:underline font-semibold text-white">
-                          {d.phone || "-"}
-                        </a>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                        <Mail size={12} className="text-slate-400 shrink-0" />
-                        <a href={`mailto:${d.email}`} className="hover:underline hover:text-white truncate max-w-[170px]">
-                          {d.email || "-"}
-                        </a>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="flex items-center gap-1 text-xs font-semibold text-white mb-1">
-                        <MapPin size={12} className="text-sky-400 shrink-0" />
-                        <span>{d.postal_code} {d.city}</span>
-                      </div>
-                      <div className="text-xs text-slate-400 truncate max-w-[170px]">
-                        {d.address || "Secteur régional & national"}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="flex flex-wrap gap-1.5 mb-1.5">
-                        {Array.isArray(d.permits) &&
-                          d.permits.map((p: string) => (
-                            <span key={p} className="cockpit-badge-pill" style={{ background: "#0284c7", color: "#fff", fontWeight: 800 }}>
-                              {p}
+                {filteredDrivers.map((d) => {
+                  const isUnlocked = unlockedDriverIds.includes(d.id);
+                  return (
+                    <tr key={d.id}>
+                      <td>
+                        <div className="font-bold text-white text-sm tracking-tight mb-1 flex items-center gap-1.5">
+                          <span>{d.first_name} {d.last_name}</span>
+                          {isUnlocked && (
+                            <span className="text-[10px] bg-emerald-950 text-emerald-400 px-1.5 py-0.5 rounded font-extrabold border border-emerald-800" title="Profil débloqué avec succès">
+                              ✓ Débloqué
                             </span>
-                          ))}
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {d.fimo && (
-                          <span className="cockpit-badge-pill" style={{ background: "#064e3b", color: "#34d399", border: "1px solid #059669" }}>
-                            FIMO
-                          </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-slate-400">
+                          {d.birth_date
+                            ? `Né(e) le ${new Date(d.birth_date).toLocaleDateString("fr-FR")}`
+                            : "Conducteur Professionnel"}
+                        </div>
+                      </td>
+                      <td>
+                        {isUnlocked ? (
+                          <>
+                            <div className="flex items-center gap-1.5 text-xs mb-1">
+                              <Phone size={12} className="text-emerald-400 shrink-0" />
+                              <a href={`tel:${d.phone}`} className="hover:underline font-bold text-emerald-300">
+                                {d.phone || "-"}
+                              </a>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-xs text-slate-300">
+                              <Mail size={12} className="text-sky-400 shrink-0" />
+                              <a href={`mailto:${d.email}`} className="hover:underline hover:text-white truncate max-w-[170px]">
+                                {d.email || "-"}
+                              </a>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-1.5 text-xs mb-1 text-slate-400" title="Numéro masqué - Nécessite 1 crédit de déblocage">
+                              <Lock size={12} className="text-amber-400 shrink-0" />
+                              <span className="font-mono text-slate-400">
+                                {d.phone ? `${d.phone.substring(0, 4)} •• •• ••` : "06 •• •• •• ••"}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                              <Mail size={12} className="text-slate-600 shrink-0" />
+                              <span className="font-mono text-slate-500 italic">
+                                ••••••@••••.fr
+                              </span>
+                            </div>
+                          </>
                         )}
-                        {d.fco && (
-                          <span className="cockpit-badge-pill" style={{ background: "#0c4a6e", color: "#38bdf8", border: "1px solid #0284c7" }}>
-                            FCO
-                          </span>
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-1 text-xs font-semibold text-white mb-1">
+                          <MapPin size={12} className="text-sky-400 shrink-0" />
+                          <span>{d.postal_code} {d.city}</span>
+                        </div>
+                        <div className="text-xs text-slate-400 truncate max-w-[170px]">
+                          {d.address || "Secteur régional & national"}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="flex flex-wrap gap-1.5 mb-1.5">
+                          {Array.isArray(d.permits) &&
+                            d.permits.map((p: string) => (
+                              <span key={p} className="cockpit-badge-pill" style={{ background: "#0284c7", color: "#fff", fontWeight: 800 }}>
+                                {p}
+                              </span>
+                            ))}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {d.fimo && (
+                            <span className="cockpit-badge-pill" style={{ background: "#064e3b", color: "#34d399", border: "1px solid #059669" }}>
+                              FIMO
+                            </span>
+                          )}
+                          {d.fco && (
+                            <span className="cockpit-badge-pill" style={{ background: "#0c4a6e", color: "#38bdf8", border: "1px solid #0284c7" }}>
+                              FCO
+                            </span>
+                          )}
+                          {d.chrono_card && (
+                            <span className="cockpit-badge-pill" style={{ background: "#451a03", color: "#fbbf24", border: "1px solid #d97706" }}>
+                              Chrono
+                            </span>
+                          )}
+                          {Array.isArray(d.adr) && d.adr.length > 0 && (
+                            <span className="cockpit-badge-pill" style={{ background: "#7c2d12", color: "#fdba74", border: "1px solid #ea580c" }}>
+                              ADR
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        {d.resume_url ? (
+                          <a
+                            href={d.resume_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn-cockpit-action"
+                            style={{ fontSize: "0.74rem", padding: "0.3rem 0.65rem", borderRadius: "7px" }}
+                            title="Consulter le CV PDF"
+                          >
+                            <FileText size={12} className="text-primary" />
+                            <span>Voir CV</span>
+                            <ExternalLink size={10} />
+                          </a>
+                        ) : (
+                          <span className="text-xs text-slate-500 italic">Aucun CV</span>
                         )}
-                        {d.chrono_card && (
-                          <span className="cockpit-badge-pill" style={{ background: "#451a03", color: "#fbbf24", border: "1px solid #d97706" }}>
-                            Chrono
-                          </span>
-                        )}
-                        {Array.isArray(d.adr) && d.adr.length > 0 && (
-                          <span className="cockpit-badge-pill" style={{ background: "#7c2d12", color: "#fdba74", border: "1px solid #ea580c" }}>
-                            ADR
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      {d.resume_url ? (
-                        <a
-                          href={d.resume_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-cockpit-action"
-                          style={{ fontSize: "0.74rem", padding: "0.3rem 0.65rem", borderRadius: "7px" }}
-                          title="Consulter le CV PDF"
+                      </td>
+                      <td>
+                        <span
+                          className={`cockpit-badge-pill ${
+                            d.availability === "immediate" ? "badge-imm-on" : "badge-imm-off"
+                          }`}
+                          style={{ padding: "0.35rem 0.75rem", borderRadius: "8px" }}
                         >
-                          <FileText size={12} className="text-primary" />
-                          <span>Voir CV</span>
-                          <ExternalLink size={10} />
-                        </a>
-                      ) : (
-                        <span className="text-xs text-slate-500 italic">Aucun CV</span>
-                      )}
-                    </td>
-                    <td>
-                      <span
-                        className={`cockpit-badge-pill ${
-                          d.availability === "immediate" ? "badge-imm-on" : "badge-imm-off"
-                        }`}
-                        style={{ padding: "0.35rem 0.75rem", borderRadius: "8px" }}
-                      >
-                        {d.availability === "immediate" ? "● Immédiat" : "○ Flexible"}
-                      </span>
-                    </td>
-                    <td className="text-xs text-slate-400">
-                      {d.created_at ? new Date(d.created_at).toLocaleDateString("fr-FR") : "-"}
-                    </td>
-                    <td>
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedDriver(d)}
-                          className="btn-cockpit-action btn-cockpit-action-primary"
-                          style={{ fontSize: "0.75rem", padding: "0.35rem 0.75rem" }}
-                          title="Consulter la fiche complète du chauffeur"
-                        >
-                          <Eye size={13} />
-                          <span>Dossier Complet</span>
-                        </button>
+                          {d.availability === "immediate" ? "● Immédiat" : "○ Flexible"}
+                        </span>
+                      </td>
+                      <td className="text-xs text-slate-400">
+                        {d.created_at ? new Date(d.created_at).toLocaleDateString("fr-FR") : "-"}
+                      </td>
+                      <td>
+                        <div className="flex items-center justify-end gap-2">
+                          {isUnlocked ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setChatDriverTarget(d)}
+                                className="btn-cockpit-action"
+                                style={{
+                                  fontSize: "0.75rem",
+                                  padding: "0.35rem 0.75rem",
+                                  background: "#0284c7",
+                                  color: "#ffffff",
+                                  fontWeight: 700,
+                                }}
+                                title="Tchat privé en direct avec ce candidat débloqué"
+                              >
+                                <MessageSquare size={13} />
+                                <span>Tchat</span>
+                              </button>
 
-                        <a
-                          href={`tel:${d.phone}`}
-                          className="btn-cockpit-mini"
-                          title="Appeler directement ce conducteur"
-                        >
-                          <Phone size={13} className="text-emerald-400" />
-                        </a>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                              <button
+                                type="button"
+                                onClick={() => setSelectedDriver(d)}
+                                className="btn-cockpit-action btn-cockpit-action-primary"
+                                style={{ fontSize: "0.75rem", padding: "0.35rem 0.75rem" }}
+                                title="Consulter le dossier complet du chauffeur"
+                              >
+                                <Eye size={13} />
+                                <span>Dossier</span>
+                              </button>
+
+                              <a
+                                href={`tel:${d.phone}`}
+                                className="btn-cockpit-mini"
+                                title="Appeler directement ce conducteur débloqué"
+                              >
+                                <Phone size={13} className="text-emerald-400" />
+                              </a>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setUnlockDriverTarget(d)}
+                                className="btn-cockpit-action"
+                                style={{
+                                  fontSize: "0.75rem",
+                                  padding: "0.35rem 0.75rem",
+                                  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                  color: "#ffffff",
+                                  fontWeight: 800,
+                                  boxShadow: "0 2px 8px rgba(16, 185, 129, 0.3)",
+                                }}
+                                title="Débloquer les coordonnées directes et le tchat privé (1 crédit)"
+                              >
+                                <Unlock size={13} />
+                                <span>Débloquer (1 cr.)</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setSelectedDriver(d)}
+                                className="btn-cockpit-action"
+                                style={{ fontSize: "0.75rem", padding: "0.35rem 0.75rem", background: "rgba(255,255,255,0.06)" }}
+                                title="Aperçu public du chauffeur"
+                              >
+                                <Eye size={13} />
+                                <span>Aperçu</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -1300,137 +1447,231 @@ export default function CompanyPortalPage() {
         </main>
       </div>
 
-      {/* MODALE 1 : FICHE DOSSIER CANDIDAT COMPLET */}
-      {selectedDriver && (
-        <div className="admin-modal-backdrop" onClick={() => setSelectedDriver(null)}>
-          <div className="admin-modal-box" onClick={(e) => e.stopPropagation()}>
-            <div className="admin-modal-header">
-              <div className="flex items-center gap-2">
-                <Truck size={18} className="text-sky-400" />
-                <h3 className="font-black text-white text-base">
-                  Dossier Chauffeur : {selectedDriver.first_name} {selectedDriver.last_name}
-                </h3>
+      {/* MODALE 1 : FICHE DOSSIER CANDIDAT */}
+      {selectedDriver && (() => {
+        const isUnlocked = unlockedDriverIds.includes(selectedDriver.id);
+        return (
+          <div className="admin-modal-backdrop" onClick={() => setSelectedDriver(null)}>
+            <div className="admin-modal-box" onClick={(e) => e.stopPropagation()}>
+              <div className="admin-modal-header">
+                <div className="flex items-center gap-2">
+                  <Truck size={18} className="text-sky-400" />
+                  <h3 className="font-black text-white text-base">
+                    Dossier Chauffeur : {selectedDriver.first_name} {selectedDriver.last_name}
+                  </h3>
+                  {isUnlocked && (
+                    <span className="text-[10px] bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded font-extrabold border border-emerald-800">
+                      ✓ Débloqué
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDriver(null)}
+                  className="text-slate-400 hover:text-white"
+                >
+                  <X size={18} />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setSelectedDriver(null)}
-                className="text-slate-400 hover:text-white"
-              >
-                <X size={18} />
-              </button>
-            </div>
 
-            <div className="admin-modal-body">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-900/60 p-3.5 rounded-lg border border-slate-800">
-                  <div className="text-xs text-slate-400 font-bold mb-1">Contact Direct</div>
-                  <div className="text-sm font-bold text-white flex items-center gap-2 mb-1">
-                    <Phone size={13} className="text-sky-400" />
-                    <a href={`tel:${selectedDriver.phone}`} className="hover:underline">
-                      {selectedDriver.phone}
-                    </a>
+              <div className="admin-modal-body">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-900/60 p-3.5 rounded-lg border border-slate-800">
+                    <div className="text-xs text-slate-400 font-bold mb-1 flex items-center justify-between">
+                      <span>Contact Direct</span>
+                      {!isUnlocked && (
+                        <span className="text-[10px] text-amber-400 flex items-center gap-1">
+                          <Lock size={10} /> Masqué
+                        </span>
+                      )}
+                    </div>
+                    {isUnlocked ? (
+                      <>
+                        <div className="text-sm font-bold text-emerald-300 flex items-center gap-2 mb-1">
+                          <Phone size={13} className="text-emerald-400" />
+                          <a href={`tel:${selectedDriver.phone}`} className="hover:underline">
+                            {selectedDriver.phone}
+                          </a>
+                        </div>
+                        <div className="text-xs text-slate-300 flex items-center gap-2">
+                          <Mail size={13} className="text-sky-400" />
+                          <a href={`mailto:${selectedDriver.email}`} className="hover:underline">
+                            {selectedDriver.email}
+                          </a>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-sm font-mono text-slate-400 flex items-center gap-2 mb-1">
+                          <Lock size={13} className="text-amber-400" />
+                          <span>{selectedDriver.phone ? `${selectedDriver.phone.substring(0, 4)} •• •• ••` : "06 •• •• •• ••"}</span>
+                        </div>
+                        <div className="text-xs font-mono text-slate-500 italic">
+                          ••••••@••••.fr
+                        </div>
+                        <p className="text-[11px] text-amber-300/80 mt-1">
+                          Débloquez ce profil (1 crédit) pour afficher le numéro direct, l&apos;e-mail et activer le tchat.
+                        </p>
+                      </>
+                    )}
                   </div>
-                  <div className="text-xs text-slate-300 flex items-center gap-2">
-                    <Mail size={13} className="text-slate-400" />
-                    <a href={`mailto:${selectedDriver.email}`} className="hover:underline">
-                      {selectedDriver.email}
-                    </a>
+
+                  <div className="bg-slate-900/60 p-3.5 rounded-lg border border-slate-800">
+                    <div className="text-xs text-slate-400 font-bold mb-1">Localisation &amp; Mobilité</div>
+                    <div className="text-sm font-bold text-white flex items-center gap-2 mb-1">
+                      <MapPin size={13} className="text-sky-400" />
+                      <span>{selectedDriver.postal_code} {selectedDriver.city}</span>
+                    </div>
+                    <div className="text-xs text-slate-400">{selectedDriver.address || "Secteur régional"}</div>
                   </div>
                 </div>
 
-                <div className="bg-slate-900/60 p-3.5 rounded-lg border border-slate-800">
-                  <div className="text-xs text-slate-400 font-bold mb-1">Localisation & Mobilité</div>
-                  <div className="text-sm font-bold text-white flex items-center gap-2 mb-1">
-                    <MapPin size={13} className="text-sky-400" />
-                    <span>{selectedDriver.postal_code} {selectedDriver.city}</span>
-                  </div>
-                  <div className="text-xs text-slate-400">{selectedDriver.address || "Adresse locale"}</div>
-                </div>
-              </div>
-
-              <div>
-                <div className="text-xs font-bold text-slate-300 mb-2">Permis de conduire validés :</div>
-                <div className="flex flex-wrap gap-2">
-                  {Array.isArray(selectedDriver.permits) &&
-                    selectedDriver.permits.map((p) => (
-                      <span
-                        key={p}
-                        className="px-3 py-1 rounded-md text-xs font-black bg-sky-600 text-white"
-                      >
-                        Permis {p}
-                      </span>
-                    ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="text-xs font-bold text-slate-300 mb-2">Titres professionnels & Validations :</div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div
-                    className={`p-2 rounded text-xs font-bold flex items-center gap-1.5 ${
-                      selectedDriver.fimo ? "bg-emerald-950/80 text-emerald-400 border border-emerald-800" : "bg-slate-800 text-slate-500"
-                    }`}
-                  >
-                    <Check size={13} /> FIMO Marchandises
-                  </div>
-                  <div
-                    className={`p-2 rounded text-xs font-bold flex items-center gap-1.5 ${
-                      selectedDriver.fco ? "bg-sky-950/80 text-sky-400 border border-sky-800" : "bg-slate-800 text-slate-500"
-                    }`}
-                  >
-                    <Check size={13} /> FCO Continue
-                  </div>
-                  <div
-                    className={`p-2 rounded text-xs font-bold flex items-center gap-1.5 ${
-                      selectedDriver.chrono_card ? "bg-amber-950/80 text-amber-400 border border-amber-800" : "bg-slate-800 text-slate-500"
-                    }`}
-                  >
-                    <Check size={13} /> Carte Chronotachygraphe
+                <div>
+                  <div className="text-xs font-bold text-slate-300 mb-2">Permis de conduire validés :</div>
+                  <div className="flex flex-wrap gap-2">
+                    {Array.isArray(selectedDriver.permits) &&
+                      selectedDriver.permits.map((p) => (
+                        <span
+                          key={p}
+                          className="px-3 py-1 rounded-md text-xs font-black bg-sky-600 text-white"
+                        >
+                          Permis {p}
+                        </span>
+                      ))}
                   </div>
                 </div>
-              </div>
 
-              {selectedDriver.resume_url && (
-                <div className="bg-sky-950/40 p-4 rounded-lg border border-sky-800/80 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FileText size={24} className="text-sky-400" />
-                    <div>
-                      <div className="text-sm font-bold text-white">Curriculum Vitae (PDF)</div>
-                      <div className="text-xs text-slate-300">Document vérifié disponible en consultation</div>
+                <div>
+                  <div className="text-xs font-bold text-slate-300 mb-2">Titres professionnels &amp; Validations :</div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div
+                      className={`p-2 rounded text-xs font-bold flex items-center gap-1.5 ${
+                        selectedDriver.fimo ? "bg-emerald-950/80 text-emerald-400 border border-emerald-800" : "bg-slate-800 text-slate-500"
+                      }`}
+                    >
+                      <Check size={13} /> FIMO Marchandises
+                    </div>
+                    <div
+                      className={`p-2 rounded text-xs font-bold flex items-center gap-1.5 ${
+                        selectedDriver.fco ? "bg-sky-950/80 text-sky-400 border border-sky-800" : "bg-slate-800 text-slate-500"
+                      }`}
+                    >
+                      <Check size={13} /> FCO Continue
+                    </div>
+                    <div
+                      className={`p-2 rounded text-xs font-bold flex items-center gap-1.5 ${
+                        selectedDriver.chrono_card ? "bg-amber-950/80 text-amber-400 border border-amber-800" : "bg-slate-800 text-slate-500"
+                      }`}
+                    >
+                      <Check size={13} /> Carte Chronotachygraphe
                     </div>
                   </div>
-                  <a
-                    href={selectedDriver.resume_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-cockpit-action btn-cockpit-action-primary"
-                  >
-                    <span>Ouvrir le CV</span>
-                    <ExternalLink size={12} />
-                  </a>
                 </div>
-              )}
-            </div>
 
-            <div className="admin-modal-footer">
-              <button
-                type="button"
-                onClick={() => setSelectedDriver(null)}
-                className="btn-cockpit-action"
-              >
-                Fermer
-              </button>
-              <a
-                href={`tel:${selectedDriver.phone}`}
-                className="btn-cockpit-action btn-cockpit-action-primary"
-              >
-                <Phone size={13} />
-                <span>Appeler {selectedDriver.first_name}</span>
-              </a>
+                {selectedDriver.resume_url && (
+                  <div className="bg-sky-950/40 p-4 rounded-lg border border-sky-800/80 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <FileText size={24} className="text-sky-400" />
+                      <div>
+                        <div className="text-sm font-bold text-white">Curriculum Vitae (PDF)</div>
+                        <div className="text-xs text-slate-300">Document vérifié disponible en consultation</div>
+                      </div>
+                    </div>
+                    <a
+                      href={selectedDriver.resume_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-cockpit-action btn-cockpit-action-primary"
+                    >
+                      <span>Ouvrir le CV</span>
+                      <ExternalLink size={12} />
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              <div className="admin-modal-footer">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDriver(null)}
+                  className="btn-cockpit-action"
+                >
+                  Fermer
+                </button>
+
+                {isUnlocked ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = selectedDriver;
+                        setSelectedDriver(null);
+                        setChatDriverTarget(target);
+                      }}
+                      className="btn-cockpit-action"
+                      style={{ background: "#0284c7", color: "#ffffff", fontWeight: 700 }}
+                    >
+                      <MessageSquare size={13} />
+                      <span>Tchat Direct Privé</span>
+                    </button>
+                    <a
+                      href={`tel:${selectedDriver.phone}`}
+                      className="btn-cockpit-action btn-cockpit-action-primary"
+                    >
+                      <Phone size={13} />
+                      <span>Appeler {selectedDriver.first_name}</span>
+                    </a>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = selectedDriver;
+                      setSelectedDriver(null);
+                      setUnlockDriverTarget(target);
+                    }}
+                    className="btn-cockpit-action btn-cockpit-action-primary"
+                    style={{
+                      background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                      boxShadow: "0 2px 10px rgba(16, 185, 129, 0.4)",
+                      fontWeight: 800,
+                    }}
+                  >
+                    <Unlock size={13} />
+                    <span>Débloquer ce candidat (1 crédit)</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
+
+      {/* MODALE DÉBLOCAGE CANDIDAT (DÉBIT 1 CRÉDIT) */}
+      <DriverUnlockModal
+        driver={unlockDriverTarget}
+        creditsBalance={company?.credits_balance ?? 0}
+        isOpen={!!unlockDriverTarget}
+        onClose={() => setUnlockDriverTarget(null)}
+        onSuccessUnlock={(driverId, newBalance) => {
+          setUnlockedDriverIds((prev) => [...prev, driverId]);
+          setCompany((prev: any) => ({ ...prev, credits_balance: newBalance }));
+          setUnlockDriverTarget(null);
+          loadCompanyData();
+          loadCommercialData();
+        }}
+        onGoToBuyCredits={() => {
+          setUnlockDriverTarget(null);
+          setNav("billing");
+        }}
+      />
+
+      {/* MODALE TCHAT PRIVÉ AVEC CANDIDAT DÉBLOQUÉ */}
+      <CompanyChatModal
+        driver={chatDriverTarget}
+        isOpen={!!chatDriverTarget}
+        onClose={() => setChatDriverTarget(null)}
+      />
 
       {/* Fin espace entreprise */}
     </div>
