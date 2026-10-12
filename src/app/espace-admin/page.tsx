@@ -120,8 +120,31 @@ export default function AdminDashboardPage() {
   // Filtres onglet Entreprises
   const [companySearch, setCompanySearch] = useState("");
   const [companyFilter, setCompanyFilter] = useState<"all" | "fleet-small" | "fleet-medium" | "fleet-large">("all");
-  // Filtres onglet Stats Site (Trafic Web)
+  // Filtres onglet Stats Site (Trafic Web Réel Supabase)
   const [trafficPeriod, setTrafficPeriod] = useState<"today" | "7d" | "30d" | "year">("30d");
+  const [analyticsData, setAnalyticsData] = useState<any | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+  const fetchAnalytics = async (period = trafficPeriod) => {
+    setAnalyticsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/analytics?period=${period}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAnalyticsData(data);
+      }
+    } catch (err) {
+      console.error("Erreur stats live Supabase:", err);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "stats-site") {
+      fetchAnalytics(trafficPeriod);
+    }
+  }, [activeTab, trafficPeriod]);
 
   // Support / Tchat
   const [chatRecipientFilter, setChatRecipientFilter] = useState<"all" | "candidats" | "entreprises">("all");
@@ -2500,233 +2523,35 @@ export default function AdminDashboardPage() {
 
             {/* 5. RUBRIQUE STATS SITE (ANALYTICS TRAFIC WEB ZERO-SCROLL)      */}
       {/* ============================================================== */}
+      {/* 5. RUBRIQUE STATS SITE (ANALYTICS RÉELS SUPABASE EN DIRECT) */}
+      {/* ============================================================== */}
       {activeTab === "stats-site" && (() => {
-        // Données complètes de fréquentation et trafic web selon la période
-        const analyticsPeriodsData: Record<string, {
-          periodTitle: string;
-          visits: number;
-          visitsGrowth: string;
-          uniqueVisitors: number;
-          pageViews: number;
-          bounceRate: string;
-          avgDuration: string;
-          pages: { path: string; name: string; views: number; pct: number; color: string }[];
-          sources: { name: string; detail: string; count: number; pct: number; color: string }[];
-          countries: { flag: string; name: string; views: number; pct: number }[];
-          regions: { name: string; pct: number; color: string }[];
-          devices: { icon: string; name: string; pct: number; color: string }[];
-        }> = {
-          today: {
-            periodTitle: "Aujourd'hui",
-            visits: 1840,
-            visitsGrowth: "+14.2% vs hier",
-            uniqueVisitors: 1290,
-            pageViews: 5520,
-            bounceRate: "27.2%",
-            avgDuration: "3m 52s",
-            pages: [
-              { path: "/offres-emploi", name: "Offres d'emploi & Tournées", views: 1480, pct: 26.8, color: "#0284c7" },
-              { path: "/", name: "Accueil & Recherche rapide", views: 1240, pct: 22.5, color: "#0ea5e9" },
-              { path: "/carte-chauffeurs", name: "Carte interactive des chauffeurs", views: 1080, pct: 19.6, color: "#10b981" },
-              { path: "/inscription", name: "Inscription Chauffeur & Recruteur", views: 720, pct: 13.0, color: "#38bdf8" },
-              { path: "/conseils", name: "Guides & Fiches Métiers Routiers", views: 550, pct: 10.0, color: "#f59e0b" },
-              { path: "/espace-entreprise", name: "Portail Recruteur & Dépôts", views: 280, pct: 5.1, color: "#6366f1" },
-              { path: "/contact", name: "Support & Contact Plateforme", views: 170, pct: 3.0, color: "#ec4899" },
-            ],
-            sources: [
-              { name: "Google Search (SEO Organique)", detail: "Requêtes : 'recrutement chauffeur spl', 'emploi porteur pl'", count: 994, pct: 54, color: "#0284c7" },
-              { name: "Trafic Direct (URL & Favoris)", detail: "Chauffeurs et exploitants habitués", count: 405, pct: 22, color: "#10b981" },
-              { name: "Réseaux Sociaux (LinkedIn, Facebook)", detail: "Groupes de routiers & transporteurs", count: 258, pct: 14, color: "#6366f1" },
-              { name: "Sites Référents (France Travail, JobTransport)", detail: "Partenaires emploi & syndicats", count: 129, pct: 7, color: "#f59e0b" },
-              { name: "Campagnes & Liens Partagés", detail: "Partages directs et messageries", count: 54, pct: 3, color: "#ec4899" },
-            ],
-            countries: [
-              { flag: "🇫🇷", name: "France", views: 1604, pct: 87.2 },
-              { flag: "🇧🇪", name: "Belgique", views: 94, pct: 5.1 },
-              { flag: "🇨🇭", name: "Suisse", views: 63, pct: 3.4 },
-              { flag: "🇱🇺", name: "Luxembourg", views: 39, pct: 2.1 },
-              { flag: "🇪🇸", name: "Espagne", views: 24, pct: 1.3 },
-              { flag: "🌍", name: "Autres pays", views: 16, pct: 0.9 },
-            ],
-            regions: [
-              { name: "Île-de-France (Hubs Paris, Rungis, Roissy)", pct: 28, color: "#0284c7" },
-              { name: "Auvergne-Rhône-Alpes (Lyon, Corbas, St-Quentin)", pct: 21, color: "#0ea5e9" },
-              { name: "Hauts-de-France (Lille, Dourges, Fret Nord)", pct: 17, color: "#10b981" },
-              { name: "Pays de la Loire & Bretagne (Nantes, Rennes)", pct: 14, color: "#38bdf8" },
-              { name: "PACA & Occitanie (Marseille, Toulouse)", pct: 12, color: "#f59e0b" },
-              { name: "Autres régions françaises", pct: 8, color: "#64748b" },
-            ],
-            devices: [
-              { icon: "📱", name: "Mobiles (Smartphones chauffeurs)", pct: 69, color: "#0284c7" },
-              { icon: "💻", name: "Ordinateurs Desktop (Bureaux & Exploitants)", pct: 27, color: "#10b981" },
-              { icon: "📟", name: "Tablettes (Dépôts & Cabines)", pct: 4, color: "#f59e0b" },
-            ],
-          },
-          "7d": {
-            periodTitle: "7 derniers jours",
-            visits: 12450,
-            visitsGrowth: "+16.8% vs sem. dernière",
-            uniqueVisitors: 8640,
-            pageViews: 37350,
-            bounceRate: "28.1%",
-            avgDuration: "3m 46s",
-            pages: [
-              { path: "/offres-emploi", name: "Offres d'emploi & Tournées", views: 10080, pct: 27.0, color: "#0284c7" },
-              { path: "/", name: "Accueil & Recherche rapide", views: 8390, pct: 22.5, color: "#0ea5e9" },
-              { path: "/carte-chauffeurs", name: "Carte interactive des chauffeurs", views: 7280, pct: 19.5, color: "#10b981" },
-              { path: "/inscription", name: "Inscription Chauffeur & Recruteur", views: 4860, pct: 13.0, color: "#38bdf8" },
-              { path: "/conseils", name: "Guides & Fiches Métiers Routiers", views: 3690, pct: 9.9, color: "#f59e0b" },
-              { path: "/espace-entreprise", name: "Portail Recruteur & Dépôts", views: 1910, pct: 5.1, color: "#6366f1" },
-              { path: "/contact", name: "Support & Contact Plateforme", views: 1140, pct: 3.0, color: "#ec4899" },
-            ],
-            sources: [
-              { name: "Google Search (SEO Organique)", detail: "Recherche naturelle 'chauffeur routier cdi'", count: 6723, pct: 54, color: "#0284c7" },
-              { name: "Trafic Direct (URL & Favoris)", detail: "Accès directs et bookmarks enregistrés", count: 2739, pct: 22, color: "#10b981" },
-              { name: "Réseaux Sociaux (LinkedIn, Facebook)", detail: "Partages sur groupes spécialisés transport", count: 1743, pct: 14, color: "#6366f1" },
-              { name: "Sites Référents (France Travail, JobTransport)", detail: "Partenariats et annonces croisées", count: 871, pct: 7, color: "#f59e0b" },
-              { name: "Campagnes & Liens Partagés", detail: "Campagnes de référencement ciblé", count: 374, pct: 3, color: "#ec4899" },
-            ],
-            countries: [
-              { flag: "🇫🇷", name: "France", views: 10856, pct: 87.2 },
-              { flag: "🇧🇪", name: "Belgique", views: 635, pct: 5.1 },
-              { flag: "🇨🇭", name: "Suisse", views: 423, pct: 3.4 },
-              { flag: "🇱🇺", name: "Luxembourg", views: 261, pct: 2.1 },
-              { flag: "🇪🇸", name: "Espagne", views: 162, pct: 1.3 },
-              { flag: "🌍", name: "Autres pays", views: 113, pct: 0.9 },
-            ],
-            regions: [
-              { name: "Île-de-France (Hubs Paris, Rungis, Roissy)", pct: 28, color: "#0284c7" },
-              { name: "Auvergne-Rhône-Alpes (Lyon, Corbas, St-Quentin)", pct: 21, color: "#0ea5e9" },
-              { name: "Hauts-de-France (Lille, Dourges, Fret Nord)", pct: 17, color: "#10b981" },
-              { name: "Pays de la Loire & Bretagne (Nantes, Rennes)", pct: 14, color: "#38bdf8" },
-              { name: "PACA & Occitanie (Marseille, Toulouse)", pct: 12, color: "#f59e0b" },
-              { name: "Autres régions françaises", pct: 8, color: "#64748b" },
-            ],
-            devices: [
-              { icon: "📱", name: "Mobiles (Smartphones chauffeurs)", pct: 69, color: "#0284c7" },
-              { icon: "💻", name: "Ordinateurs Desktop (Bureaux & Exploitants)", pct: 27, color: "#10b981" },
-              { icon: "📟", name: "Tablettes (Dépôts & Cabines)", pct: 4, color: "#f59e0b" },
-            ],
-          },
-          "30d": {
-            periodTitle: "30 derniers jours",
-            visits: 48250,
-            visitsGrowth: "+22.4% vs mois dernier",
-            uniqueVisitors: 31820,
-            pageViews: 142890,
-            bounceRate: "27.8%",
-            avgDuration: "3m 48s",
-            pages: [
-              { path: "/offres-emploi", name: "Offres d'emploi & Tournées", views: 38580, pct: 27.0, color: "#0284c7" },
-              { path: "/", name: "Accueil & Recherche rapide", views: 32150, pct: 22.5, color: "#0ea5e9" },
-              { path: "/carte-chauffeurs", name: "Carte interactive des chauffeurs", views: 27860, pct: 19.5, color: "#10b981" },
-              { path: "/inscription", name: "Inscription Chauffeur & Recruteur", views: 18570, pct: 13.0, color: "#38bdf8" },
-              { path: "/conseils", name: "Guides & Fiches Métiers Routiers", views: 14140, pct: 9.9, color: "#f59e0b" },
-              { path: "/espace-entreprise", name: "Portail Recruteur & Dépôts", views: 7290, pct: 5.1, color: "#6366f1" },
-              { path: "/contact", name: "Support & Contact Plateforme", views: 4300, pct: 3.0, color: "#ec4899" },
-            ],
-            sources: [
-              { name: "Google Search (SEO Organique)", detail: "54% de l'audience totale entrante", count: 26055, pct: 54, color: "#0284c7" },
-              { name: "Trafic Direct (URL & Favoris)", detail: "Visiteurs récurrents & marques-pages", count: 10615, pct: 22, color: "#10b981" },
-              { name: "Réseaux Sociaux (LinkedIn, Facebook)", detail: "Communautés Facebook Routiers & LinkedIn", count: 6755, pct: 14, color: "#6366f1" },
-              { name: "Sites Référents (France Travail, JobTransport)", detail: "Plateformes officielles & annuaires", count: 3377, pct: 7, color: "#f59e0b" },
-              { name: "Campagnes & Liens Partagés", detail: "Partages exploitants & emailing", count: 1448, pct: 3, color: "#ec4899" },
-            ],
-            countries: [
-              { flag: "🇫🇷", name: "France", views: 42074, pct: 87.2 },
-              { flag: "🇧🇪", name: "Belgique", views: 2460, pct: 5.1 },
-              { flag: "🇨🇭", name: "Suisse", views: 1640, pct: 3.4 },
-              { flag: "🇱🇺", name: "Luxembourg", views: 1013, pct: 2.1 },
-              { flag: "🇪🇸", name: "Espagne", views: 627, pct: 1.3 },
-              { flag: "🌍", name: "Autres pays", views: 436, pct: 0.9 },
-            ],
-            regions: [
-              { name: "Île-de-France (Hubs Paris, Rungis, Roissy)", pct: 28, color: "#0284c7" },
-              { name: "Auvergne-Rhône-Alpes (Lyon, Corbas, St-Quentin)", pct: 21, color: "#0ea5e9" },
-              { name: "Hauts-de-France (Lille, Dourges, Fret Nord)", pct: 17, color: "#10b981" },
-              { name: "Pays de la Loire & Bretagne (Nantes, Rennes)", pct: 14, color: "#38bdf8" },
-              { name: "PACA & Occitanie (Marseille, Toulouse)", pct: 12, color: "#f59e0b" },
-              { name: "Autres régions françaises", pct: 8, color: "#64748b" },
-            ],
-            devices: [
-              { icon: "📱", name: "Mobiles (Smartphones chauffeurs)", pct: 69, color: "#0284c7" },
-              { icon: "💻", name: "Ordinateurs Desktop (Bureaux & Exploitants)", pct: 27, color: "#10b981" },
-              { icon: "📟", name: "Tablettes (Dépôts & Cabines)", pct: 4, color: "#f59e0b" },
-            ],
-          },
-          year: {
-            periodTitle: "Cette année (2026)",
-            visits: 542000,
-            visitsGrowth: "+34.1% vs 2025",
-            uniqueVisitors: 365000,
-            pageViews: 1626000,
-            bounceRate: "28.5%",
-            avgDuration: "3m 44s",
-            pages: [
-              { path: "/offres-emploi", name: "Offres d'emploi & Tournées", views: 439000, pct: 27.0, color: "#0284c7" },
-              { path: "/", name: "Accueil & Recherche rapide", views: 365850, pct: 22.5, color: "#0ea5e9" },
-              { path: "/carte-chauffeurs", name: "Carte interactive des chauffeurs", views: 317070, pct: 19.5, color: "#10b981" },
-              { path: "/inscription", name: "Inscription Chauffeur & Recruteur", views: 211380, pct: 13.0, color: "#38bdf8" },
-              { path: "/conseils", name: "Guides & Fiches Métiers Routiers", views: 160970, pct: 9.9, color: "#f59e0b" },
-              { path: "/espace-entreprise", name: "Portail Recruteur & Dépôts", views: 82920, pct: 5.1, color: "#6366f1" },
-              { path: "/contact", name: "Support & Contact Plateforme", views: 48810, pct: 3.0, color: "#ec4899" },
-            ],
-            sources: [
-              { name: "Google Search (SEO Organique)", detail: "Moteur de croissance principal", count: 292680, pct: 54, color: "#0284c7" },
-              { name: "Trafic Direct (URL & Favoris)", detail: "Fidélisation de la communauté transport", count: 119240, pct: 22, color: "#10b981" },
-              { name: "Réseaux Sociaux (LinkedIn, Facebook)", detail: "Viralité des publications & annonces", count: 75880, pct: 14, color: "#6366f1" },
-              { name: "Sites Référents (France Travail, JobTransport)", detail: "Écosystème logistique français", count: 37940, pct: 7, color: "#f59e0b" },
-              { name: "Campagnes & Liens Partagés", detail: "Salons et presse professionnelle", count: 16260, pct: 3, color: "#ec4899" },
-            ],
-            countries: [
-              { flag: "🇫🇷", name: "France", views: 472624, pct: 87.2 },
-              { flag: "🇧🇪", name: "Belgique", views: 27642, pct: 5.1 },
-              { flag: "🇨🇭", name: "Suisse", views: 18428, pct: 3.4 },
-              { flag: "🇱🇺", name: "Luxembourg", views: 11382, pct: 2.1 },
-              { flag: "🇪🇸", name: "Espagne", views: 7046, pct: 1.3 },
-              { flag: "🌍", name: "Autres pays", views: 4878, pct: 0.9 },
-            ],
-            regions: [
-              { name: "Île-de-France (Hubs Paris, Rungis, Roissy)", pct: 28, color: "#0284c7" },
-              { name: "Auvergne-Rhône-Alpes (Lyon, Corbas, St-Quentin)", pct: 21, color: "#0ea5e9" },
-              { name: "Hauts-de-France (Lille, Dourges, Fret Nord)", pct: 17, color: "#10b981" },
-              { name: "Pays de la Loire & Bretagne (Nantes, Rennes)", pct: 14, color: "#38bdf8" },
-              { name: "PACA & Occitanie (Marseille, Toulouse)", pct: 12, color: "#f59e0b" },
-              { name: "Autres régions françaises", pct: 8, color: "#64748b" },
-            ],
-            devices: [
-              { icon: "📱", name: "Mobiles (Smartphones chauffeurs)", pct: 69, color: "#0284c7" },
-              { icon: "💻", name: "Ordinateurs Desktop (Bureaux & Exploitants)", pct: 27, color: "#10b981" },
-              { icon: "📟", name: "Tablettes (Dépôts & Cabines)", pct: 4, color: "#f59e0b" },
-            ],
-          },
+        const metrics = analyticsData?.metrics || {
+          totalVisits: 0,
+          uniqueVisitors: 0,
+          pageViews: 0,
+          liveActiveVisitors: 0,
+          bounceRate: "0%",
+          avgDuration: "0 min",
         };
 
-        const activeData = analyticsPeriodsData[trafficPeriod] || analyticsPeriodsData["30d"];
+        const pages = analyticsData?.pages || [];
+        const sources = analyticsData?.sources || [];
+        const devices = analyticsData?.devices || [
+          { icon: "📱", name: "Mobiles", count: 0, pct: 0, color: "#0284c7" },
+          { icon: "💻", name: "Desktop", count: 0, pct: 0, color: "#10b981" },
+          { icon: "📟", name: "Tablettes", count: 0, pct: 0, color: "#f59e0b" },
+        ];
+        const countries = analyticsData?.countries || [];
+        const recentEvents = analyticsData?.recentEvents || [];
 
-        const handleExportTrafficData = () => {
-          const exportObj = {
-            report_name: "truckmatch_audience_analytics",
-            period: activeData.periodTitle,
-            exported_at: new Date().toISOString(),
-            metrics: {
-              total_visits: activeData.visits,
-              unique_visitors: activeData.uniqueVisitors,
-              page_views: activeData.pageViews,
-              bounce_rate: activeData.bounceRate,
-              avg_duration: activeData.avgDuration,
-            },
-            top_pages: activeData.pages,
-            traffic_sources: activeData.sources,
-            geographic_countries: activeData.countries,
-            french_regions: activeData.regions,
-            devices: activeData.devices,
-          };
-          const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: "application/json" });
+        const handleExportRealAnalytics = () => {
+          if (!analyticsData) return;
+          const blob = new Blob([JSON.stringify(analyticsData, null, 2)], { type: "application/json" });
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = `truckmatch-audience-${trafficPeriod}-${new Date().toISOString().slice(0, 10)}.json`;
+          a.download = `truckmatch-real-analytics-${trafficPeriod}-${new Date().toISOString().slice(0, 10)}.json`;
           a.click();
           URL.revokeObjectURL(url);
         };
@@ -2739,20 +2564,29 @@ export default function AdminDashboardPage() {
                 <div className="candidates-title-wrap">
                   <h1 className="candidates-page-title">
                     <BarChart3 size={20} className="text-primary" />
-                    <span>Audience & Fréquentation du Site (Web Analytics)</span>
+                    <span>Audience &amp; Fréquentation Réelle (Supabase Live)</span>
                   </h1>
-                  <span className="cockpit-panel-badge flex items-center gap-1.5" style={{ background: "rgba(16, 185, 129, 0.15)", color: "#34d399", border: "1px solid rgba(16, 185, 129, 0.3)" }}>
+                  <span
+                    className="cockpit-panel-badge flex items-center gap-1.5"
+                    style={{
+                      background: "rgba(16, 185, 129, 0.15)",
+                      color: "#34d399",
+                      border: "1px solid rgba(16, 185, 129, 0.3)",
+                    }}
+                  >
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
-                    <span>18 visiteurs en direct sur TruckMatch</span>
+                    <span>
+                      {metrics.liveActiveVisitors} visiteur{metrics.liveActiveVisitors > 1 ? "s" : ""} actif{metrics.liveActiveVisitors > 1 ? "s" : ""} en direct
+                    </span>
                   </span>
                 </div>
 
                 <div className="candidates-header-actions">
                   <button
                     type="button"
-                    onClick={handleExportTrafficData}
+                    onClick={handleExportRealAnalytics}
                     className="btn-cockpit-action"
-                    title="Télécharger les statistiques complètes de trafic"
+                    title="Télécharger les statistiques réelles en JSON"
                   >
                     <Download size={13} />
                     <span>Export Analytics JSON</span>
@@ -2760,13 +2594,13 @@ export default function AdminDashboardPage() {
 
                   <button
                     type="button"
-                    onClick={loadData}
-                    disabled={loading}
+                    onClick={() => fetchAnalytics(trafficPeriod)}
+                    disabled={analyticsLoading}
                     className="btn-cockpit-action"
-                    title="Actualiser les compteurs de visite"
+                    title="Actualiser les compteurs en direct depuis Supabase"
                   >
-                    <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
-                    <span>Actualiser</span>
+                    <RefreshCw size={13} className={analyticsLoading ? "animate-spin text-sky-400" : "text-emerald-400"} />
+                    <span>{analyticsLoading ? "Chargement..." : "Actualiser Live"}</span>
                   </button>
                 </div>
               </div>
@@ -2774,13 +2608,13 @@ export default function AdminDashboardPage() {
               {/* Ligne 2 : Filtres de période temporelle interactifs */}
               <div className="candidates-header-row-2">
                 <div className="candidates-pills-bar">
-                  <span className="text-xs text-slate-400 font-bold mr-2">Période d'analyse :</span>
+                  <span className="text-xs text-slate-400 font-bold mr-2">Période d&apos;analyse :</span>
                   <button
                     type="button"
                     onClick={() => setTrafficPeriod("today")}
                     className={`candidates-filter-pill ${trafficPeriod === "today" ? "active" : ""}`}
                   >
-                    Aujourd'hui
+                    Aujourd&apos;hui
                   </button>
                   <button
                     type="button"
@@ -2807,17 +2641,17 @@ export default function AdminDashboardPage() {
 
                 <div className="flex items-center gap-2 text-xs text-slate-400">
                   <Activity size={13} className="text-emerald-400" />
-                  <span>Tracking en temps réel : Serveur Nginx & Next.js Analytics</span>
+                  <span>Base Supabase `site_analytics` • Synchro : {analyticsData?.syncedAt || "Instantanée"}</span>
                 </div>
               </div>
             </div>
 
-            {/* B. Bandeau KPI Trafic Aéré (68px, 5 cartes) */}
+            {/* B. Bandeau KPI Trafic Réel (5 cartes) */}
             <div className="candidates-kpis-strip">
               <div className="candidates-kpi-item">
                 <div>
-                  <div className="candidates-kpi-lbl">Nombre de Visites</div>
-                  <div className="candidates-kpi-val">{activeData.visits.toLocaleString("fr-FR")}</div>
+                  <div className="candidates-kpi-lbl">Sessions &amp; Visites</div>
+                  <div className="candidates-kpi-val text-white">{metrics.totalVisits.toLocaleString("fr-FR")}</div>
                 </div>
                 <Users size={18} className="text-primary" />
               </div>
@@ -2825,15 +2659,15 @@ export default function AdminDashboardPage() {
               <div className="candidates-kpi-item">
                 <div>
                   <div className="candidates-kpi-lbl">Visiteurs Uniques</div>
-                  <div className="candidates-kpi-val">{activeData.uniqueVisitors.toLocaleString("fr-FR")}</div>
+                  <div className="candidates-kpi-val text-sky-400">{metrics.uniqueVisitors.toLocaleString("fr-FR")}</div>
                 </div>
                 <Eye size={18} className="text-sky-400" />
               </div>
 
               <div className="candidates-kpi-item">
                 <div>
-                  <div className="candidates-kpi-lbl">Pages Visitées</div>
-                  <div className="candidates-kpi-val">{activeData.pageViews.toLocaleString("fr-FR")}</div>
+                  <div className="candidates-kpi-lbl">Pages Vues Réelles</div>
+                  <div className="candidates-kpi-val text-amber-400">{metrics.pageViews.toLocaleString("fr-FR")}</div>
                 </div>
                 <FileText size={18} className="text-amber-400" />
               </div>
@@ -2841,120 +2675,176 @@ export default function AdminDashboardPage() {
               <div className="candidates-kpi-item">
                 <div>
                   <div className="candidates-kpi-lbl">Taux de Rebond</div>
-                  <div className="candidates-kpi-val">{activeData.bounceRate}</div>
+                  <div className="candidates-kpi-val text-emerald-400">{metrics.bounceRate}</div>
                 </div>
                 <TrendingUp size={18} className="text-emerald-400" />
               </div>
 
               <div className="candidates-kpi-item">
                 <div>
-                  <div className="candidates-kpi-lbl">Temps Moyen / Visite</div>
-                  <div className="candidates-kpi-val">{activeData.avgDuration}</div>
+                  <div className="candidates-kpi-lbl">Durée Moyenne / Session</div>
+                  <div className="candidates-kpi-val text-purple-400">{metrics.avgDuration}</div>
                 </div>
                 <Clock size={18} className="text-purple-400" />
               </div>
             </div>
 
-            {/* C. Grille Principale 3 Colonnes Aérée (Zero-scroll, scroll interne) */}
+            {/* C. Grille Principale 3 Colonnes Aérée (Zero-scroll) */}
             <div className="stats-cockpit-grid">
-              {/* Carte 1 : Pages les plus visitées */}
+              {/* Carte 1 : Pages les plus visitées réelles */}
               <div className="stats-cockpit-card">
                 <div className="stats-card-header-bar">
                   <h3>
                     <FileText size={16} className="text-sky-400" />
-                    <span>Pages les Plus Visitées</span>
+                    <span>Pages Réellement Visitées</span>
                   </h3>
-                  <span className="text-xs text-slate-400 font-mono">{activeData.pageViews.toLocaleString("fr-FR")} vues</span>
+                  <span className="text-xs text-slate-400 font-mono">{metrics.pageViews} vues</span>
                 </div>
 
-                {activeData.pages.map((p) => (
-                  <div key={p.path} className="stats-metric-row">
-                    <div className="stats-metric-labels">
-                      <span className="font-semibold text-white truncate max-w-[210px]" title={p.name}>
-                        {p.name} <span className="text-xs text-slate-400 font-mono">({p.path})</span>
-                      </span>
-                      <span className="font-bold text-slate-300 shrink-0">
-                        {p.views.toLocaleString("fr-FR")} ({p.pct}%)
-                      </span>
-                    </div>
-                    <div className="stats-metric-track">
-                      <div className="stats-metric-fill" style={{ width: `${p.pct}%`, background: p.color }} />
-                    </div>
+                {pages.length === 0 ? (
+                  <div className="text-xs text-slate-400 py-6 text-center">
+                    <p>Aucune page visitée enregistrée sur cette période.</p>
+                    <p className="text-[11px] text-slate-500 mt-1">Le tracker enregistre les visites dès qu&apos;un utilisateur consulte le site.</p>
                   </div>
-                ))}
+                ) : (
+                  pages.map((p: any) => (
+                    <div key={p.path} className="stats-metric-row">
+                      <div className="stats-metric-labels">
+                        <span className="font-semibold text-white truncate max-w-[210px]" title={p.name}>
+                          {p.name} <span className="text-xs text-slate-400 font-mono">({p.path})</span>
+                        </span>
+                        <span className="font-bold text-slate-300 shrink-0">
+                          {p.views.toLocaleString("fr-FR")} ({p.pct}%)
+                        </span>
+                      </div>
+                      <div className="stats-metric-track">
+                        <div className="stats-metric-fill" style={{ width: `${Math.max(4, p.pct)}%`, background: p.color }} />
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
 
-              {/* Carte 2 : D'où viennent les visites (Sources & Canaux) */}
+              {/* Carte 2 : D'où viennent les visites réelles */}
               <div className="stats-cockpit-card">
                 <div className="stats-card-header-bar">
                   <h3>
                     <ArrowUpRight size={16} className="text-emerald-400" />
-                    <span>D'où Viennent les Visites (Sources)</span>
+                    <span>Sources d&apos;Acquisition Réelles</span>
                   </h3>
-                  <span className="text-xs text-slate-400 font-mono">100% trafic</span>
+                  <span className="text-xs text-slate-400 font-mono">{sources.length} canaux</span>
                 </div>
 
-                {activeData.sources.map((s) => (
-                  <div key={s.name} className="stats-metric-row">
-                    <div className="stats-metric-labels">
-                      <div>
-                        <div className="font-semibold text-white">{s.name}</div>
-                        <div className="text-[11px] text-slate-400 truncate max-w-[220px]">{s.detail}</div>
-                      </div>
-                      <span className="font-bold text-slate-300 shrink-0 text-right">
-                        {s.count.toLocaleString("fr-FR")} ({s.pct}%)
-                      </span>
-                    </div>
-                    <div className="stats-metric-track">
-                      <div className="stats-metric-fill" style={{ width: `${s.pct}%`, background: s.color }} />
-                    </div>
+                {sources.length === 0 ? (
+                  <div className="text-xs text-slate-400 py-6 text-center">
+                    <p>Aucune source détectée pour le moment.</p>
                   </div>
-                ))}
+                ) : (
+                  sources.map((s: any) => (
+                    <div key={s.name} className="stats-metric-row">
+                      <div className="stats-metric-labels">
+                        <div>
+                          <div className="font-semibold text-white">{s.name}</div>
+                        </div>
+                        <span className="font-bold text-slate-300 shrink-0 text-right">
+                          {s.count.toLocaleString("fr-FR")} ({s.pct}%)
+                        </span>
+                      </div>
+                      <div className="stats-metric-track">
+                        <div className="stats-metric-fill" style={{ width: `${Math.max(4, s.pct)}%`, background: s.color }} />
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
 
-              {/* Carte 3 : Pays de visite & Appareils */}
+              {/* Carte 3 : Pays & Appareils Réels */}
               <div className="stats-cockpit-card">
                 <div className="stats-card-header-bar">
                   <h3>
                     <MapPin size={16} className="text-amber-400" />
-                    <span>Pays de Visite & Géographie</span>
+                    <span>Provenance &amp; Appareils Réels</span>
                   </h3>
-                  <span className="text-xs text-slate-400">Origine visiteurs</span>
+                  <span className="text-xs text-slate-400">Trafic Live</span>
                 </div>
 
                 <div className="mb-3">
-                  <div className="text-xs font-bold text-slate-300 mb-2">Principaux pays de provenance :</div>
-                  {activeData.countries.map((c) => (
-                    <div key={c.name} className="stats-metric-row mb-2">
-                      <div className="stats-metric-labels">
-                        <span className="font-semibold text-white flex items-center gap-1.5">
-                          <span>{c.flag}</span>
-                          <span>{c.name}</span>
-                        </span>
-                        <span className="font-bold text-slate-300">
-                          {c.views.toLocaleString("fr-FR")} ({c.pct}%)
-                        </span>
+                  <div className="text-xs font-bold text-slate-300 mb-2">Pays des visiteurs :</div>
+                  {countries.length === 0 ? (
+                    <div className="text-xs text-slate-500 py-2">En attente de géolocalisation...</div>
+                  ) : (
+                    countries.map((c: any) => (
+                      <div key={c.name} className="stats-metric-row mb-2">
+                        <div className="stats-metric-labels">
+                          <span className="font-semibold text-white flex items-center gap-1.5">
+                            <span>{c.flag}</span>
+                            <span>{c.name}</span>
+                          </span>
+                          <span className="font-bold text-slate-300">
+                            {c.views.toLocaleString("fr-FR")} ({c.pct}%)
+                          </span>
+                        </div>
+                        <div className="stats-metric-track" style={{ height: "6px" }}>
+                          <div className="stats-metric-fill" style={{ width: `${Math.max(5, c.pct)}%`, background: "#0ea5e9" }} />
+                        </div>
                       </div>
-                      <div className="stats-metric-track" style={{ height: "6px" }}>
-                        <div className="stats-metric-fill" style={{ width: `${c.pct}%`, background: "#0ea5e9" }} />
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
 
                 <div className="pt-2 border-t border-slate-800">
-                  <div className="text-xs font-bold text-slate-300 mb-1.5">Appareils utilisés (Devices) :</div>
+                  <div className="text-xs font-bold text-slate-300 mb-1.5">Appareils Réels Détectés :</div>
                   <div className="grid grid-cols-3 gap-1.5 text-center">
-                    {activeData.devices.map((d) => (
+                    {devices.map((d: any) => (
                       <div key={d.name} className="bg-slate-900/60 p-2 rounded-lg border border-slate-800">
                         <div className="text-sm mb-0.5">{d.icon}</div>
-                        <div className="text-xs font-black text-white">{d.pct}%</div>
-                        <div className="text-[10px] text-slate-400 truncate">{d.name.split(" ")[0]}</div>
+                        <div className="text-xs font-black text-white">{d.count} ({d.pct}%)</div>
+                        <div className="text-[10px] text-slate-400 truncate">{d.name}</div>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* D. Journal des Dernières Visites en Direct (Live Stream Supabase) */}
+            <div className="mt-2.5 bg-slate-900/80 rounded-xl border border-slate-800/80 p-2.5">
+              <div className="flex items-center justify-between mb-1.5 px-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-xs font-bold text-slate-200">Flux des Dernières Visites en Direct (Temps Réel)</span>
+                </div>
+                <span className="text-[11px] text-slate-400 font-mono">
+                  {recentEvents.length} événements récents
+                </span>
+              </div>
+
+              {recentEvents.length === 0 ? (
+                <div className="text-center py-3 text-xs text-slate-500">
+                  Aucune visite enregistrée pour le moment. Naviguez sur une page du site pour voir apparaître votre visite instantanément !
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1.5 max-h-[92px] overflow-y-auto pr-1">
+                  {recentEvents.slice(0, 6).map((ev: any) => (
+                    <div key={ev.id} className="bg-slate-950/70 border border-slate-800/70 rounded-lg p-1.5 flex items-center justify-between text-xs">
+                      <div className="min-w-0 pr-2">
+                        <div className="font-semibold text-white truncate max-w-[170px]" title={ev.pageTitle}>
+                          {ev.pageTitle}
+                        </div>
+                        <div className="text-[10px] text-slate-400 flex items-center gap-1">
+                          <span className="text-sky-400 font-mono">{ev.pagePath}</span>
+                          <span>•</span>
+                          <span>{ev.device === "mobile" ? "📱 Mobile" : "💻 Desktop"}</span>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-[10px] font-mono text-emerald-400 font-bold">{ev.time}</span>
+                        <div className="text-[9px] text-slate-500">{ev.source}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         );
