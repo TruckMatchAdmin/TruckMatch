@@ -3,6 +3,11 @@
  * Couvre l'intégralité des 15 exigences de conformité du cahier des charges
  */
 
+// Polyfill WebSocket pour compatibilité Node 18/20 dans l'environnement serveur
+if (typeof globalThis.WebSocket === "undefined") {
+  globalThis.WebSocket = class DummyWebSocket {};
+}
+
 const assert = require("assert");
 const crypto = require("crypto");
 const fs = require("fs");

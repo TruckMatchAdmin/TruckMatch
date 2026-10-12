@@ -3,6 +3,10 @@ import { createClient } from "@supabase/supabase-js";
 import { sendTelegramMessage } from "@/lib/telegram/bot";
 import { formatParisDate } from "@/lib/telegram/notifier";
 
+if (typeof globalThis.WebSocket === "undefined") {
+  (globalThis as any).WebSocket = class DummyWebSocket {};
+}
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://azxwqcdnwkolodxwsqoq.supabase.co";
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
