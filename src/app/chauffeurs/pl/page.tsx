@@ -1,94 +1,62 @@
 import React from "react";
-import Link from "next/link";
 import type { Metadata } from "next";
-import { CATEGORIES } from "@/lib/constants/categories";
-import { Check, Truck, ArrowRight, UserPlus, Building2 } from "lucide-react";
+import { CategoryLanding } from "@/components/chauffeurs/CategoryLanding";
 
 export const metadata: Metadata = {
-  title: "Chauffeur PL (Poids Lourd) — Recrutement & Profils Distribution",
+  title: "Chauffeur PL (Poids Lourd) — Recrutement & Profils Distribution | TruckMatch",
   description:
-    "Trouvez un chauffeur PL qualifié (Permis C, FIMO/FCO) ou créez votre profil conducteur poids lourd. Distribution régionale, livraisons urbaines, chantiers.",
+    "Trouvez un chauffeur PL qualifié (Permis C, FIMO/FCO, carte conducteur) ou créez votre profil conducteur poids lourd. Distribution régionale, livraisons urbaines, chantiers en direct.",
   alternates: {
     canonical: "https://truckmatch.fr/chauffeurs/pl",
   },
 };
 
 export default function ChauffeurPlPage() {
-  const cat = CATEGORIES.pl;
-
   return (
-    <div className="cat-landing">
-      <section className="cat-hero">
-        <div className="container">
-          <div className="hero-content">
-            <div className="hero-breadcrumbs">
-              <Link href="/">Accueil</Link> &gt; <Link href="/chauffeurs">Chauffeurs</Link> &gt; <span>PL</span>
-            </div>
-            <div className="cat-badge-row">
-              <span className="badge badge-blue">Permis C • FIMO / FCO</span>
-              <span className="badge badge-navy">Véhicules isolés &gt; 3,5 t</span>
-            </div>
-            <h1 className="hero-title">Chauffeur PL (Poids Lourd)</h1>
-            <p className="hero-desc">{cat.longDescription}</p>
-
-            <div className="hero-buttons">
-              <Link href="/chauffeurs" className="btn btn-primary btn-lg">
-                <UserPlus size={18} />
-                <span>Créer mon profil Chauffeur PL</span>
-              </Link>
-              <Link href="/entreprises" className="btn btn-secondary btn-lg">
-                <Building2 size={18} />
-                <span>Recruter un Chauffeur PL</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="cat-details-section">
-        <div className="container">
-          <div className="details-grid">
-            <div className="details-col card">
-              <h2 className="col-title">Compétences et qualifications requises</h2>
-              <p className="col-subtitle">Les exigences fondamentales pour la conduite de véhicules poids lourds :</p>
-              <ul className="details-list">
-                {cat.keySkills.map((skill, i) => (
-                  <li key={i} className="list-item">
-                    <Check size={18} className="check-ico" />
-                    <span>{skill}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="details-col card">
-              <h2 className="col-title">Missions types en transport PL</h2>
-              <p className="col-subtitle">Les activités courantes proposées par les entreprises :</p>
-              <ul className="details-list">
-                {cat.typicalMissions.map((mission, i) => (
-                  <li key={i} className="list-item">
-                    <Truck size={18} className="truck-ico" />
-                    <span>{mission}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="connection-banner">
-            <div className="banner-text">
-              <h3>Trouvez un conducteur PL disponible dans votre région</h3>
-              <p>Consultez les profils locaux prêts à prendre le volant immédiatement.</p>
-            </div>
-            <div className="banner-actions">
-              <Link href="/entreprises" className="btn btn-primary">
-                <span>Accéder aux profils PL</span>
-                <ArrowRight size={16} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
+    <CategoryLanding
+      id="pl"
+      title="Chauffeur PL (Poids Lourd)"
+      shortTitle="Chauffeur PL"
+      badgePermit="Permis C • FIMO / FCO • Carte Chrono"
+      badgeWeight="Véhicules rigides isolés > 3,5 tonnes"
+      icon="🚚"
+      heroDescription="Le chauffeur PL (Poids Lourd) assure les tournées de distribution urbaine, régionale et les approvisionnements de chantiers. Maître des manœuvres en zone encombrée, il gère la relation client sur site, le déchargement sécurisé et la conformité des livraisons au quotidien."
+      salaryRange="2 100 € — 2 700 € net / mois (+ primes & paniers)"
+      experienceAvg="1 an à 12+ ans d'expérience"
+      keySkills={[
+        "Conduite de précision en milieu urbain, zones artisanales et accès restreints",
+        "Utilisation experte du hayon élévateur, transpalette électrique et diable",
+        "Optimisation de l'ordre de chargement en fonction des étapes de la tournée",
+        "Émargement rigoureux des bons de livraison et gestion des réserves transport",
+        "Sens du contact client et respect des créneaux horaires stricts",
+      ]}
+      typicalMissions={[
+        "Distribution régionale multi-clients (10 à 25 points de livraison / jour)",
+        "Livraison magasins, grandes surfaces (GMS) et commerces de centre-ville",
+        "Navettes inter-dépôts et approvisionnement logistique en flux tendus",
+        "Transport de matériaux de construction et livraisons sur chantiers",
+      ]}
+      equipmentList={[
+        "Fourgon Poids Lourd avec Hayon",
+        "Caisse Frigorifique Régionale",
+        "Rideaux Coulissants (Savoyarde)",
+        "Plateau Ridelles",
+        "Bâché Distribution Urbaine",
+      ]}
+      faqItems={[
+        {
+          q: "Quels permis sont requis pour conduire un camion PL ?",
+          a: "Le permis C (poids lourd isolé de plus de 3,5 tonnes), accompagné de la FIMO ou FCO Marchandises en cours de validité et de la carte chrono.",
+        },
+        {
+          q: "Les postes de chauffeurs PL permettent-ils de rentrer tous les soirs chez soi ?",
+          a: "Oui, la grande majorité des postes en PL sont des tournées de distribution régionale de jour, garantissant un retour au domicile chaque soir.",
+        },
+        {
+          q: "Comment postuler ou trouver une mission en tant que chauffeur PL sur TruckMatch ?",
+          a: "Inscrivez-vous en 2 minutes sur l'Espace Chauffeur. Votre profil est immédiatement visible par les transporteurs de votre département qui vous contactent directement.",
+        },
+      ]}
+    />
   );
 }

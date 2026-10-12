@@ -1,94 +1,62 @@
 import React from "react";
-import Link from "next/link";
 import type { Metadata } from "next";
-import { CATEGORIES } from "@/lib/constants/categories";
-import { Check, Truck, ArrowRight, UserPlus, Building2 } from "lucide-react";
+import { CategoryLanding } from "@/components/chauffeurs/CategoryLanding";
 
 export const metadata: Metadata = {
-  title: "Chauffeur Porteur — Recrutement & Profils Camion Porteur",
+  title: "Chauffeur Porteur (Grue, Benne, Ampliroll) — Recrutement & Profils | TruckMatch",
   description:
-    "Recrutez un chauffeur sur camion porteur rigide ou proposez vos compétences : benne, plateau, grue auxiliaire, frigo. Plateforme spécialisée transport.",
+    "Recrutez un chauffeur porteur rigide qualifié ou proposez vos compétences : benne TP, plateau grue auxiliaire, ampliroll, frigo, hayon. Contact direct sans intermédiaire.",
   alternates: {
     canonical: "https://truckmatch.fr/chauffeurs/porteur",
   },
 };
 
 export default function ChauffeurPorteurPage() {
-  const cat = CATEGORIES.porteur;
-
   return (
-    <div className="cat-landing">
-      <section className="cat-hero">
-        <div className="container">
-          <div className="hero-content">
-            <div className="hero-breadcrumbs">
-              <Link href="/">Accueil</Link> &gt; <Link href="/chauffeurs">Chauffeurs</Link> &gt; <span>Porteur</span>
-            </div>
-            <div className="cat-badge-row">
-              <span className="badge badge-blue">Permis C / EC • FIMO / FCO</span>
-              <span className="badge badge-navy">Véhicules porteurs rigides & équipements</span>
-            </div>
-            <h1 className="hero-title">Chauffeur Porteur</h1>
-            <p className="hero-desc">{cat.longDescription}</p>
-
-            <div className="hero-buttons">
-              <Link href="/chauffeurs" className="btn btn-primary btn-lg">
-                <UserPlus size={18} />
-                <span>Créer mon profil Chauffeur Porteur</span>
-              </Link>
-              <Link href="/entreprises" className="btn btn-secondary btn-lg">
-                <Building2 size={18} />
-                <span>Recruter un Conducteur Porteur</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="cat-details-section">
-        <div className="container">
-          <div className="details-grid">
-            <div className="details-col card">
-              <h2 className="col-title">Compétences techniques spécifiques</h2>
-              <p className="col-subtitle">Les aptitudes indispensables à la conduite et à la manœuvre d'un porteur :</p>
-              <ul className="details-list">
-                {cat.keySkills.map((skill, i) => (
-                  <li key={i} className="list-item">
-                    <Check size={18} className="check-ico" />
-                    <span>{skill}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="details-col card">
-              <h2 className="col-title">Missions et domaines d'intervention</h2>
-              <p className="col-subtitle">Les secteurs professionnels qui recrutent des chauffeurs porteurs :</p>
-              <ul className="details-list">
-                {cat.typicalMissions.map((mission, i) => (
-                  <li key={i} className="list-item">
-                    <Truck size={18} className="truck-ico" />
-                    <span>{mission}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="connection-banner">
-            <div className="banner-text">
-              <h3>Besoin d'un chauffeur porteur avec matériel spécialisé ?</h3>
-              <p>Filtrez les profils selon les habilitations CACES grue, hayon ou benne.</p>
-            </div>
-            <div className="banner-actions">
-              <Link href="/entreprises" className="btn btn-primary">
-                <span>Trouver un profil qualifié</span>
-                <ArrowRight size={16} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
+    <CategoryLanding
+      id="porteur"
+      title="Chauffeur Camion Porteur"
+      shortTitle="Chauffeur Porteur"
+      badgePermit="Permis C / EC • FIMO / FCO • CACES Grue"
+      badgeWeight="Porteurs rigides 19t, 26t (6x2/6x4) & 32t (8x4)"
+      icon="🏗️"
+      heroDescription="Le chauffeur porteur pilote des véhicules rigides lourds dotés d'équipements techniques spécialisés (bras grue auxiliaire, système ampliroll, bi-benne TP, malaxeur béton). Spécialiste du transport technique, il intervient sur chantiers, carrières, travaux publics et sites industriels complexes."
+      salaryRange="2 300 € — 3 000 € net / mois (+ primes techniques CACES)"
+      experienceAvg="2 ans à 15+ ans d'expérience"
+      keySkills={[
+        "Maniement précis de grue auxiliaire de chargement (CACES R490) avec télécommande",
+        "Conduite tout-terrain sur pistes chantiers, carrières et accès non stabilisés",
+        "Maîtrise des systèmes hydrauliques : vérins de benne, bras ampliroll et béquilles",
+        "Respect strict des protocoles de sécurité BTP et port des EPI complets",
+        "Contrôle de la répartition des charges sur les essieux et bâchage sécurisé",
+      ]}
+      typicalMissions={[
+        "Livraison de matériaux sur chantiers du bâtiment et travaux publics (BTP)",
+        "Rotation benne TP (évacuation de déblais, approvisionnement gravats et enrobés)",
+        "Dépôt et enlèvement de bennes industrielles par système ampliroll",
+        "Livraison avec déchargement à la grue (palettes de parpaings, tuiles, charpentes)",
+      ]}
+      equipmentList={[
+        "Porteur Plateau Grue Auxiliaire (R490)",
+        "Bi-Benne & Tri-Benne TP (6x4 / 8x4)",
+        "Bras Ampliroll / Multibenne",
+        "Toupie Béton Malaxeur (PUMI)",
+        "Porteur Frigorifique Gros Volume",
+      ]}
+      faqItems={[
+        {
+          q: "Quelles sont les qualifications recommandées pour un chauffeur porteur ?",
+          a: "En plus du permis C et de la FIMO/FCO, les habilitations CACES R490 (grue auxiliaire de chargement) ou CACES R482 sont particulièrement recherchées et valorisées sur le marché.",
+        },
+        {
+          q: "Quelle est la différence entre un chauffeur PL classique et un chauffeur porteur ?",
+          a: "Le porteur intègre généralement un équipement de manutention ou de bennage propre (grue de levage, compas hydraulique, ampliroll) nécessitant une double compétence de conduite et d'opération technique sur site.",
+        },
+        {
+          q: "Comment trouver rapidement une mission ou un chauffeur porteur qualifié ?",
+          a: "Via TruckMatch, les entreprises filtrent instantanément les profils selon les équipements maîtrisés (grue, benne, hayon) et contactent directement le conducteur sans commission d'agence.",
+        },
+      ]}
+    />
   );
 }
