@@ -17,6 +17,7 @@ export interface SessionUser {
   role: SessionRole;
   name: string;
   exp: number; // epoch secondes
+  twoFactorVerifiedAt?: number; // epoch secondes de validation 2FA
 }
 
 function getSecret(): string {
@@ -79,6 +80,16 @@ export const sessionCookieOptions = {
   maxAge: SESSION_TTL_SECONDS,
   sameSite: "lax" as const,
 };
+
+export const ADMIN_2FA_MAX_AGE_SECONDS = 12 * 60 * 60; // 12 heures renouvelables
+
+/** Vérifie si la session admin est valide et a été confirmée par 2FA depuis moins de 12h. */
+export function isAdmin2FAValid(user: SessionUser | null): boolean {
+  if (!user || user.role !== "admin") return false;
+  if (!user.twoFactorVerifiedAt) return false;
+  const now = Math.floor(Date.now() / 1000);
+  return now - user.twoFactorVerifiedAt < ADMIN_2FA_MAX_AGE_SECONDS;
+}
 
 /** Comparaison de chaînes à temps constant (mots de passe). */
 export function safeEqual(a: string, b: string): boolean {

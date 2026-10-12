@@ -176,6 +176,14 @@ export async function POST(request: Request) {
         }
       }
 
+      // Notification instantanée vers le bot Telegram administrateur
+      try {
+        const { notifyDriverRegistered } = await import("@/lib/telegram/notifier");
+        await notifyDriverRegistered(data?.[0]);
+      } catch (tgErr) {
+        console.warn("[Register] Erreur notification Telegram chauffeur:", tgErr);
+      }
+
       return NextResponse.json({
         success: true,
         message: "Profil chauffeur créé avec succès !",
@@ -266,6 +274,14 @@ export async function POST(request: Request) {
         } catch (authErr) {
           console.warn("Auth user creation warning:", authErr);
         }
+      }
+
+      // Notification instantanée vers le bot Telegram administrateur
+      try {
+        const { notifyCompanyRegistered } = await import("@/lib/telegram/notifier");
+        await notifyCompanyRegistered(data?.[0]);
+      } catch (tgErr) {
+        console.warn("[Register] Erreur notification Telegram entreprise:", tgErr);
       }
 
       return NextResponse.json({

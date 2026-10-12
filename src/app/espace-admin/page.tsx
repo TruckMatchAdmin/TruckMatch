@@ -45,6 +45,7 @@ import {
   Award,
   Briefcase,
   AlertCircle,
+  KeyRound,
 } from "lucide-react";
 
 type AdminTab =
@@ -88,6 +89,15 @@ export default function AdminDashboardPage() {
   });
 
   // Recherche dans le cockpit dashboard
+    const [supportTickets, setSupportTickets] = useState<any[]>([]);
+
+  // 2FA Admin (Renouvellement 12h)
+  const [is2FAModalOpen, setIs2FAModalOpen] = useState(false);
+  const [twoFaCode, setTwoFaCode] = useState("");
+  const [twoFaLoading, setTwoFaLoading] = useState(false);
+  const [twoFaError, setTwoFaError] = useState<string | null>(null);
+  const [twoFaResendSuccess, setTwoFaResendSuccess] = useState<string | null>(null);
+
   const [cockpitDriverSearch, setCockpitDriverSearch] = useState("");
   const [cockpitCompanySearch, setCockpitCompanySearch] = useState("");
 
@@ -164,6 +174,45 @@ export default function AdminDashboardPage() {
   const [messageInput, setMessageInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  
+  const handleVerify2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTwoFaLoading(true);
+    setTwoFaError(null);
+    try {
+      const res = await fetch("/api/auth/2fa/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: twoFaCode }),
+      });
+      const d = await res.json();
+      if (!res.ok || !d.success) throw new Error(d.error || "Code incorrect.");
+      setIs2FAModalOpen(false);
+      setTwoFaCode("");
+      loadData();
+    } catch (err: any) {
+      setTwoFaError(err.message);
+    } finally {
+      setTwoFaLoading(false);
+    }
+  };
+
+  const handleResend2FA = async () => {
+    setTwoFaLoading(true);
+    setTwoFaResendSuccess(null);
+    setTwoFaError(null);
+    try {
+      const res = await fetch("/api/auth/2fa/resend", { method: "POST" });
+      const d = await res.json();
+      if (!res.ok || !d.success) throw new Error(d.error || "Échec renvoi code");
+      setTwoFaResendSuccess("Nouveau code expédié sur Telegram (@TruckMatchAdmin_bot) !");
+    } catch (err: any) {
+      setTwoFaError(err.message);
+    } finally {
+      setTwoFaLoading(false);
+    }
+  };
+
   const loadData = async () => {
     setLoading(true);
     setError(null);
@@ -171,6 +220,13 @@ export default function AdminDashboardPage() {
     try {
       const res = await fetch("/api/admin/data");
       if (!res.ok) {
+        if (res.status === 401) {
+          const errData = await res.json().catch(() => ({}));
+          if (errData.requires2FA) {
+            setIs2FAModalOpen(true);
+            return;
+          }
+        }
         if (res.status === 403 || res.status === 401) {
           setError("Session expirée ou droits administrateur requis. Veuillez vous reconnecter.");
           return;
@@ -178,6 +234,7 @@ export default function AdminDashboardPage() {
         throw new Error("Erreur de chargement des données.");
       }
       const data = await res.json();
+      setSupportTickets(data.supportTickets || []);
       const loadedDrivers = data.drivers || [];
       const loadedCompanies = data.companies || [];
       const loadedJobs = data.jobs || [];
@@ -3559,6 +3616,92 @@ export default function AdminDashboardPage() {
           </div>
         );
       })()}
+
+      {/* Modale de Vérification 2FA Sécurisée Administrateur */}
+      {is2FAModalOpen && (
+        <div className="auth-modal-overlay" style={{ zIndex: 9999 }}>
+          <div className="auth-modal-card" style={{ maxWidth: 440 }}>
+            <div className="auth-modal-header">
+              <div className="auth-modal-badge">
+                <ShieldCheck size={16} />
+                <span>Vérification Admin Renforcée (12h)</span>
+              </div>
+              <h2 className="auth-modal-title">Code de Sécurité Requis</h2>
+              <p className="auth-modal-subtitle">
+                Votre session administrateur nécessite une validation par code temporaire à 4 chiffres expédié sur Telegram.
+              </p>
+            </div>
+
+            {twoFaError && (
+              <div className="auth-modal-error">
+                <AlertCircle size={16} className="shrink-0" />
+                <span>{twoFaError}</span>
+              </div>
+            )}
+
+            {twoFaResendSuccess && (
+              <div className="p-2.5 mb-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
+                <ShieldCheck size={16} />
+                <span>{twoFaResendSuccess}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleVerify2FA} className="auth-modal-form">
+              <div className="form-group-modal">
+                <label className="modal-input-label">Code temporaire (4 chiffres)</label>
+                <div className="modal-input-wrap">
+                  <KeyRound size={17} className="modal-input-icon text-sky-400" />
+                  <input
+                    type="text"
+                    maxLength={4}
+                    autoFocus
+                    required
+                    placeholder="Ex : 4821"
+                    value={twoFaCode}
+                    onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, ""))}
+                    className="modal-input tracking-[6px] text-center text-lg font-mono font-bold text-white"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1">
+                  <span>Envoyé sur :</span>
+                  <a
+                    href="https://t.me/TruckMatchAdmin_bot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sky-400 hover:underline"
+                  >
+                    @TruckMatchAdmin_bot
+                  </a>
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={twoFaLoading || twoFaCode.length !== 4}
+                className="auth-modal-submit-btn"
+              >
+                {twoFaLoading ? "Vérification en cours..." : "Déverrouiller l'Espace Administrateur"}
+              </button>
+
+              <div className="flex items-center justify-between pt-2 text-xs">
+                <button
+                  type="button"
+                  onClick={handleResend2FA}
+                  disabled={twoFaLoading}
+                  className="text-slate-400 hover:text-white flex items-center gap-1"
+                >
+                  <RefreshCw size={12} className={twoFaLoading ? "animate-spin" : ""} />
+                  <span>Renvoyer le code sur Telegram</span>
+                </button>
+                <Link href="/" className="text-slate-500 hover:text-slate-300">
+                  Retour à l'accueil
+                </Link>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

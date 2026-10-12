@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start -p 3005",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node tests/monitoring_security.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",

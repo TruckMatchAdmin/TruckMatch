@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getSession } from "@/lib/auth/session";
+import { getSession, isAdmin2FAValid } from "@/lib/auth/session";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://azxwqcdnwkolodxwsqoq.supabase.co";
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
@@ -8,38 +8,53 @@ const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
 export async function GET(request: Request) {
   try {
-    // Vérification de la session signée
+    // Vérification de la session signée et du 2FA (12h)
     const sessionUser = getSession(request);
 
     if (!sessionUser || sessionUser.role !== "admin") {
       return NextResponse.json({ error: "Accès refusé. Réservé à l'administration." }, { status: 403 });
     }
 
+    if (!isAdmin2FAValid(sessionUser)) {
+      return NextResponse.json(
+        { error: "Vérification 2FA requise ou session de 12h expirée.", requires2FA: true },
+        { status: 401 }
+      );
+    }
+
     // Récupération des conducteurs
-    const { data: drivers, error: driverErr } = await supabaseAdmin
+    const { data: drivers } = await supabaseAdmin
       .from("drivers")
       .select("*")
       .order("created_at", { ascending: false });
 
     // Récupération des entreprises
-    const { data: companies, error: compErr } = await supabaseAdmin
+    const { data: companies } = await supabaseAdmin
       .from("companies")
       .select("*")
       .order("created_at", { ascending: false });
 
     // Récupération des offres d'emploi
-    const { data: jobs, error: jobErr } = await supabaseAdmin
+    const { data: jobs } = await supabaseAdmin
       .from("jobs")
       .select("*")
       .order("created_at", { ascending: false });
 
+    // Récupération des tickets support
+    const { data: supportTickets } = await supabaseAdmin
+      .from("support_tickets")
+      .select("*")
+      .order("created_at", { ascending: false });
+
     const jobsList = jobs || [];
+    const ticketsList = supportTickets || [];
 
     return NextResponse.json({
       success: true,
       drivers: drivers || [],
       companies: companies || [],
       jobs: jobsList,
+      supportTickets: ticketsList,
       stats: {
         totalDrivers: drivers?.length || 0,
         pendingDrivers: drivers?.filter((d) => d.status === "pending" || (!d.status && !d.is_approved))?.length || 0,
@@ -52,6 +67,9 @@ export async function GET(request: Request) {
         pendingJobs: jobsList.filter((j) => j.status === "pending").length,
         approvedJobs: jobsList.filter((j) => j.status === "approved" && j.is_active).length,
         rejectedJobs: jobsList.filter((j) => j.status === "rejected").length,
+        totalTickets: ticketsList.length,
+        openTickets: ticketsList.filter((t) => t.status === "open" || t.status === "in_progress").length,
+        urgentTickets: ticketsList.filter((t) => t.priority === "urgente" && t.status !== "resolved").length,
       },
     });
   } catch (err: any) {

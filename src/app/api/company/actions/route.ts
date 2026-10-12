@@ -105,6 +105,21 @@ export async function POST(request: Request) {
         throw insertErr;
       }
 
+      // Notification Telegram instantanée
+      try {
+        const { notifyJobCreated } = await import("@/lib/telegram/notifier");
+        await notifyJobCreated({
+          id: inserted?.[0]?.id,
+          title: String(title).trim(),
+          company_name: company.company_name,
+          contract_type,
+          location: locCity,
+          salary,
+        });
+      } catch (tgErr) {
+        console.warn("[Job] Erreur notification Telegram:", tgErr);
+      }
+
       return NextResponse.json({
         success: true,
         job: inserted?.[0],

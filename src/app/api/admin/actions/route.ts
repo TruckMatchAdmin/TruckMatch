@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getSession } from "@/lib/auth/session";
+import { getSession, isAdmin2FAValid } from "@/lib/auth/session";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://azxwqcdnwkolodxwsqoq.supabase.co";
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
@@ -12,6 +12,13 @@ export async function POST(request: Request) {
 
     if (!sessionUser || sessionUser.role !== "admin") {
       return NextResponse.json({ error: "Accès refusé. Réservé à l'administrateur." }, { status: 403 });
+    }
+
+    if (!isAdmin2FAValid(sessionUser)) {
+      return NextResponse.json(
+        { error: "Vérification 2FA requise ou session expirée (validité 12h).", requires2FA: true },
+        { status: 401 }
+      );
     }
 
     const body = await request.json();
@@ -152,6 +159,66 @@ export async function POST(request: Request) {
       if (error) throw error;
       return NextResponse.json({ success: true, message: "L'offre d'emploi a été supprimée." });
     }
+
+    // 5. RÉSOUDRE UN TICKET SUPPORT
+    if (action === "resolve_ticket" && id) {
+      const { data: updated, error } = await supabaseAdmin
+        .from("support_tickets")
+        .update({
+          status: "resolved",
+          resolved_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Notification de résolution vers Telegram
+      try {
+        const { notifySupportTicket } = await import("@/lib/telegram/notifier");
+        await notifySupportTicket({
+          id: updated.id,
+          ticket_number: updated.ticket_number,
+          user_type: updated.user_type,
+          name: updated.name,
+          email: updated.email,
+          subject: updated.subject,
+          message: updated.message,
+          priority: updated.priority,
+          status: updated.status,
+          eventType: "resolved",
+        });
+      } catch {}
+
+      return NextResponse.json({ success: true, message: "Ticket support marqué comme résolu." });
+    }
+
+    // 6. CHANGER PRIORITÉ TICKET SUPPORT
+    if (action === "update_ticket_priority" && id && data?.priority) {
+      const { data: updated, error } = await supabaseAdmin
+        .from("support_tickets")
+        .update({
+          priority: data.priority,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return NextResponse.json({ success: true, message: "Priorité du ticket mise à jour." });
+    }
+
+    // Journalisation d'audit de l'action exécutée
+    try {
+      await supabaseAdmin.from("admin_audit_logs").insert({
+        event_type: "action_executed",
+        admin_email: sessionUser.email,
+        details: { action, targetId: id || null },
+      });
+    } catch {}
 
     return NextResponse.json({ error: "Action inconnue" }, { status: 400 });
   } catch (err: any) {

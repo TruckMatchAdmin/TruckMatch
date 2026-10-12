@@ -24,3 +24,7 @@ Thumbs.db
 
 # Turbopack & cache
 .turbo
+
+# Scratch & temporary scripts
+scratch/
+

@@ -5,6 +5,8 @@ import {
   createSessionToken,
   safeEqual,
   sessionCookieOptions,
+  getSession,
+  isAdmin2FAValid,
 } from "@/lib/auth/session";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://azxwqcdnwkolodxwsqoq.supabase.co";
@@ -42,16 +44,69 @@ export async function POST(request: Request) {
     const adminPassword = process.env.ADMIN_PASSWORD || "";
 
     if (adminEmail && adminPassword && cleanEmail === adminEmail) {
+      const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "127.0.0.1";
+      const userAgent = request.headers.get("user-agent") || "Navigateur inconnu";
+
       if (!safeEqual(String(password), adminPassword)) {
+        // Journalisation de la tentative échouée
+        try {
+          await supabaseAdmin.from("admin_audit_logs").insert({
+            event_type: "unauthorized_attempt",
+            admin_email: cleanEmail,
+            ip_address: ip,
+            user_agent: userAgent,
+            details: { reason: "Mot de passe admin incorrect" },
+          });
+        } catch {}
+
         return NextResponse.json(
           { error: "Adresse email ou mot de passe incorrect." },
           { status: 401 }
         );
       }
-      return sessionResponse(
-        { success: true, role: "admin", redirectUrl: "/espace-admin" },
-        { id: "admin", email: cleanEmail, role: "admin", name: "Administrateur TruckMatch" }
-      );
+
+      // Vérifier si une session 2FA admin valide (< 12h) existe déjà
+      const existingSession = getSession(request);
+      if (existingSession && isAdmin2FAValid(existingSession)) {
+        return sessionResponse(
+          { success: true, role: "admin", redirectUrl: "/espace-admin" },
+          existingSession
+        );
+      }
+
+      // Étape 1 validée : Génération et expédition sécurisée du code 2FA par Telegram
+      const { generateAndSend2FACode } = await import("@/lib/auth/twoFactor");
+      const twoFaResult = await generateAndSend2FACode(cleanEmail, ip, userAgent);
+
+      if (!twoFaResult.success) {
+        return NextResponse.json(
+          { error: twoFaResult.error || "Impossible d'envoyer le code de vérification Telegram." },
+          { status: 429 }
+        );
+      }
+
+      const pendingToken = createSessionToken({
+        id: "admin-pending",
+        email: cleanEmail,
+        role: "admin",
+        name: "Admin (2FA Requis)",
+      });
+
+      const response = NextResponse.json({
+        success: true,
+        requires2FA: true,
+        message: "Code à 4 chiffres envoyé sur votre Telegram @TruckMatchAdmin_bot.",
+      });
+
+      response.cookies.set("tm_2fa_pending", pendingToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 5 * 60, // 5 minutes
+        sameSite: "lax",
+      });
+
+      return response;
     }
 
     // Authentification via Supabase Auth (conducteurs et entreprises)
