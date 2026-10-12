@@ -67,8 +67,8 @@ export function Footer() {
             </div>
             <div className="footer-trust-item">
               <Mail size={16} className="trust-icon" />
-              <a href="mailto:contact@truckmatch.fr" className="footer-contact-email">
-                contact@truckmatch.fr
+              <a href="mailto:jobs@truckmatch.fr" className="footer-contact-email">
+                jobs@truckmatch.fr
               </a>
             </div>
           </div>

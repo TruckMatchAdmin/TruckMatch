@@ -24,7 +24,10 @@ export default function MentionsLegalesPage() {
               indépendante dédiée à la mise en relation dans le secteur du transport routier de marchandises.
             </p>
             <p>
-              <strong>Email de contact :</strong> contact@truckmatch.fr
+              <strong>Email de contact :</strong>{" "}
+              <a href="mailto:jobs@truckmatch.fr" style={{ color: "var(--color-primary)", textDecoration: "underline" }}>
+                jobs@truckmatch.fr
+              </a>
               <br />
               <strong>Directeur de la publication :</strong> Direction Générale TruckMatch
             </p>

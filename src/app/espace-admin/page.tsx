@@ -749,7 +749,7 @@ export default function AdminDashboardPage() {
 
             <div className="admin-user-badge">
               <span className="admin-user-dot" />
-              <span>admin@truckmatch.fr</span>
+              <span>jobs@truckmatch.fr</span>
             </div>
 
             <button

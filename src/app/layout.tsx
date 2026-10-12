@@ -95,6 +95,7 @@ export default function RootLayout({
           "@type": "ContactPoint",
           contactType: "customer service",
           url: "https://truckmatch.fr/contact",
+          email: "jobs@truckmatch.fr",
           availableLanguage: ["French"],
         },
       },

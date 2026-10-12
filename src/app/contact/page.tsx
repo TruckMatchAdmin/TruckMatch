@@ -91,7 +91,11 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <p className="info-label">Email</p>
-                      <p className="info-val">contact@truckmatch.fr</p>
+                      <p className="info-val">
+                        <a href="mailto:jobs@truckmatch.fr" style={{ color: "inherit", textDecoration: "none" }}>
+                          jobs@truckmatch.fr
+                        </a>
+                      </p>
                     </div>
                   </div>
 

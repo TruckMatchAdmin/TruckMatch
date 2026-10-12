@@ -70,7 +70,7 @@ export default function PolitiqueConfidentialitePage() {
             </p>
             <p>
               Pour exercer vos droits, adressez votre demande à :{" "}
-              <strong>dpo@truckmatch.fr</strong> ou via notre formulaire de contact.
+              <strong>jobs@truckmatch.fr</strong> ou via notre formulaire de contact.
             </p>
           </section>
         </div>
