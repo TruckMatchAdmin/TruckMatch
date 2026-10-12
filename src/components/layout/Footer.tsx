@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { FOOTER_LINKS } from "@/lib/constants/navigation";
 import { ShieldCheck, Truck, ArrowRight, Mail, Sparkles } from "lucide-react";
+import { FacebookIcon, TelegramIcon } from "@/components/ui/SocialIcons";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -69,6 +70,64 @@ export function Footer() {
               <Mail size={16} className="trust-icon" />
               <a href="mailto:jobs@truckmatch.fr" className="footer-contact-email">
                 jobs@truckmatch.fr
+              </a>
+            </div>
+          </div>
+
+          {/* Réseaux Sociaux Officiels */}
+          <div className="footer-social-strip" style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.6rem' }}>
+              Communauté &amp; Réseaux Officiels
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+              <a
+                href="https://www.facebook.com/profile.php?id=61593705328209"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  padding: '0.4rem 0.75rem',
+                  borderRadius: '0.5rem',
+                  backgroundColor: 'rgba(24, 119, 242, 0.15)',
+                  border: '1px solid rgba(24, 119, 242, 0.35)',
+                  color: '#60a5fa',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease',
+                }}
+                className="hover:scale-105"
+                title="Page Facebook Officielle TruckMatch"
+              >
+                <FacebookIcon size={16} />
+                <span>Facebook</span>
+              </a>
+
+              <a
+                href="https://t.me/TruckMatchOfficiel"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  padding: '0.4rem 0.75rem',
+                  borderRadius: '0.5rem',
+                  backgroundColor: 'rgba(14, 165, 233, 0.15)',
+                  border: '1px solid rgba(14, 165, 233, 0.35)',
+                  color: '#38bdf8',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease',
+                }}
+                className="hover:scale-105"
+                title="Canal Telegram Officiel @TruckMatchOfficiel"
+              >
+                <TelegramIcon size={16} />
+                <span>@TruckMatchOfficiel</span>
               </a>
             </div>
           </div>

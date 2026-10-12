@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { MAIN_NAV } from "@/lib/constants/navigation";
 import { Menu, X, ArrowRight, UserPlus, LogIn } from "lucide-react";
 import { LoginModal } from "@/components/auth/LoginModal";
+import { FacebookIcon, TelegramIcon } from "@/components/ui/SocialIcons";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -74,6 +75,18 @@ export function Header() {
 
           {/* Actions Desktop Pro */}
           <div className="header-actions">
+            {/* Lien Facebook Officiel */}
+            <a
+              href="https://www.facebook.com/profile.php?id=61593705328209"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-600/10 transition-colors hidden sm:inline-flex items-center justify-center"
+              title="Page Facebook Officielle TruckMatch"
+              aria-label="Facebook TruckMatch"
+            >
+              <FacebookIcon size={18} />
+            </a>
+
             <button
               type="button"
               onClick={() => setLoginModalOpen(true)}
@@ -144,6 +157,28 @@ export function Header() {
                   <UserPlus size={16} />
                   <span>Créer mon profil Chauffeur (Gratuit)</span>
                 </Link>
+
+                {/* Réseaux sociaux mobile */}
+                <div className="flex items-center justify-center gap-3 pt-3 border-t border-slate-800">
+                  <a
+                    href="https://www.facebook.com/profile.php?id=61593705328209"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600/15 border border-blue-600/30 text-blue-400 text-xs font-semibold"
+                  >
+                    <FacebookIcon size={16} />
+                    <span>Facebook</span>
+                  </a>
+                  <a
+                    href="https://t.me/TruckMatchOfficiel"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-sky-500/15 border border-sky-500/30 text-sky-400 text-xs font-semibold"
+                  >
+                    <TelegramIcon size={16} />
+                    <span>Telegram</span>
+                  </a>
+                </div>
               </div>
             </nav>
           </div>
