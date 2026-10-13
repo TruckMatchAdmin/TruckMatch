@@ -28,6 +28,11 @@ import {
   Settings,
   HelpCircle,
   Eye,
+  MapPin,
+  BadgeEuro,
+  Mail,
+  Phone,
+  ExternalLink,
 } from "lucide-react";
 
 export function AdminCommercialModule() {
@@ -225,294 +230,271 @@ export function AdminCommercialModule() {
   // Calcul du max pour le graphique SVG
   const maxRevenue = Math.max(...chartData.map((d: any) => d.revenue), 100);
 
+  const periodLabels: Record<string, string> = {
+    today: "Aujourd'hui",
+    "7d": "7 derniers jours",
+    "30d": "30 derniers jours",
+    month: "Ce mois-ci",
+    year: "Cette année",
+    all: "Historique complet",
+  };
+
   return (
-    <div className="admin-commercial-container">
-      {/* 1. HEADER DU COCKPIT COMMERCIAL */}
-      <div className="admin-commercial-header">
-        <div className="admin-commercial-title">
-          <h2>
-            <TrendingUp size={24} style={{ display: "inline-block", marginRight: "0.5rem", color: "var(--color-primary, #0080ff)" }} />
-            Gestion Commerciale &amp; Abonnements
-          </h2>
-          <p>
-            Chiffre d&apos;affaires réel, suivi des forfaits, crédits et attribution d&apos;abonnements offerts.
-          </p>
+    <div className="candidates-cockpit-view">
+      {/* A. Bloc Contrôle Haut : Titre + Recherche + Filtres + Actions */}
+      <div className="candidates-header-block">
+        {/* Ligne 1 : Titre + Actions */}
+        <div className="candidates-header-row-1">
+          <div className="candidates-title-wrap">
+            <h1 className="candidates-page-title">
+              <BadgeEuro size={18} className="text-emerald-400" />
+              <span>Gestion Commerciale &amp; Abonnements</span>
+            </h1>
+            <span className="cockpit-panel-badge">{companies.length} entreprises supervisées</span>
+            <span className="company-cockpit-badge">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block mr-1"></span>
+              Régime Micro-Entreprise (0% TVA)
+            </span>
+          </div>
+
+          <div className="candidates-header-actions">
+            <button
+              type="button"
+              onClick={() => setIsTaxModalOpen(true)}
+              className="btn-cockpit-action"
+              title="Paramètres de facturation et régime fiscal micro-entreprise"
+            >
+              <Settings size={13} className="text-amber-400" />
+              <span>Fiscalité Micro-Entreprise</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => loadData()}
+              disabled={loading}
+              className="btn-cockpit-action"
+              title="Actualiser Supabase"
+            >
+              <RefreshCw size={13} className={loading ? "animate-spin text-sky-400" : "text-emerald-400"} />
+              <span>Actualiser</span>
+            </button>
+          </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
-          {/* Sélecteur de période */}
-          <div className="admin-period-pills">
+        {/* Ligne 2 : Recherche sombre + Pilules filtres claires */}
+        <div className="candidates-header-row-2">
+          <div className="candidates-search-dark">
+            <Search size={14} className="text-muted" />
+            <input
+              type="text"
+              placeholder="Chercher entreprise, email, ville, code postal..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="candidates-pills-bar">
+            {/* Périodes */}
             {[
               { id: "today", label: "Aujourd'hui" },
               { id: "7d", label: "7 jours" },
               { id: "30d", label: "30 jours" },
-              { id: "month", label: "Mois" },
-              { id: "year", label: "Année" },
+              { id: "month", label: "Ce mois" },
+              { id: "year", label: "2026" },
               { id: "all", label: "Tout" },
             ].map((p) => (
               <button
                 key={p.id}
                 type="button"
                 onClick={() => setPeriod(p.id as any)}
-                className={`admin-period-btn ${period === p.id ? "active" : ""}`}
+                className={`candidates-filter-pill ${period === p.id ? "active" : ""}`}
               >
                 {p.label}
               </button>
             ))}
+
+            <span className="text-slate-600 hidden sm:inline">|</span>
+
+            {/* Filtres de forfaits */}
+            <button
+              type="button"
+              onClick={() => setFilterPlan("all")}
+              className={`candidates-filter-pill ${filterPlan === "all" ? "active" : ""}`}
+            >
+              Tous ({companies.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterPlan("paid")}
+              className={`candidates-filter-pill ${filterPlan === "paid" ? "active" : ""}`}
+            >
+              Payants ({companies.filter((c: any) => !c.isGifted && c.subscriptionPlan && c.subscriptionPlan !== "decouverte").length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterPlan("gifted")}
+              className={`candidates-filter-pill ${filterPlan === "gifted" ? "active" : ""}`}
+            >
+              Offerts ({companies.filter((c: any) => c.isGifted).length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterPlan("free")}
+              className={`candidates-filter-pill ${filterPlan === "free" ? "active" : ""}`}
+            >
+              Découverte ({companies.filter((c: any) => !c.subscriptionPlan || c.subscriptionPlan === "decouverte").length})
+            </button>
           </div>
-
-          {/* Bouton Paramètres Fiscaux */}
-          <button
-            type="button"
-            onClick={() => setIsTaxModalOpen(true)}
-            style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.5rem 0.9rem", background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "10px", fontSize: "0.82rem", fontWeight: "700", cursor: "pointer", color: "var(--color-navy, #0b192c)" }}
-          >
-            <Settings size={14} />
-            <span>Fiscalité Micro-Entreprise</span>
-          </button>
-
-          {/* Bouton Actualiser */}
-          <button
-            type="button"
-            onClick={() => loadData()}
-            disabled={loading}
-            style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.5rem 0.9rem", background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "10px", fontSize: "0.82rem", fontWeight: "700", cursor: "pointer", color: "var(--color-navy, #0b192c)" }}
-          >
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            <span>Actualiser</span>
-          </button>
         </div>
       </div>
 
       {/* Notifications retour */}
       {errorMsg && (
-        <div style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#991b1b", padding: "0.85rem 1.25rem", borderRadius: "12px", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "0.65rem", fontSize: "0.88rem" }}>
-          <AlertCircle size={18} />
+        <div style={{ background: "rgba(239, 68, 68, 0.12)", border: "1px solid rgba(239, 68, 68, 0.3)", color: "#fca5a5", padding: "0.6rem 1rem", borderRadius: "8px", display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.82rem" }}>
+          <AlertCircle size={15} style={{ color: "#ef4444", flexShrink: 0 }} />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {successMsg && (
-        <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", color: "#065f46", padding: "0.85rem 1.25rem", borderRadius: "12px", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "0.65rem", fontSize: "0.88rem" }}>
-          <CheckCircle2 size={18} />
+        <div style={{ background: "rgba(16, 185, 129, 0.12)", border: "1px solid rgba(16, 185, 129, 0.3)", color: "#6ee7b7", padding: "0.6rem 1rem", borderRadius: "8px", display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.82rem" }}>
+          <CheckCircle2 size={15} style={{ color: "#10b981", flexShrink: 0 }} />
           <span>{successMsg}</span>
         </div>
       )}
 
-      {/* 2. GRILLE KPI COMMERCIALE (CHIFFRES RÉELS) */}
-      <div className="admin-commercial-kpi-grid">
-        {/* CA ENCAISSÉ */}
-        <div className="admin-comm-kpi-card" style={{ borderLeft: "4px solid #10b981" }}>
-          <div className="admin-comm-kpi-head">
-            <span className="admin-comm-kpi-label">CA Réel Encaissé</span>
-            <div className="admin-comm-kpi-icon" style={{ background: "#e6f9f0", color: "#10b981" }}>
-              <Euro size={18} />
+      {/* B. Bandeau KPI Aéré (68px) identique aux autres pages */}
+      <div className="candidates-kpis-strip" style={{ gridTemplateColumns: "repeat(6, minmax(0, 1fr))" }}>
+        <div className="candidates-kpi-item">
+          <div>
+            <div className="candidates-kpi-lbl">CA Réel Encaissé</div>
+            <div className="candidates-kpi-val text-emerald-400">
+              {Number(kpis.collectedRevenueEur || 0).toFixed(2)} €
             </div>
           </div>
-          <div className="admin-comm-kpi-value">
-            {Number(kpis.collectedRevenueEur || 0).toFixed(2)} €
-          </div>
-          <div className="admin-comm-kpi-sub">
-            Sur la période • Commandes payées uniquement
-          </div>
+          <Euro size={18} className="text-emerald-400" />
         </div>
 
-        {/* ENTREPRISES AVEC ABO PAYANT */}
-        <div className="admin-comm-kpi-card" style={{ borderLeft: "4px solid #0080ff" }}>
-          <div className="admin-comm-kpi-head">
-            <span className="admin-comm-kpi-label">Abonnements Payants</span>
-            <div className="admin-comm-kpi-icon" style={{ background: "#e8f3ff", color: "#0080ff" }}>
-              <Crown size={18} />
+        <div className="candidates-kpi-item">
+          <div>
+            <div className="candidates-kpi-lbl">Abonnements Payants</div>
+            <div className="candidates-kpi-val text-sky-400">
+              {kpis.paidActiveCompanies || 0}
             </div>
           </div>
-          <div className="admin-comm-kpi-value">
-            {kpis.paidActiveCompanies || 0}
-          </div>
-          <div className="admin-comm-kpi-sub">
-            Entreprises clientes actives
-          </div>
+          <Crown size={18} className="text-sky-400" />
         </div>
 
-        {/* ABONNEMENTS OFFERTS */}
-        <div className="admin-comm-kpi-card" style={{ borderLeft: "4px solid #a855f7" }}>
-          <div className="admin-comm-kpi-head">
-            <span className="admin-comm-kpi-label">Abonnements Offerts</span>
-            <div className="admin-comm-kpi-icon" style={{ background: "#f3e8ff", color: "#9333ea" }}>
-              <Gift size={18} />
+        <div className="candidates-kpi-item">
+          <div>
+            <div className="candidates-kpi-lbl">Abonnements Offerts</div>
+            <div className="candidates-kpi-val text-purple-400">
+              {kpis.giftedCompanies || 0}
             </div>
           </div>
-          <div className="admin-comm-kpi-value" style={{ color: "#9333ea" }}>
-            {kpis.giftedCompanies || 0}
-          </div>
-          <div className="admin-comm-kpi-sub">
-            Attribués par l&apos;admin (0 € de CA)
-          </div>
+          <Gift size={18} className="text-purple-400" />
         </div>
 
-        {/* ENTREPRISES GRATUITES */}
-        <div className="admin-comm-kpi-card" style={{ borderLeft: "4px solid #64748b" }}>
-          <div className="admin-comm-kpi-head">
-            <span className="admin-comm-kpi-label">Comptes Découverte</span>
-            <div className="admin-comm-kpi-icon" style={{ background: "#f1f5f9", color: "#64748b" }}>
-              <Users size={18} />
+        <div className="candidates-kpi-item">
+          <div>
+            <div className="candidates-kpi-lbl">Comptes Découverte</div>
+            <div className="candidates-kpi-val text-slate-300">
+              {kpis.freeCompanies || 0}
             </div>
           </div>
-          <div className="admin-comm-kpi-value">
-            {kpis.freeCompanies || 0}
-          </div>
-          <div className="admin-comm-kpi-sub">
-            Total : {kpis.totalCompanies || 0} entreprises
-          </div>
+          <Users size={18} className="text-slate-400" />
         </div>
 
-        {/* PROFILS DÉBLOQUÉS */}
-        <div className="admin-comm-kpi-card" style={{ borderLeft: "4px solid #f59e0b" }}>
-          <div className="admin-comm-kpi-head">
-            <span className="admin-comm-kpi-label">Candidats Débloqués</span>
-            <div className="admin-comm-kpi-icon" style={{ background: "#fef7e6", color: "#f59e0b" }}>
-              <Zap size={18} />
+        <div className="candidates-kpi-item">
+          <div>
+            <div className="candidates-kpi-lbl">Candidats Débloqués</div>
+            <div className="candidates-kpi-val text-amber-400">
+              {kpis.unlockedProfilesCount || 0}
             </div>
           </div>
-          <div className="admin-comm-kpi-value">
-            {kpis.unlockedProfilesCount || 0}
-          </div>
-          <div className="admin-comm-kpi-sub">
-            {kpis.creditsPurchasesCount || 0} achat(s) de packs crédits
-          </div>
+          <Zap size={18} className="text-amber-400" />
         </div>
 
-        {/* MISSIONS DE RECHERCHE */}
-        <div className="admin-comm-kpi-card" style={{ borderLeft: "4px solid #06b6d4" }}>
-          <div className="admin-comm-kpi-head">
-            <span className="admin-comm-kpi-label">Missions Recherche</span>
-            <div className="admin-comm-kpi-icon" style={{ background: "#ecfeff", color: "#0891b2" }}>
-              <Search size={18} />
+        <div className="candidates-kpi-item">
+          <div>
+            <div className="candidates-kpi-lbl">Missions Recherche</div>
+            <div className="candidates-kpi-val text-cyan-400">
+              {kpis.searchMissionsCount || 0}
             </div>
           </div>
-          <div className="admin-comm-kpi-value">
-            {kpis.searchMissionsCount || 0}
-          </div>
-          <div className="admin-comm-kpi-sub">
-            {kpis.paidCampaignsCount || 0} campagne(s) pub active(s)
-          </div>
+          <Search size={18} className="text-cyan-400" />
         </div>
       </div>
 
-      {/* 3. GRAPHIQUE DES VENTES RÉELLES DANS LE TEMPS (30 JOURS) */}
-      <div className="admin-chart-card">
-        <div className="admin-chart-head">
-          <div>
-            <h3>Évolution du chiffre d&apos;affaires encaissé (30 derniers jours)</h3>
-            <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
-              Données directes de la base Supabase sans interpolation
-            </span>
+      {/* C. Table Complète Sombre Haute Précision (Identique Candidats/Entreprises) */}
+      <div className="candidates-table-container">
+        {/* Encart Évolution CA Sombre intégré dans le conteneur */}
+        <div style={{ background: "#091322", borderBottom: "1px solid #1c2e47", padding: "0.75rem 1.15rem" }}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <TrendingUp size={15} className="text-emerald-400" />
+              <span className="font-bold text-white text-xs">
+                Évolution du chiffre d&apos;affaires ({periodLabels[period] || period})
+              </span>
+              <span className="text-[11px] text-slate-400">
+                • {kpis.creditsPurchasesCount || 0} commandes enregistrées
+              </span>
+            </div>
+            <div className="flex items-center gap-3 text-xs">
+              <span className="flex items-center gap-1.5 font-mono text-emerald-400 font-bold">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                {Number(kpis.collectedRevenueEur || 0).toFixed(2)} € encaissés
+              </span>
+            </div>
           </div>
 
-          <div style={{ display: "flex", gap: "1rem", fontSize: "0.82rem" }}>
-            <span style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#10b981", fontWeight: "700" }}>
-              <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#10b981" }} />
-              Revenus (€)
-            </span>
-            <span style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#0080ff", fontWeight: "700" }}>
-              <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#0080ff" }} />
-              Commandes confirmées
-            </span>
-          </div>
-        </div>
-
-        {/* Histogramme / Barres SVG dynamiques */}
-        <div style={{ height: "180px", width: "100%", display: "flex", alignItems: "flex-end", gap: "6px", paddingTop: "20px" }}>
-          {chartData.map((d: any, idx: number) => {
-            const heightPercent = maxRevenue > 0 ? Math.min(100, Math.max(8, (d.revenue / maxRevenue) * 100)) : 8;
-            const hasValue = d.revenue > 0;
-
-            return (
-              <div
-                key={idx}
-                title={`${d.date} : ${d.revenue} € (${d.ordersCount} commandes)`}
-                style={{
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  height: "100%",
-                  justifyContent: "flex-end",
-                }}
-              >
+          <div style={{ height: "64px", width: "100%", display: "flex", alignItems: "flex-end", gap: "4px" }}>
+            {chartData.map((d: any, idx: number) => {
+              const heightPercent = maxRevenue > 0 ? Math.min(100, Math.max(8, (d.revenue / maxRevenue) * 100)) : 8;
+              const hasValue = d.revenue > 0;
+              return (
                 <div
-                  style={{
-                    width: "100%",
-                    height: `${heightPercent}%`,
-                    background: hasValue ? "linear-gradient(180deg, #10b981 0%, #059669 100%)" : "#e2e8f0",
-                    borderRadius: "4px 4px 0 0",
-                    transition: "height 300ms ease",
-                    minHeight: "4px",
-                  }}
-                />
-                <span style={{ fontSize: "0.62rem", color: "#94a3b8", marginTop: "4px", whiteSpace: "nowrap" }}>
-                  {idx % 4 === 0 ? d.date : ""}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 4. TABLEAU DES ENTREPRISES, FORFAITS ET ATTRIBUTION D'ABONNEMENTS */}
-      <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "18px", padding: "1.5rem", boxShadow: "0 4px 16px -2px rgba(15, 23, 42, 0.05)", marginBottom: "2rem" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
-          <div>
-            <h3 style={{ fontSize: "1.15rem", fontWeight: "800", color: "var(--color-navy, #0b192c)" }}>
-              Entreprises, Forfaits &amp; Soldes de Crédits ({filteredCompanies.length})
-            </h3>
-            <span style={{ fontSize: "0.82rem", color: "#64748b" }}>
-              Gérez les forfaits clients ou attribuez manuellement un abonnement offert sans paiement.
-            </span>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexWrap: "wrap" }}>
-            {/* Barre de recherche */}
-            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-              <Search size={14} style={{ position: "absolute", left: "0.75rem", color: "#94a3b8" }} />
-              <input
-                type="text"
-                placeholder="Rechercher entreprise, email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ padding: "0.45rem 0.85rem 0.45rem 2.2rem", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "0.82rem", outline: "none", width: "220px" }}
-              />
-            </div>
-
-            {/* Filtre de formule */}
-            <select
-              value={filterPlan}
-              onChange={(e) => setFilterPlan(e.target.value as any)}
-              style={{ padding: "0.45rem 0.85rem", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "0.82rem", color: "#334155" }}
-            >
-              <option value="all">Tous les forfaits</option>
-              <option value="paid">Payants actifs</option>
-              <option value="gifted">Offerts par TruckMatch</option>
-              <option value="free">Comptes Découverte</option>
-              <option value="recruteur">Recruteur</option>
-              <option value="transport_pro">Transport Pro</option>
-              <option value="flotte_reseau">Flotte &amp; Réseau</option>
-            </select>
+                  key={idx}
+                  title={`${d.date} : ${d.revenue} € (${d.ordersCount} commandes)`}
+                  style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", height: "100%", justifyContent: "flex-end", cursor: "pointer" }}
+                >
+                  <div
+                    style={{
+                      width: "100%",
+                      height: `${heightPercent}%`,
+                      background: hasValue ? "#10b981" : "#16263e",
+                      borderRadius: "2px 2px 0 0",
+                      transition: "height 200ms ease",
+                    }}
+                  />
+                  <span style={{ fontSize: "0.58rem", color: "#64748b", marginTop: "3px", whiteSpace: "nowrap" }}>
+                    {idx % 5 === 0 ? d.date : ""}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Table Entreprises */}
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.85rem" }}>
+        {/* Table Dark */}
+        {filteredCompanies.length === 0 ? (
+          <div className="text-center py-12 text-slate-400">
+            <Building2 size={32} className="mx-auto mb-2 text-slate-600 opacity-50" />
+            <p className="font-bold text-sm text-white">Aucune entreprise ne correspond aux critères.</p>
+          </div>
+        ) : (
+          <table className="candidates-table-dark">
             <thead>
-              <tr style={{ borderBottom: "2px solid #e2e8f0" }}>
-                <th style={{ padding: "0.75rem 0.85rem", color: "#64748b", fontWeight: "700" }}>Entreprise</th>
-                <th style={{ padding: "0.75rem 0.85rem", color: "#64748b", fontWeight: "700" }}>Email pro</th>
-                <th style={{ padding: "0.75rem 0.85rem", color: "#64748b", fontWeight: "700" }}>Forfait Actuel</th>
-                <th style={{ padding: "0.75rem 0.85rem", color: "#64748b", fontWeight: "700" }}>Statut</th>
-                <th style={{ padding: "0.75rem 0.85rem", color: "#64748b", fontWeight: "700" }}>Crédits</th>
-                <th style={{ padding: "0.75rem 0.85rem", color: "#64748b", fontWeight: "700" }}>Débloqués</th>
-                <th style={{ padding: "0.75rem 0.85rem", color: "#64748b", fontWeight: "700" }}>CA Encaissé</th>
-                <th style={{ padding: "0.75rem 0.85rem", color: "#64748b", fontWeight: "700", textAlign: "right" }}>Actions</th>
+              <tr>
+                <th>Entreprise Transport</th>
+                <th>Contact / Coordonnées</th>
+                <th>Dépôt / Ville</th>
+                <th>Forfait Actuel</th>
+                <th>Statut</th>
+                <th>Crédits</th>
+                <th>Déblocages</th>
+                <th>CA Encaissé</th>
+                <th style={{ textAlign: "right" }}>Actions Commerciales</th>
               </tr>
             </thead>
             <tbody>
@@ -526,76 +508,86 @@ export function AdminCommercialModule() {
                   : "Découverte";
 
                 return (
-                  <tr key={c.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: "0.85rem" }}>
-                      <strong style={{ color: "var(--color-navy, #0b192c)" }}>{c.name}</strong>
-                      <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>{c.city} ({c.postalCode})</div>
+                  <tr key={c.id}>
+                    <td>
+                      <div className="font-bold text-white text-sm tracking-tight mb-1">
+                        {c.name}
+                      </div>
+                      <div className="text-xs text-slate-400 font-mono">
+                        ID: {c.id?.slice(0, 8)}
+                      </div>
                     </td>
-                    <td style={{ padding: "0.85rem" }}>
-                      <code style={{ fontSize: "0.8rem", color: "#475569" }}>{c.email}</code>
+                    <td>
+                      <div className="flex items-center gap-1.5 text-xs text-slate-300 mb-1">
+                        <Mail size={12} className="text-sky-400 shrink-0" />
+                        <span className="truncate max-w-[200px]">{c.email}</span>
+                      </div>
                     </td>
-                    <td style={{ padding: "0.85rem" }}>
+                    <td>
+                      <div className="flex items-center gap-1 text-xs font-semibold text-white mb-1">
+                        <MapPin size={12} className="text-sky-400 shrink-0" />
+                        <span>{c.postalCode} {c.city}</span>
+                      </div>
+                    </td>
+                    <td>
                       <span
+                        className="cockpit-badge-pill"
                         style={{
-                          display: "inline-block",
-                          padding: "0.2rem 0.6rem",
-                          borderRadius: "9999px",
-                          fontSize: "0.75rem",
-                          fontWeight: "800",
                           background: c.isGifted
-                            ? "#f3e8ff"
+                            ? "rgba(168, 85, 247, 0.15)"
                             : c.subscriptionPlan !== "decouverte"
-                            ? "#e0f2fe"
-                            : "#f1f5f9",
+                            ? "#0c4a6e"
+                            : "#1e293b",
                           color: c.isGifted
-                            ? "#7e22ce"
+                            ? "#d8b4fe"
                             : c.subscriptionPlan !== "decouverte"
-                            ? "#0369a1"
-                            : "#64748b",
+                            ? "#38bdf8"
+                            : "#94a3b8",
+                          border: `1px solid ${
+                            c.isGifted
+                              ? "rgba(168, 85, 247, 0.4)"
+                              : c.subscriptionPlan !== "decouverte"
+                              ? "#0284c7"
+                              : "#334155"
+                          }`,
                         }}
                       >
-                        {c.isGifted ? `🎁 ${planName} (Offert)` : planName}
+                        {c.isGifted ? `🎁 ${planName} (Offert)` : c.subscriptionPlan !== "decouverte" ? `👑 ${planName}` : planName}
                       </span>
                     </td>
-                    <td style={{ padding: "0.85rem" }}>
-                      <span style={{ color: c.subscriptionStatus === "active" ? "#10b981" : "#f59e0b", fontWeight: "700" }}>
+                    <td>
+                      <span className={`cockpit-badge-pill ${c.subscriptionStatus === "active" ? "badge-imm-on" : "badge-imm-off"}`}>
                         {c.subscriptionStatus === "active" ? "Actif" : c.subscriptionStatus}
                       </span>
                     </td>
-                    <td style={{ padding: "0.85rem", fontWeight: "800", color: "#0080ff" }}>
-                      {c.creditsBalance} cr.
+                    <td>
+                      <span className="font-mono font-bold text-sky-400">
+                        {c.creditsBalance} cr.
+                      </span>
                     </td>
-                    <td style={{ padding: "0.85rem" }}>
-                      {c.unlocksCount}
+                    <td>
+                      <span className="font-mono text-slate-300">
+                        {c.unlocksCount}
+                      </span>
                     </td>
-                    <td style={{ padding: "0.85rem", fontWeight: "700", color: "#10b981" }}>
-                      {Number(c.totalPaidEur || 0).toFixed(2)} €
+                    <td>
+                      <span className="font-mono font-bold text-emerald-400">
+                        {Number(c.totalPaidEur || 0).toFixed(2)} €
+                      </span>
                     </td>
-                    <td style={{ padding: "0.85rem", textAlign: "right" }}>
-                      <div style={{ display: "inline-flex", gap: "0.4rem" }}>
-                        {/* Bouton Attribuer / Modifier abonnement offert */}
+                    <td>
+                      <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
                           onClick={() => {
                             setGiftTargetCompany(c);
                             setIsGiftModalOpen(true);
                           }}
-                          style={{
-                            padding: "0.35rem 0.65rem",
-                            borderRadius: "8px",
-                            border: "1px solid #c084fc",
-                            background: "#faf5ff",
-                            color: "#7e22ce",
-                            fontSize: "0.78rem",
-                            fontWeight: "800",
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "0.3rem",
-                          }}
-                          title="Attribuer manuellement un abonnement offert (0 €)"
+                          className="btn-cockpit-action"
+                          style={{ fontSize: "0.74rem", padding: "0.3rem 0.65rem", borderRadius: "7px" }}
+                          title="Attribuer ou modifier un abonnement offert (0 €)"
                         >
-                          <Gift size={13} />
+                          <Gift size={13} className="text-purple-400" />
                           <span>{c.isGifted ? "Modifier Offre" : "Offrir Forfait"}</span>
                         </button>
 
@@ -603,19 +595,10 @@ export function AdminCommercialModule() {
                           <button
                             type="button"
                             onClick={() => handleRevokeGift(c.id)}
-                            style={{
-                              padding: "0.35rem 0.55rem",
-                              borderRadius: "8px",
-                              border: "1px solid #fecaca",
-                              background: "#fef2f2",
-                              color: "#b91c1c",
-                              fontSize: "0.78rem",
-                              fontWeight: "700",
-                              cursor: "pointer",
-                            }}
+                            className="btn-cockpit-mini btn-cockpit-mini-danger"
                             title="Révoquer l'abonnement offert"
                           >
-                            Révoquer
+                            <Trash2 size={13} />
                           </button>
                         )}
                       </div>
@@ -625,252 +608,214 @@ export function AdminCommercialModule() {
               })}
             </tbody>
           </table>
-        </div>
+        )}
       </div>
 
-      {/* 5. MODALE : ATTRIBUER UN ABONNEMENT OFFERT (RÈGLE MÉTIER STRICTE : 0 € DE CA) */}
+      {/* D. Modale Attribuer Abonnement Offert (admin-modal-box) */}
       {isGiftModalOpen && giftTargetCompany && (
-        <div className="admin-gift-modal-backdrop">
-          <div className="admin-gift-modal-card">
-            <button
-              type="button"
-              onClick={() => {
-                setIsGiftModalOpen(false);
-                setGiftTargetCompany(null);
-              }}
-              style={{ position: "absolute", top: "1.25rem", right: "1.25rem", background: "none", border: "none", color: "#64748b", cursor: "pointer" }}
-            >
-              <X size={20} />
-            </button>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", marginBottom: "1rem" }}>
-              <div style={{ width: 42, height: 42, borderRadius: "12px", background: "#f3e8ff", color: "#9333ea", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Gift size={22} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: "1.2rem", fontWeight: "900", color: "var(--color-navy, #0b192c)" }}>
-                  Attribuer un abonnement offert
+        <div className="admin-modal-backdrop" onClick={() => { setIsGiftModalOpen(false); setGiftTargetCompany(null); }}>
+          <div className="admin-modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <div className="flex items-center gap-2">
+                <Gift size={18} className="text-purple-400" />
+                <h3 className="font-bold text-white text-base">
+                  Attribuer un abonnement offert : {giftTargetCompany.name}
                 </h3>
-                <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
-                  Entreprise : <strong>{giftTargetCompany.name}</strong> ({giftTargetCompany.email})
-                </span>
               </div>
+              <button
+                type="button"
+                onClick={() => { setIsGiftModalOpen(false); setGiftTargetCompany(null); }}
+                className="btn-cockpit-mini"
+              >
+                <X size={14} />
+              </button>
             </div>
 
-            <div className="admin-gift-alert-warning">
-              ⚖️ <strong>Règle comptable impérative :</strong> L&apos;abonnement offert ne déclenche aucun paiement, n&apos;ajoute aucun montant au chiffre d&apos;affaires encaissé (0,00 €) et est journalisé dans les audits de sécurité.
-            </div>
-
-            <form onSubmit={handleConfirmGift} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "0.35rem" }}>
-                  Forfait à attribuer gratuitement :
-                </label>
-                <select
-                  value={giftForm.planId}
-                  onChange={(e) => setGiftForm({ ...giftForm, planId: e.target.value })}
-                  style={{ width: "100%", padding: "0.65rem", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem", fontWeight: "700" }}
-                >
-                  <option value="recruteur">Recruteur (2 offres, 3 crédits / mois)</option>
-                  <option value="transport_pro">Transport Pro (5 offres, 10 crédits / mois, logo bandeau)</option>
-                  <option value="flotte_reseau">Flotte &amp; Réseau (15 offres, 25 crédits / mois, visibilité max)</option>
-                </select>
+            <div className="admin-modal-body">
+              <div style={{ background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.3)", borderRadius: "8px", padding: "0.75rem 1rem", fontSize: "0.8rem", color: "#fbbf24", lineHeight: 1.45, marginBottom: "1rem" }}>
+                ⚖️ <strong>Règle comptable :</strong> L&apos;abonnement offert ne déclenche aucun paiement, n&apos;ajoute aucun montant au CA encaissé (0,00 €) et est journalisé dans les audits.
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <form onSubmit={handleConfirmGift} className="flex flex-col gap-3">
                 <div>
-                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "0.35rem" }}>
-                    Durée de validité :
-                  </label>
+                  <label className="text-xs text-muted block mb-1 font-bold">Forfait à attribuer gratuitement</label>
                   <select
-                    value={giftForm.durationDays}
-                    onChange={(e) => setGiftForm({ ...giftForm, durationDays: Number(e.target.value) })}
-                    style={{ width: "100%", padding: "0.65rem", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem" }}
+                    value={giftForm.planId}
+                    onChange={(e) => setGiftForm({ ...giftForm, planId: e.target.value })}
+                    className="admin-chat-input-field w-full"
+                    style={{ background: "#101c2e", color: "#fff", borderColor: "#1e3352" }}
                   >
-                    <option value={30}>30 jours (1 mois)</option>
-                    <option value={60}>60 jours (2 mois)</option>
-                    <option value={90}>90 jours (3 mois)</option>
-                    <option value={180}>180 jours (6 mois)</option>
-                    <option value={365}>365 jours (1 an)</option>
+                    <option value="recruteur">Recruteur (2 offres, 3 crédits / mois)</option>
+                    <option value="transport_pro">Transport Pro (5 offres, 10 crédits / mois, logo bandeau)</option>
+                    <option value="flotte_reseau">Flotte &amp; Réseau (15 offres, 25 crédits / mois, visibilité max)</option>
                   </select>
                 </div>
 
-                <div>
-                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "0.35rem" }}>
-                    Motif administratif obligatoire :
-                  </label>
-                  <select
-                    value={giftForm.reason}
-                    onChange={(e) => setGiftForm({ ...giftForm, reason: e.target.value })}
-                    style={{ width: "100%", padding: "0.65rem", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem" }}
-                  >
-                    <option value="Partenariat de lancement">Partenariat de lancement</option>
-                    <option value="Entreprise partenaire">Entreprise partenaire</option>
-                    <option value="Geste commercial">Geste commercial</option>
-                    <option value="Test interne / Démo">Test interne / Démo</option>
-                    <option value="Offre commerciale spécifique">Offre commerciale spécifique</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted block mb-1 font-bold">Durée de validité</label>
+                    <select
+                      value={giftForm.durationDays}
+                      onChange={(e) => setGiftForm({ ...giftForm, durationDays: Number(e.target.value) })}
+                      className="admin-chat-input-field w-full"
+                      style={{ background: "#101c2e", color: "#fff", borderColor: "#1e3352" }}
+                    >
+                      <option value={30}>30 jours (1 mois)</option>
+                      <option value={60}>60 jours (2 mois)</option>
+                      <option value={90}>90 jours (3 mois)</option>
+                      <option value={180}>180 jours (6 mois)</option>
+                      <option value={365}>365 jours (1 an)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-muted block mb-1 font-bold">Motif administratif obligatoire</label>
+                    <select
+                      value={giftForm.reason}
+                      onChange={(e) => setGiftForm({ ...giftForm, reason: e.target.value })}
+                      className="admin-chat-input-field w-full"
+                      style={{ background: "#101c2e", color: "#fff", borderColor: "#1e3352" }}
+                    >
+                      <option value="Partenariat de lancement">Partenariat de lancement</option>
+                      <option value="Entreprise partenaire">Entreprise partenaire</option>
+                      <option value="Geste commercial">Geste commercial</option>
+                      <option value="Test interne / Démo">Test interne / Démo</option>
+                      <option value="Offre commerciale spécifique">Offre commerciale spécifique</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "0.35rem" }}>
-                  Commentaire interne (Audit log) :
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Justification de l'attribution pour l'administration..."
-                  value={giftForm.notes}
-                  onChange={(e) => setGiftForm({ ...giftForm, notes: e.target.value })}
-                  style={{ width: "100%", padding: "0.65rem", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", resize: "vertical" }}
-                />
-              </div>
+                <div>
+                  <label className="text-xs text-muted block mb-1 font-bold">Commentaire interne (Audit log)</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Justification de l'attribution pour l'administration..."
+                    value={giftForm.notes}
+                    onChange={(e) => setGiftForm({ ...giftForm, notes: e.target.value })}
+                    className="admin-chat-input-field w-full"
+                    style={{ background: "#101c2e", color: "#fff", borderColor: "#1e3352" }}
+                  />
+                </div>
 
-              <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
-                <button
-                  type="button"
-                  onClick={() => setIsGiftModalOpen(false)}
-                  style={{ flex: 1, padding: "0.75rem", borderRadius: "10px", border: "1px solid #cbd5e1", background: "#f8fafc", color: "#64748b", fontWeight: "700", cursor: "pointer" }}
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={giftLoading}
-                  style={{ flex: 2, padding: "0.75rem", borderRadius: "10px", border: "none", background: "#9333ea", color: "#ffffff", fontWeight: "800", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
-                >
-                  {giftLoading ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      <span>Validation en cours...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Gift size={16} />
-                      <span>Confirmer l&apos;abonnement offert</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+                <div className="admin-modal-footer mt-2">
+                  <button
+                    type="button"
+                    onClick={() => { setIsGiftModalOpen(false); setGiftTargetCompany(null); }}
+                    className="btn-cockpit-action"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={giftLoading}
+                    className="btn-cockpit-action btn-cockpit-action-primary"
+                  >
+                    {giftLoading ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin" />
+                        <span>Validation...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Gift size={13} />
+                        <span>Confirmer l&apos;abonnement offert</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
 
-      {/* 6. MODALE : CONFIGURATION FISCALE MICRO-ENTREPRISE */}
+      {/* E. Modale Configuration Fiscale Micro-Entreprise */}
       {isTaxModalOpen && (
-        <div className="admin-gift-modal-backdrop">
-          <div className="admin-gift-modal-card">
-            <button
-              type="button"
-              onClick={() => setIsTaxModalOpen(false)}
-              style={{ position: "absolute", top: "1.25rem", right: "1.25rem", background: "none", border: "none", color: "#64748b", cursor: "pointer" }}
-            >
-              <X size={20} />
-            </button>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", marginBottom: "1rem" }}>
-              <div style={{ width: 42, height: 42, borderRadius: "12px", background: "#e8f3ff", color: "#0080ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Settings size={22} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: "1.2rem", fontWeight: "900", color: "var(--color-navy, #0b192c)" }}>
-                  Configuration Fiscale &amp; Facturation
+        <div className="admin-modal-backdrop" onClick={() => setIsTaxModalOpen(false)}>
+          <div className="admin-modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <div className="flex items-center gap-2">
+                <Settings size={18} className="text-amber-400" />
+                <h3 className="font-bold text-white text-base">
+                  Configuration Fiscale &amp; Facturation (Micro-Entreprise)
                 </h3>
-                <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
-                  Régime de micro-entreprise et mentions légales applicables
-                </span>
               </div>
+              <button
+                type="button"
+                onClick={() => setIsTaxModalOpen(false)}
+                className="btn-cockpit-mini"
+              >
+                <X size={14} />
+              </button>
             </div>
 
-            <form onSubmit={handleSaveTaxSettings} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: "0.65rem", cursor: "pointer", background: "#f8fafc", padding: "0.75rem 1rem", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-                <input
-                  type="checkbox"
-                  checked={taxForm.isVatExempt}
-                  onChange={(e) => setTaxForm({ ...taxForm, isVatExempt: e.target.checked })}
-                  style={{ width: 18, height: 18 }}
-                />
-                <span style={{ fontSize: "0.88rem", fontWeight: "700", color: "var(--color-navy, #0b192c)" }}>
-                  Franchise en base de TVA (Micro-Entreprise)
-                </span>
-              </label>
-
-              <div>
-                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "0.35rem" }}>
-                  Mention légale de TVA sur factures et reçus :
+            <div className="admin-modal-body">
+              <form onSubmit={handleSaveTaxSettings} className="flex flex-col gap-3">
+                <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+                  <input
+                    type="checkbox"
+                    checked={taxForm.isVatExempt}
+                    onChange={(e) => setTaxForm({ ...taxForm, isVatExempt: e.target.checked })}
+                    className="w-4 h-4 accent-sky-500"
+                  />
+                  <div>
+                    <span className="text-xs font-bold text-white block">Franchise en base de TVA (Micro-Entreprise)</span>
+                    <span className="text-[11px] text-slate-400">Application art. 293 B du CGI (TVA non applicable)</span>
+                  </div>
                 </label>
-                <input
-                  type="text"
-                  value={taxForm.vatLegalNotice}
-                  onChange={(e) => setTaxForm({ ...taxForm, vatLegalNotice: e.target.value })}
-                  style={{ width: "100%", padding: "0.65rem", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}
-                />
-              </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "0.35rem" }}>
-                    Raison sociale légale :
-                  </label>
+                  <label className="text-xs text-muted block mb-1 font-bold">Mention légale de TVA sur factures</label>
                   <input
                     type="text"
-                    value={taxForm.companyLegalName}
-                    onChange={(e) => setTaxForm({ ...taxForm, companyLegalName: e.target.value })}
-                    style={{ width: "100%", padding: "0.65rem", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}
+                    value={taxForm.vatLegalNotice}
+                    onChange={(e) => setTaxForm({ ...taxForm, vatLegalNotice: e.target.value })}
+                    className="admin-chat-input-field w-full"
+                    style={{ background: "#101c2e", color: "#fff", borderColor: "#1e3352" }}
                   />
                 </div>
 
-                <div>
-                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#334155", marginBottom: "0.35rem" }}>
-                    Email de facturation :
-                  </label>
-                  <input
-                    type="email"
-                    value={taxForm.companyBillingEmail}
-                    onChange={(e) => setTaxForm({ ...taxForm, companyBillingEmail: e.target.value })}
-                    style={{ width: "100%", padding: "0.65rem", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted block mb-1 font-bold">Raison sociale légale</label>
+                    <input
+                      type="text"
+                      value={taxForm.companyLegalName}
+                      onChange={(e) => setTaxForm({ ...taxForm, companyLegalName: e.target.value })}
+                      className="admin-chat-input-field w-full"
+                      style={{ background: "#101c2e", color: "#fff", borderColor: "#1e3352" }}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted block mb-1 font-bold">Email de facturation</label>
+                    <input
+                      type="email"
+                      value={taxForm.companyBillingEmail}
+                      onChange={(e) => setTaxForm({ ...taxForm, companyBillingEmail: e.target.value })}
+                      className="admin-chat-input-field w-full"
+                      style={{ background: "#101c2e", color: "#fff", borderColor: "#1e3352" }}
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                disabled={taxLoading}
-                style={{ padding: "0.75rem", borderRadius: "10px", border: "none", background: "var(--color-primary, #0080ff)", color: "#ffffff", fontWeight: "800", cursor: "pointer", marginTop: "0.5rem" }}
-              >
-                {taxLoading ? "Enregistrement..." : "Enregistrer la configuration fiscale"}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 7. JOURNAL D'AUDIT COMMERCIAL DES OPÉRATIONS SENSIBLES */}
-      {auditLogs.length > 0 && (
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "18px", padding: "1.5rem", boxShadow: "0 4px 16px -2px rgba(15, 23, 42, 0.05)" }}>
-          <h3 style={{ fontSize: "1.05rem", fontWeight: "800", color: "var(--color-navy, #0b192c)", marginBottom: "0.85rem" }}>
-            Historique d&apos;Audit Commercial &amp; Attributions Offertes
-          </h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem", fontSize: "0.82rem" }}>
-            {auditLogs.map((log: any) => (
-              <div key={log.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.65rem 0.85rem", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                <div>
-                  <strong>{log.action === "gift_subscription" ? "🎁 Abonnement offert" : log.action}</strong>
-                  <span style={{ color: "#64748b", marginLeft: "0.5rem" }}>
-                    → {log.target_company_name || "Entreprise"}
-                  </span>
-                  {log.details?.reason && (
-                    <span style={{ color: "#9333ea", marginLeft: "0.5rem", fontWeight: "600" }}>
-                      ({log.details.reason})
-                    </span>
-                  )}
+                <div className="admin-modal-footer mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsTaxModalOpen(false)}
+                    className="btn-cockpit-action"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={taxLoading}
+                    className="btn-cockpit-action btn-cockpit-action-primary"
+                  >
+                    {taxLoading ? "Enregistrement..." : "Enregistrer la configuration"}
+                  </button>
                 </div>
-                <div style={{ color: "#94a3b8" }}>
-                  Par {log.admin_email} • {new Date(log.created_at).toLocaleDateString("fr-FR")}
-                </div>
-              </div>
-            ))}
+              </form>
+            </div>
           </div>
         </div>
       )}
