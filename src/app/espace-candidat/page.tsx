@@ -425,22 +425,6 @@ export default function CandidatePortalPage() {
           </button>
         </nav>
 
-        {/* Stats Rapides en Sidebar */}
-        <div className="portal-sidebar-kpi-box">
-          <div className="portal-sidebar-kpi-item">
-            <span>Visibilité directe :</span>
-            <strong className="text-emerald-400">Maximale</strong>
-          </div>
-          <div className="portal-sidebar-kpi-item">
-            <span>Consultations SIRET :</span>
-            <strong>24 vues / 7j</strong>
-          </div>
-          <div className="portal-sidebar-kpi-item">
-            <span>Frais conducteur :</span>
-            <strong className="text-sky-400">0.00 € (0%)</strong>
-          </div>
-        </div>
-
         {/* Footer Sidebar */}
         <div className="portal-sidebar-footer">
           <Link href="/" className="portal-footer-link">
@@ -551,50 +535,7 @@ export default function CandidatePortalPage() {
           {/* ONGLET 1 : COCKPIT & VISIBILITÉ (OVERVIEW)                      */}
           {/* ============================================================== */}
           {activeTab === "overview" && (
-            <div>
-              {/* Grille 4 KPI Chauffeur */}
-              <div className="driver-kpi-grid">
-                <div className="driver-kpi-card">
-                  <div className="driver-kpi-icon-box sky">
-                    <Eye size={20} />
-                  </div>
-                  <div>
-                    <div className="driver-kpi-val">24 vues</div>
-                    <div className="driver-kpi-lbl">Exploitants vérifiés (7j)</div>
-                  </div>
-                </div>
-
-                <div className="driver-kpi-card">
-                  <div className="driver-kpi-icon-box emerald">
-                    <ShieldCheck size={20} />
-                  </div>
-                  <div>
-                    <div className="driver-kpi-val">100% Actif</div>
-                    <div className="driver-kpi-lbl">Visibilité directe région</div>
-                  </div>
-                </div>
-
-                <div className="driver-kpi-card">
-                  <div className="driver-kpi-icon-box amber">
-                    <Briefcase size={20} />
-                  </div>
-                  <div>
-                    <div className="driver-kpi-val">{jobOffers.length} tournées</div>
-                    <div className="driver-kpi-lbl">Disponibles sur votre secteur</div>
-                  </div>
-                </div>
-
-                <div className="driver-kpi-card">
-                  <div className="driver-kpi-icon-box purple">
-                    <Sparkles size={20} />
-                  </div>
-                  <div>
-                    <div className="driver-kpi-val">0.00 €</div>
-                    <div className="driver-kpi-lbl">0% commission prélevée</div>
-                  </div>
-                </div>
-              </div>
-
+            <div className="flex flex-col gap-6">
               {/* Carte Statut de mise en relation directe */}
               <div className="portal-panel-card border-sky">
                 <div className="portal-panel-card-header">
