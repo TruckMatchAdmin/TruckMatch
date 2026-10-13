@@ -525,203 +525,363 @@
 }
 
 /* ==========================================================================
-   ÉDITEUR DE PROFIL ENTREPRISE & PAGE PUBLIQUE VITRINE
+   ÉDITEUR DE PROFIL ENTREPRISE — DESIGN ÉPURÉ & MODERNE
    ========================================================================== */
 
-/* Carte de prévisualisation & bannière */
-.company-preview-hero-card {
-  position: relative;
-  background: #0b1523;
-  border: 1px solid #1a2c42;
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+.company-profile-sleek {
+  width: 100%;
+  max-width: 100%;
 }
 
-.company-preview-cover {
-  position: relative;
+/* En-tête épuré avec couverture & avatar intégrés */
+.company-sleek-header {
+  background: #091321;
+  border: 1px solid #16263b;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.company-sleek-cover {
+  height: 200px;
   width: 100%;
-  height: 220px;
-  background: linear-gradient(135deg, #0d1e33 0%, #173252 50%, #0a1728 100%);
+  position: relative;
   background-size: cover;
   background-position: center;
-  border-bottom: 1px solid #1a2c42;
+  background-color: #0c1a2d;
 }
 
-.company-preview-cover-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #64748b;
-  gap: 0.5rem;
+.company-sleek-cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(5, 11, 19, 0.15) 0%, rgba(5, 11, 19, 0.75) 100%);
 }
 
-.company-cover-upload-trigger {
+.company-sleek-cover-btn {
   position: absolute;
   top: 14px;
   right: 14px;
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.5rem 0.9rem;
-  background: rgba(10, 20, 32, 0.85);
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  background: rgba(8, 18, 30, 0.85);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
-  color: #f1f5f9;
-  font-size: 0.78rem;
-  font-weight: 700;
+  color: #f8fafc;
+  font-size: 0.76rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   z-index: 10;
 }
 
-.company-cover-upload-trigger:hover {
+.company-sleek-cover-btn:hover {
   background: rgba(16, 185, 129, 0.9);
   color: #ffffff;
   border-color: #10b981;
 }
 
-.company-preview-header-bar {
-  position: relative;
-  padding: 1.25rem 1.75rem;
+.company-sleek-identity-bar {
+  padding: 1.25rem 1.5rem;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
   gap: 1.25rem;
-  background: #091321;
+  background: #081220;
 }
 
-.company-logo-avatar-wrap {
+.company-sleek-avatar-wrap {
   position: relative;
-  width: 100px;
-  height: 100px;
-  margin-top: -60px;
-  border-radius: 16px;
-  border: 3px solid #091321;
-  background: #0f1c2d;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-  overflow: hidden;
+  width: 92px;
+  height: 92px;
+  margin-top: -55px;
   flex-shrink: 0;
-  z-index: 5;
+  z-index: 10;
 }
 
-.company-logo-avatar-wrap img {
+.company-sleek-avatar-box {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-}
-
-.company-logo-avatar-empty {
-  width: 100%;
-  height: 100%;
+  border-radius: 18px;
+  border: 3px solid #081220;
+  background: #0c1828;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
-  background: #0b1523;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  position: relative;
 }
 
-.company-logo-upload-trigger {
+.company-sleek-avatar-loading {
   position: absolute;
-  bottom: 4px;
-  right: 4px;
-  width: 28px;
-  height: 28px;
+  inset: 0;
+  background: rgba(5, 11, 19, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.company-sleek-avatar-btn {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: #10b981;
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #091321;
+  border: 2px solid #081220;
   cursor: pointer;
   transition: transform 0.2s ease;
 }
 
-.company-logo-upload-trigger:hover {
+.company-sleek-avatar-btn:hover {
   transform: scale(1.1);
   background: #059669;
 }
 
-/* Bannière de lien public */
-.company-public-link-banner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
-  background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, rgba(14, 165, 233, 0.08) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  border-radius: 12px;
+.company-sleek-meta-block {
+  flex: 1;
+  min-width: 240px;
 }
 
-.company-link-input-pill {
-  display: flex;
+.company-sleek-url-pill {
+  display: inline-flex;
   align-items: center;
-  background: #050c15;
-  border: 1px solid #1a2c42;
-  border-radius: 8px;
-  padding: 0.35rem 0.6rem;
+  gap: 0.4rem;
+  background: #040911;
+  border: 1px solid #16263b;
+  border-radius: 6px;
+  padding: 0.28rem 0.6rem;
   font-family: monospace;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   color: #38bdf8;
-  max-width: 100%;
+  text-decoration: none;
+  max-width: 320px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: border-color 0.2s ease;
 }
 
-/* Boutons tags interactifs */
-.company-tag-btn {
+.company-sleek-url-pill:hover {
+  border-color: #38bdf8;
+}
+
+.company-sleek-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.55rem;
+  background: #0f1d30;
+  border: 1px solid #1e334e;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.company-sleek-copy-btn:hover {
+  background: #162b45;
+  color: #ffffff;
+}
+
+.company-sleek-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.company-sleek-btn-primary {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.5rem 0.85rem;
-  background: #0c1726;
-  border: 1px solid #1d334d;
-  border-radius: 9999px;
-  color: #94a3b8;
-  font-size: 0.8rem;
-  font-weight: 600;
+  padding: 0.55rem 1.15rem;
+  background: #10b981;
+  color: #04100c;
+  font-size: 0.82rem;
+  font-weight: 800;
+  border-radius: 9px;
+  border: none;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+  text-decoration: none;
+}
+
+.company-sleek-btn-primary:hover {
+  background: #059669;
+  color: #ffffff;
+}
+
+.company-sleek-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1rem;
+  background: #0d1a2b;
+  border: 1px solid #1c334f;
+  color: #cbd5e1;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 9px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.company-sleek-btn-ghost:hover {
+  background: #14273f;
+  color: #ffffff;
+  border-color: #38bdf8;
+}
+
+/* Toast alertes */
+.company-sleek-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.company-sleek-alert.success {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+.company-sleek-alert.error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+/* Cartes formulaires épurées */
+.company-sleek-card {
+  background: #091321;
+  border: 1px solid #152438;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.company-sleek-card-header {
+  padding: 0.85rem 1.25rem;
+  background: #060e19;
+  border-bottom: 1px solid #142337;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.company-sleek-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin-bottom: 0.35rem;
+}
+
+.company-sleek-hint {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.company-sleek-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 0.85rem;
+  background: #050c16;
+  border: 1px solid #182a40;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: #f8fafc;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.company-sleek-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
+}
+
+.company-sleek-textarea {
+  width: 100%;
+  min-height: 95px;
+  padding: 0.75rem 0.85rem;
+  background: #050c16;
+  border: 1px solid #182a40;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: #f8fafc;
+  line-height: 1.5;
+  resize: vertical;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.company-sleek-textarea:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
+}
+
+/* Chips d'avantages & matériels */
+.company-sleek-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.38rem 0.75rem;
+  background: #050c16;
+  border: 1px solid #192c44;
+  border-radius: 9999px;
+  color: #94a3b8;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
   user-select: none;
 }
 
-.company-tag-btn:hover {
-  background: #122238;
+.company-sleek-chip:hover {
+  background: #0d1b2d;
   border-color: #38bdf8;
   color: #f1f5f9;
 }
 
-.company-tag-btn-active {
-  background: rgba(16, 185, 129, 0.15) !important;
+.company-sleek-chip.active-emerald {
+  background: rgba(16, 185, 129, 0.14) !important;
   border-color: #10b981 !important;
   color: #34d399 !important;
   font-weight: 700;
 }
 
-/* Pied de formulaire d'enregistrement */
-.company-save-profile-footer {
-  position: sticky;
-  bottom: 12px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.1rem 1.4rem;
-  background: rgba(9, 19, 33, 0.95);
-  backdrop-filter: blur(12px);
-  border: 1px solid #1a3250;
-  border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-  z-index: 20;
+.company-sleek-chip.active-sky {
+  background: rgba(14, 165, 233, 0.14) !important;
+  border-color: #0ea5e9 !important;
+  color: #38bdf8 !important;
+  font-weight: 700;
+}
+
+.company-sleek-chip.active-amber {
+  background: rgba(245, 158, 11, 0.14) !important;
+  border-color: #f59e0b !important;
+  color: #fbbf24 !important;
+  font-weight: 700;
 }
 
 /* ==========================================================================
