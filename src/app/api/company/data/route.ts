@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
     // 2. Profil de l'entreprise connectée (aucune donnée de substitution)
     let companyProfile: any = null;
-    if (session.role === "company") {
+    if (session.role === "company" || session.role === "admin") {
       const { data: comp } = await supabaseAdmin
         .from("companies")
         .select("*")

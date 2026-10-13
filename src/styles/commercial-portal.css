@@ -523,3 +523,336 @@
   line-height: 1.5;
   margin-bottom: 1.25rem;
 }
+
+/* ==========================================================================
+   ÉDITEUR DE PROFIL ENTREPRISE & PAGE PUBLIQUE VITRINE
+   ========================================================================== */
+
+/* Carte de prévisualisation & bannière */
+.company-preview-hero-card {
+  position: relative;
+  background: #0b1523;
+  border: 1px solid #1a2c42;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+.company-preview-cover {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  background: linear-gradient(135deg, #0d1e33 0%, #173252 50%, #0a1728 100%);
+  background-size: cover;
+  background-position: center;
+  border-bottom: 1px solid #1a2c42;
+}
+
+.company-preview-cover-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #64748b;
+  gap: 0.5rem;
+}
+
+.company-cover-upload-trigger {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.9rem;
+  background: rgba(10, 20, 32, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #f1f5f9;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.company-cover-upload-trigger:hover {
+  background: rgba(16, 185, 129, 0.9);
+  color: #ffffff;
+  border-color: #10b981;
+}
+
+.company-preview-header-bar {
+  position: relative;
+  padding: 1.25rem 1.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  background: #091321;
+}
+
+.company-logo-avatar-wrap {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin-top: -60px;
+  border-radius: 16px;
+  border: 3px solid #091321;
+  background: #0f1c2d;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+.company-logo-avatar-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.company-logo-avatar-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  background: #0b1523;
+}
+
+.company-logo-upload-trigger {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #091321;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.company-logo-upload-trigger:hover {
+  transform: scale(1.1);
+  background: #059669;
+}
+
+/* Bannière de lien public */
+.company-public-link-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, rgba(14, 165, 233, 0.08) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 12px;
+}
+
+.company-link-input-pill {
+  display: flex;
+  align-items: center;
+  background: #050c15;
+  border: 1px solid #1a2c42;
+  border-radius: 8px;
+  padding: 0.35rem 0.6rem;
+  font-family: monospace;
+  font-size: 0.82rem;
+  color: #38bdf8;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Boutons tags interactifs */
+.company-tag-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.85rem;
+  background: #0c1726;
+  border: 1px solid #1d334d;
+  border-radius: 9999px;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.company-tag-btn:hover {
+  background: #122238;
+  border-color: #38bdf8;
+  color: #f1f5f9;
+}
+
+.company-tag-btn-active {
+  background: rgba(16, 185, 129, 0.15) !important;
+  border-color: #10b981 !important;
+  color: #34d399 !important;
+  font-weight: 700;
+}
+
+/* Pied de formulaire d'enregistrement */
+.company-save-profile-footer {
+  position: sticky;
+  bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.4rem;
+  background: rgba(9, 19, 33, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid #1a3250;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  z-index: 20;
+}
+
+/* ==========================================================================
+   PAGE PUBLIQUE ENTREPRISE VITRINE (/entreprises/[slug])
+   ========================================================================== */
+.company-public-page {
+  background: #070e17;
+  color: #e2e8f0;
+  min-height: 100vh;
+  padding-bottom: 5rem;
+}
+
+.company-public-hero {
+  position: relative;
+  background: #0b1523;
+  border-bottom: 1px solid #1a2c42;
+}
+
+.company-public-cover {
+  width: 100%;
+  height: 320px;
+  background-size: cover;
+  background-position: center;
+  background-color: #0c1a2c;
+  position: relative;
+}
+
+.company-public-cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(7, 14, 23, 0.1) 0%, rgba(7, 14, 23, 0.85) 100%);
+}
+
+.company-public-header-bar {
+  position: relative;
+  padding-bottom: 2rem;
+}
+
+.company-public-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-top: -70px;
+  position: relative;
+  z-index: 10;
+}
+
+.company-public-avatar-wrapper {
+  width: 130px;
+  height: 130px;
+  border-radius: 20px;
+  border: 4px solid #070e17;
+  background: #0e1c2d;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.company-public-avatar-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.company-public-title-block h1 {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.company-public-meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+}
+
+.company-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  background: #0f1e31;
+  border: 1px solid #1c334f;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.company-public-card {
+  background: #0c1726;
+  border: 1px solid #192c43;
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+.company-public-card-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #172a3f;
+}
+
+.company-public-job-card {
+  background: #0a1422;
+  border: 1px solid #182b42;
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.company-public-job-card:hover {
+  border-color: #10b981;
+  background: #0e1c2e;
+  transform: translateY(-2px);
+}
