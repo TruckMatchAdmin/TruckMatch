@@ -176,6 +176,21 @@ export async function POST(request: Request) {
         console.error("Telegram notify error:", tgErr);
       }
 
+      // Envoi de l'email officiel de confirmation & reçu Boost 4,99 €
+      try {
+        const { sendPaymentDriverBoostEmail } = await import("@/lib/email/mailer");
+        await sendPaymentDriverBoostEmail({
+          email: driver.email,
+          driverName: `${driver.first_name || ""} ${driver.last_name || ""}`.trim() || "Conducteur",
+          orderNumber,
+          amountEur: 4.99,
+          paidAt: new Date().toLocaleDateString("fr-FR"),
+          expiresAt: expiresAt.toLocaleDateString("fr-FR"),
+        });
+      } catch (mailErr) {
+        console.warn("[Boost] Erreur envoi email confirmation boost:", mailErr);
+      }
+
       return NextResponse.json({
         success: true,
         message: "Félicitations ! Votre profil est désormais boosté en 1ère position pour 3 mois.",

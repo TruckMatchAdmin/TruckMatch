@@ -184,6 +184,17 @@ export async function POST(request: Request) {
         console.warn("[Register] Erreur notification Telegram chauffeur:", tgErr);
       }
 
+      // Envoi de l'email officiel de bienvenue avec logo et tracking
+      try {
+        const { sendWelcomeDriverEmail } = await import("@/lib/email/mailer");
+        await sendWelcomeDriverEmail({
+          email: email.trim().toLowerCase(),
+          firstName: firstName ? firstName.trim() : "Conducteur",
+        });
+      } catch (mailErr) {
+        console.warn("[Register] Erreur envoi email bienvenue chauffeur:", mailErr);
+      }
+
       return NextResponse.json({
         success: true,
         message: "Profil chauffeur créé avec succès !",
@@ -282,6 +293,18 @@ export async function POST(request: Request) {
         await notifyCompanyRegistered(data?.[0]);
       } catch (tgErr) {
         console.warn("[Register] Erreur notification Telegram entreprise:", tgErr);
+      }
+
+      // Envoi de l'email officiel de bienvenue entreprise avec logo et tracking
+      try {
+        const { sendWelcomeCompanyEmail } = await import("@/lib/email/mailer");
+        await sendWelcomeCompanyEmail({
+          email: email.trim().toLowerCase(),
+          companyName: companyName.trim(),
+          contactName: contactFirstName ? contactFirstName.trim() : undefined,
+        });
+      } catch (mailErr) {
+        console.warn("[Register] Erreur envoi email bienvenue entreprise:", mailErr);
       }
 
       return NextResponse.json({

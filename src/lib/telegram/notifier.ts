@@ -400,3 +400,42 @@ export async function notifyGiftedSubscription(params: {
 
   await sendTelegramMessage(text, { parseMode: "HTML" });
 }
+
+/**
+ * Notification Telegram envoyée immédiatement quand un destinataire ouvre et lit un email
+ */
+export async function notifyEmailOpened(params: {
+  recipientEmail: string;
+  emailType: string;
+  subject: string;
+  ipAddress?: string;
+  userAgent?: string;
+}) {
+  const idempotencyKey = `email_open_${params.recipientEmail}_${params.emailType}_${Date.now().toString().slice(0, 7)}`;
+  const shouldSend = await canSendNotification(idempotencyKey, "email_open", {
+    recipient_email: params.recipientEmail,
+    email_type: params.emailType,
+  });
+  if (!shouldSend) return;
+
+  const dateStr = formatParisDate();
+
+  let typeLabel = "Email officiel";
+  if (params.emailType === "welcome_driver") typeLabel = "Bienvenue Chauffeur / Candidat";
+  else if (params.emailType === "welcome_company") typeLabel = "Bienvenue Entreprise / Recruteur";
+  else if (params.emailType === "payment_subscription") typeLabel = "Remerciement Paiement Abonnement";
+  else if (params.emailType === "payment_driver_boost") typeLabel = "Remerciement Paiement Boost 4,99 €";
+
+  const lines = [
+    `👁️ <b>EMAIL OUVERT &amp; LU PAR LE DESTINATAIRE</b> 📨`,
+    ``,
+    `👤 <b>Destinataire :</b> <code>${escapeHtml(params.recipientEmail)}</code>`,
+    `📄 <b>Type d'email :</b> <b>${escapeHtml(typeLabel)}</b>`,
+    `✉️ <b>Sujet :</b> ${escapeHtml(params.subject)}`,
+    `🕒 <b>Date de lecture :</b> ${escapeHtml(dateStr)} (Paris)`,
+    params.ipAddress ? `🌐 <b>IP :</b> <code>${escapeHtml(params.ipAddress)}</code>` : "",
+  ].filter(Boolean);
+
+  await sendTelegramMessage(lines.join("\n"), { parseMode: "HTML" });
+}
+

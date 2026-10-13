@@ -297,6 +297,21 @@ export async function POST(request: Request) {
         },
       });
 
+      // Envoi de l'email officiel de confirmation et reçu abonnement avec logo
+      try {
+        const { sendPaymentCompanyEmail } = await import("@/lib/email/mailer");
+        await sendPaymentCompanyEmail({
+          email: company.email,
+          companyName: company.company_name,
+          orderNumber,
+          productName: `Abonnement ${plan.name}`,
+          amountEur: priceEur,
+          credits: creditsToAdd,
+        });
+      } catch (mailErr) {
+        console.warn("[Commercial] Erreur envoi email abonnement:", mailErr);
+      }
+
       return NextResponse.json({
         success: true,
         message: `Abonnement ${plan.name} activé avec succès !`,
@@ -357,6 +372,21 @@ export async function POST(request: Request) {
         productName: pack.name,
         amountEur: pack.price,
       });
+
+      // Envoi de l'email officiel de confirmation et reçu crédits avec logo
+      try {
+        const { sendPaymentCompanyEmail } = await import("@/lib/email/mailer");
+        await sendPaymentCompanyEmail({
+          email: company.email,
+          companyName: company.company_name,
+          orderNumber,
+          productName: pack.name,
+          amountEur: pack.price,
+          credits: packSize,
+        });
+      } catch (mailErr) {
+        console.warn("[Commercial] Erreur envoi email crédits:", mailErr);
+      }
 
       return NextResponse.json({
         success: true,
