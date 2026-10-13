@@ -82,6 +82,7 @@ export default function CompanyPortalPage() {
   const [jobs, setJobs] = useState<any[]>([]);
 
   // Déblocage profils et tchat commercial
+  const [commercialData, setCommercialData] = useState<any>(null);
   const [unlockedDriverIds, setUnlockedDriverIds] = useState<string[]>([]);
   const [unlockDriverTarget, setUnlockDriverTarget] = useState<Driver | null>(null);
   const [chatDriverTarget, setChatDriverTarget] = useState<Driver | null>(null);
@@ -129,11 +130,13 @@ export default function CompanyPortalPage() {
       const res = await fetch("/api/company/commercial");
       if (res.ok) {
         const json = await res.json();
+        setCommercialData(json);
         if (json.company) {
           setCompany((prev: any) => ({ ...prev, ...json.company }));
         }
-        if (Array.isArray(json.unlockedProfiles)) {
-          setUnlockedDriverIds(json.unlockedProfiles.map((p: any) => p.driver_id));
+        const unlocked = json.unlockedDrivers || json.unlockedProfiles || [];
+        if (Array.isArray(unlocked)) {
+          setUnlockedDriverIds(unlocked.map((p: any) => p.driver_id || p.id));
         }
       }
     } catch (err) {
@@ -1572,9 +1575,11 @@ export default function CompanyPortalPage() {
         );
       })()}
 
-      {/* MODALE DÉBLOCAGE CANDIDAT (DÉBIT 1 CRÉDIT) */}
+      {/* MODALE DÉBLOCAGE CANDIDAT (VÉRIFICATION ABONNEMENT EN COURS & QUOTAS) */}
       <DriverUnlockModal
         driver={unlockDriverTarget}
+        company={company}
+        currentPlan={commercialData?.currentPlan}
         creditsBalance={company?.credits_balance ?? 0}
         isOpen={!!unlockDriverTarget}
         onClose={() => setUnlockDriverTarget(null)}
@@ -1587,7 +1592,11 @@ export default function CompanyPortalPage() {
         }}
         onGoToBuyCredits={() => {
           setUnlockDriverTarget(null);
-          setNav("billing");
+          setActiveNav("billing");
+        }}
+        onGoToPlans={() => {
+          setUnlockDriverTarget(null);
+          setActiveNav("billing");
         }}
       />
 

@@ -134,17 +134,28 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { action, data } = body;
 
-    // 1. DÉBLOCAGE DE PROFIL CANDIDAT (1 crédit, jamais facturé deux fois)
+    // 1. DÉBLOCAGE DE PROFIL CANDIDAT (Vérification stricte de l'abonnement et des quotas de crédits)
     if (action === "unlock_driver") {
       const { driverId } = data || {};
       if (!driverId) {
         return NextResponse.json({ error: "Identifiant conducteur requis." }, { status: 400 });
       }
 
-      // Vérifier si déjà débloqué
+      // Récupérer les données complètes du conducteur
+      const { data: driverData } = await supabaseAdmin
+        .from("drivers")
+        .select("*")
+        .eq("id", driverId)
+        .maybeSingle();
+
+      if (!driverData) {
+        return NextResponse.json({ error: "Conducteur introuvable." }, { status: 404 });
+      }
+
+      // Vérifier si le profil a déjà été débloqué (Accès permanent, jamais refacturé)
       const { data: alreadyUnlocked } = await supabaseAdmin
         .from("unlocked_profiles")
-        .select("id")
+        .select("id, unlocked_at")
         .eq("company_id", company.id)
         .eq("driver_id", driverId)
         .maybeSingle();
@@ -153,20 +164,55 @@ export async function POST(request: Request) {
         return NextResponse.json({
           success: true,
           alreadyUnlocked: true,
-          message: "Ce profil est déjà débloqué pour votre entreprise.",
+          message: "Ce profil est déjà débloqué pour votre entreprise. Accès permanent conservé.",
+          driver: driverData,
+          newCreditsBalance: Number(company.credits_balance || 0),
         });
       }
 
-      // Vérifier le solde de crédits
+      // Vérifier l'abonnement en cours de l'entreprise et son quota
+      const planId = company.subscription_plan || "decouverte";
+      const { data: currentPlan } = await supabaseAdmin
+        .from("commercial_plans")
+        .select("*")
+        .eq("id", planId)
+        .maybeSingle();
+
+      const planName = currentPlan?.name || (
+        planId === "flotte_reseau" ? "Flotte & Réseau" :
+        planId === "transport_pro" ? "Transport Pro" :
+        planId === "recruteur" ? "Recruteur" : "Découverte"
+      );
+
+      const isPlanActive = company.subscription_status === "active";
+      const isGifted = company.is_subscription_gifted || false;
+      const monthlyQuota = Number(currentPlan?.monthly_credits || (
+        planId === "flotte_reseau" ? 25 :
+        planId === "transport_pro" ? 10 :
+        planId === "recruteur" ? 3 : 0
+      ));
+
+      // Vérification du solde de crédits disponible
       const currentCredits = Number(company.credits_balance || 0);
+
       if (currentCredits < 1) {
+        const errorDetail = (planId !== "decouverte" && isPlanActive)
+          ? `Quota mensuel atteint. Votre abonnement « ${planName} » inclut ${monthlyQuota} crédits par mois, mais votre solde actuel est de 0 crédit. Rechargez un pack de crédits ou passez au forfait supérieur pour débloquer ce candidat immédiatement.`
+          : "Solde insuffisant (0 crédit disponible). Vous devez acquérir un pack de crédits ou souscrire un forfait mensuel pour débloquer ce conducteur.";
+
         return NextResponse.json({
-          error: "Solde insuffisant. Vous devez acquérir des crédits ou souscrire un forfait pour débloquer ce candidat.",
+          error: errorDetail,
           needsCredits: true,
+          currentCredits: 0,
+          planId,
+          planName,
+          monthlyQuota,
+          isPlanActive,
+          isGifted,
         }, { status: 402 });
       }
 
-      // Déduction stricte de 1 crédit et enregistrement
+      // Déduction stricte de 1 crédit et enregistrement du déblocage
       const newBalance = currentCredits - 1;
       const { error: unlockErr } = await supabaseAdmin
         .from("unlocked_profiles")
@@ -177,27 +223,39 @@ export async function POST(request: Request) {
         });
 
       if (unlockErr) {
-        return NextResponse.json({ error: "Échec du déblocage: " + unlockErr.message }, { status: 500 });
+        return NextResponse.json({ error: "Échec de l'enregistrement du déblocage: " + unlockErr.message }, { status: 500 });
       }
 
-      // Mettre à jour le solde entreprise
+      // Mettre à jour le solde entreprise de manière atomique
       await supabaseAdmin
         .from("companies")
         .update({ credits_balance: newBalance })
         .eq("id", company.id);
 
-      // Récupérer les coordonnées complètes du candidat
-      const { data: driverData } = await supabaseAdmin
-        .from("drivers")
-        .select("*")
-        .eq("id", driverId)
-        .maybeSingle();
+      // Notification Telegram instantanée
+      try {
+        const { notifyDriverUnlocked } = await import("@/lib/telegram/notifier");
+        await notifyDriverUnlocked({
+          companyName: company.company_name || company.name || "Entreprise",
+          companyEmail: company.email,
+          driverName: `${driverData.first_name || ""} ${driverData.last_name || ""}`.trim() || "Chauffeur",
+          driverPermits: Array.isArray(driverData.permits) ? driverData.permits.join(", ") : (driverData.category || "CE"),
+          driverCity: driverData.city || driverData.postal_code || "France",
+          creditsRemaining: newBalance,
+          planName,
+        });
+      } catch (notifErr) {
+        console.warn("[Unlock] Notification Telegram échouée:", notifErr);
+      }
 
       return NextResponse.json({
         success: true,
         message: "Profil candidat débloqué avec succès.",
         newCreditsBalance: newBalance,
         driver: driverData,
+        planName,
+        monthlyQuota,
+        creditsRemaining: newBalance,
       });
     }
 

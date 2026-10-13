@@ -439,3 +439,36 @@ export async function notifyEmailOpened(params: {
   await sendTelegramMessage(lines.join("\n"), { parseMode: "HTML" });
 }
 
+/**
+ * Notification Telegram envoyée lorsqu'une entreprise débloque un candidat chauffeur
+ */
+export async function notifyDriverUnlocked(params: {
+  companyName: string;
+  companyEmail: string;
+  driverName: string;
+  driverPermits: string;
+  driverCity: string;
+  creditsRemaining: number;
+  planName: string;
+}) {
+  const dateStr = formatParisDate();
+  const lines = [
+    `🔓 <b>CANDIDAT CONDUCTEUR DÉBLOQUÉ</b> 🚛`,
+    ``,
+    `🏢 <b>Entreprise :</b> <b>${escapeHtml(params.companyName)}</b>`,
+    `📧 <b>Email compte :</b> <code>${escapeHtml(params.companyEmail)}</code>`,
+    `👑 <b>Forfait entreprise :</b> <b>${escapeHtml(params.planName)}</b>`,
+    ``,
+    `👤 <b>Conducteur contacté :</b> <b>${escapeHtml(params.driverName)}</b>`,
+    `📋 <b>Permis :</b> ${escapeHtml(params.driverPermits)}`,
+    `📍 <b>Localisation :</b> ${escapeHtml(params.driverCity)}`,
+    ``,
+    `⚡ <b>Solde crédits restant :</b> <b>${params.creditsRemaining} crédit(s)</b>`,
+    `🕒 <b>Date :</b> ${escapeHtml(dateStr)} (Paris)`,
+    ``,
+    `🔗 <a href="https://truckmatch.fr/espace-admin?tab=commercial">Accéder au suivi commercial</a>`,
+  ];
+
+  await sendTelegramMessage(lines.join("\n"), { parseMode: "HTML" });
+}
+
