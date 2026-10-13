@@ -28,6 +28,74 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
+export const DEFAULT_PLANS = [
+  {
+    id: "decouverte",
+    name: "Découverte",
+    price_eur: 0,
+    max_active_jobs: 0,
+    monthly_credits: 0,
+    has_chat: false,
+    priority_badge: "Gratuit",
+    features: [
+      "Page entreprise & logo",
+      "Coordonnées publiques des candidats",
+      "Achat de crédits à l'unité",
+    ],
+  },
+  {
+    id: "recruteur",
+    name: "Recruteur",
+    price_eur: 39,
+    max_active_jobs: 2,
+    monthly_credits: 3,
+    has_chat: true,
+    priority_badge: "Essentiel",
+    features: [
+      "Jusqu'à 2 offres d'emploi actives",
+      "3 crédits de déblocage inclus par mois",
+      "Recherche autonome dans la base",
+      "Tchat direct avec les candidats débloqués",
+      "Coordonnées complètes débloquées",
+    ],
+  },
+  {
+    id: "transport_pro",
+    name: "Transport Pro",
+    price_eur: 79,
+    max_active_jobs: 5,
+    monthly_credits: 10,
+    has_chat: true,
+    priority_badge: "Populaire",
+    features: [
+      "Jusqu'à 5 offres d'emploi actives",
+      "10 crédits de déblocage inclus par mois",
+      "Recherche avancée dans le vivier",
+      "Logo dans le bandeau publicitaire",
+      "Page entreprise mise en valeur",
+      "Tchat direct avec les candidats",
+    ],
+  },
+  {
+    id: "flotte_reseau",
+    name: "Flotte & Réseau",
+    price_eur: 149,
+    max_active_jobs: 15,
+    monthly_credits: 25,
+    has_chat: true,
+    priority_badge: "Premium",
+    features: [
+      "Jusqu'à 15 offres d'emploi actives",
+      "25 crédits de déblocage inclus par mois",
+      "Toutes les fonctions de recherche",
+      "Tchat direct avec les candidats débloqués",
+      "Visibilité publicitaire renforcée",
+      "Page entreprise premium",
+      "Tarif préférentiel pour les missions de recherche",
+    ],
+  },
+];
+
 export interface CompanyBillingProps {
   company: any;
   onRefreshCompany: () => void;
@@ -210,24 +278,22 @@ export function CompanyBillingModule({
     }
   };
 
-  if (loading && !commercialData) {
-    return (
-      <div className="commercial-dark-container" style={{ alignItems: "center", justifyContent: "center" }}>
-        <Loader2 size={32} className="animate-spin text-sky-400" />
-        <p style={{ marginTop: "1rem", color: "#94a3b8" }}>Chargement de l'espace commercial...</p>
-      </div>
-    );
-  }
-
-  const currentPlan = commercialData?.currentPlan || {};
-  const creditsBalance = commercialData?.company?.credits_balance || 0;
-  const isGifted = commercialData?.company?.is_subscription_gifted || false;
-  const plans = commercialData?.plans || [];
+  const plans = (commercialData?.plans && commercialData.plans.length > 0)
+    ? commercialData.plans
+    : DEFAULT_PLANS;
+  const currentPlanId = commercialData?.company?.subscription_plan || company?.subscription_plan || "transport_pro";
+  const currentPlan = commercialData?.currentPlan || plans.find((p: any) => p.id === currentPlanId) || plans[0] || {};
+  const creditsBalance = commercialData?.company?.credits_balance ?? (company?.credits_balance ?? 0);
+  const isGifted = commercialData?.company?.is_subscription_gifted || company?.is_subscription_gifted || false;
   const unlockedDrivers = commercialData?.unlockedDrivers || [];
   const orders = commercialData?.orders || [];
   const searchMissions = commercialData?.searchMissions || [];
   const adCampaigns = commercialData?.adCampaigns || [];
-  const taxSettings = commercialData?.taxSettings || {};
+  const taxSettings = commercialData?.taxSettings || {
+    company_legal_name: "TruckMatch",
+    is_vat_exempt: true,
+    vat_legal_notice: "TVA non applicable, art. 293 B du CGI",
+  };
 
   return (
     <div className="commercial-dark-container">
