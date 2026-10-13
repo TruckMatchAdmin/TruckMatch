@@ -43,11 +43,14 @@ export function AddressAutocomplete({
   const [selectedAddress, setSelectedAddress] = useState<string | null>(defaultValue || null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
+
   // Debounced search via l'API officielle de l'État Français (BAN)
   useEffect(() => {
     if (!query || query.trim().length < 3) {
       setResults([]);
       setIsOpen(false);
+      setSelectedIndex(-1);
       return;
     }
 
@@ -73,6 +76,7 @@ export function AddressAutocomplete({
           }));
           setResults(items);
           setIsOpen(items.length > 0);
+          setSelectedIndex(-1);
         }
       } catch (err) {
         console.error("Erreur API adresse:", err);
@@ -99,6 +103,7 @@ export function AddressAutocomplete({
     setSelectedAddress(item.label);
     setQuery(item.label);
     setIsOpen(false);
+    setSelectedIndex(-1);
     onAddressSelect({
       fullAddress: item.label,
       street: item.name || item.label,
@@ -110,8 +115,30 @@ export function AddressAutocomplete({
     });
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isOpen || results.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : results.length - 1));
+    } else if (e.key === "Enter") {
+      if (selectedIndex >= 0 && selectedIndex < results.length) {
+        e.preventDefault();
+        handleSelect(results[selectedIndex]);
+      }
+    } else if (e.key === "Escape") {
+      setIsOpen(false);
+    }
+  };
+
   return (
-    <div className="address-autocomplete-wrapper" ref={containerRef}>
+    <div
+      className={`address-autocomplete-wrapper ${isOpen && results.length > 0 ? "is-dropdown-open" : ""}`}
+      ref={containerRef}
+    >
       <div className="siret-label-row">
         <label className="form-label-pro">
           <span className="flex items-center gap-1.5">
@@ -140,6 +167,7 @@ export function AddressAutocomplete({
               setSelectedAddress(null);
             }
           }}
+          onKeyDown={handleKeyDown}
           onFocus={() => {
             if (results.length > 0 && query !== selectedAddress) {
               setIsOpen(true);
@@ -169,7 +197,7 @@ export function AddressAutocomplete({
 
       {/* Dropdown Suggestions */}
       {isOpen && results.length > 0 && (
-        <ul className="address-dropdown-menu">
+        <ul className="address-dropdown-menu" role="listbox">
           <li className="address-dropdown-header">
             <span>Adresses officielles certifiées ({results.length})</span>
             <span className="text-xs text-muted">Sélectionnez votre localisation exacte</span>
@@ -177,8 +205,11 @@ export function AddressAutocomplete({
           {results.map((item, idx) => (
             <li
               key={idx}
+              role="option"
+              aria-selected={selectedIndex === idx}
               onClick={() => handleSelect(item)}
-              className="address-dropdown-item"
+              onMouseEnter={() => setSelectedIndex(idx)}
+              className={`address-dropdown-item ${selectedIndex === idx ? "is-active" : ""}`}
             >
               <div className="address-item-icon">
                 <MapPin size={18} />

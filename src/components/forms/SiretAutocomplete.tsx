@@ -139,7 +139,10 @@ export function SiretAutocomplete({ onCompanySelect, required = true }: SiretAut
   };
 
   return (
-    <div className="siret-autocomplete-wrapper" ref={containerRef}>
+    <div
+      className={`siret-autocomplete-wrapper ${isOpen && results.length > 0 ? "is-dropdown-open" : ""}`}
+      ref={containerRef}
+    >
       {/* Label & Badge Officiel Gouv */}
       <div className="siret-label-row">
         <label className="form-label-pro">
