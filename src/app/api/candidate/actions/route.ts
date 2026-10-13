@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSession } from "@/lib/auth/session";
+import { notifyCommercialPurchase } from "@/lib/telegram/notifier";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://azxwqcdnwkolodxwsqoq.supabase.co";
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
@@ -103,6 +104,83 @@ export async function POST(request: Request) {
       if (error) throw error;
 
       return NextResponse.json({ success: true, availability: newAvail });
+    }
+
+    // 3. Activer le Boost Visibilité Candidat (4.99 € pour 3 mois)
+    if (action === "activate_boost") {
+      const { data: driver } = await supabaseAdmin
+        .from("drivers")
+        .select("*")
+        .eq("email", session.email.toLowerCase().trim())
+        .maybeSingle();
+
+      if (!driver) {
+        return NextResponse.json({ error: "Profil conducteur introuvable." }, { status: 404 });
+      }
+
+      const expiresAt = new Date();
+      expiresAt.setMonth(expiresAt.getMonth() + 3);
+
+      const orderNumber = `BST-${Date.now().toString(36).toUpperCase()}`;
+
+      // Enregistrer la commande
+      await supabaseAdmin.from("commercial_orders").insert({
+        order_number: orderNumber,
+        driver_id: driver.id,
+        order_type: "candidate_boost",
+        product_name: "Boost Visibilité Candidat (3 Mois)",
+        product_id: "boost_3m",
+        quantity: 1,
+        amount_eur: 4.99,
+        vat_amount: 0.83,
+        total_paid: 4.99,
+        is_paid: true,
+        status: "paid",
+        payment_method: "cb",
+        payment_reference: `CB-${Date.now()}`,
+        paid_at: new Date().toISOString(),
+        metadata: {
+          driver_id: driver.id,
+          driver_name: `${driver.first_name || ""} ${driver.last_name || ""}`.trim(),
+          driver_email: driver.email,
+          period_months: 3,
+        },
+      });
+
+      // Mettre à jour le profil conducteur
+      const { data: updatedDriver, error: updateErr } = await supabaseAdmin
+        .from("drivers")
+        .update({
+          is_boosted: true,
+          boosted_until: expiresAt.toISOString(),
+          is_premium: true,
+          is_reliable: true,
+        })
+        .eq("id", driver.id)
+        .select()
+        .single();
+
+      if (updateErr) throw updateErr;
+
+      // Notification Telegram
+      try {
+        await notifyCommercialPurchase({
+          orderNumber,
+          orderType: "candidate_boost",
+          companyName: `${driver.first_name || ""} ${driver.last_name || ""}`.trim() || "Candidat Conducteur",
+          companyEmail: driver.email,
+          productName: "Boost Visibilité Candidat 3 Mois (1er de liste, Badge Premium, Candidat Fiable)",
+          amountEur: 4.99,
+        });
+      } catch (tgErr) {
+        console.error("Telegram notify error:", tgErr);
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "Félicitations ! Votre profil est désormais boosté en 1ère position pour 3 mois.",
+        driver: updatedDriver,
+      });
     }
 
     return NextResponse.json({ error: "Action inconnue" }, { status: 400 });

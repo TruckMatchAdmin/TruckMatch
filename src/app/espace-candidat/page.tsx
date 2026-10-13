@@ -34,6 +34,11 @@ import {
   Moon,
   Repeat,
   Sliders,
+  Zap,
+  Star,
+  CreditCard,
+  X,
+  Loader2,
 } from "lucide-react";
 
 interface JobOffer {
@@ -115,6 +120,42 @@ export default function CandidatePortalPage() {
 
   // Offres réelles chargées depuis Supabase
   const [jobOffers, setJobOffers] = useState<JobOffer[]>([]);
+
+  // Boost Visibilité Candidat (4.99 € / 3 mois)
+  const [boostModalOpen, setBoostModalOpen] = useState(false);
+  const [boostLoading, setBoostLoading] = useState(false);
+  const [boostSuccessMsg, setBoostSuccessMsg] = useState<string | null>(null);
+
+  const handleActivateBoost = async () => {
+    setBoostLoading(true);
+    try {
+      const res = await fetch("/api/candidate/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "activate_boost" }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Impossible d'activer le boost.");
+      }
+      setUser((prev: any) => ({
+        ...prev,
+        is_boosted: true,
+        boosted_until: json.driver?.boosted_until,
+        is_premium: true,
+        is_reliable: true,
+      }));
+      setBoostSuccessMsg(json.message || "Boost Visibilité activé avec succès pour 3 mois !");
+      setTimeout(() => {
+        setBoostModalOpen(false);
+        setBoostSuccessMsg(null);
+      }, 3500);
+    } catch (err: any) {
+      alert(err.message || "Erreur lors de l'activation");
+    } finally {
+      setBoostLoading(false);
+    }
+  };
 
   const loadCandidateData = async () => {
     setLoading(true);
@@ -536,6 +577,137 @@ export default function CandidatePortalPage() {
           {/* ============================================================== */}
           {activeTab === "overview" && (
             <div className="flex flex-col gap-6">
+              {/* BANDEAU BOOST VISIBILITÉ CANDIDAT (4.99 € / 3 MOIS) */}
+              {user?.is_boosted ? (
+                <div className="driver-boost-active-card">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                      <Star size={20} className="fill-amber-400" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-extrabold text-white">
+                          Profil Boosté en 1ère Position
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                          <Sparkles size={11} />
+                          Candidat Premium
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                          <ShieldCheck size={11} />
+                          Candidat Fiable
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-300 mt-1">
+                        Votre profil apparaît en tête de liste pour tous les transporteurs de votre région
+                        {user?.boosted_until && (
+                          <span>
+                            {" "}• Actif jusqu&apos;au{" "}
+                            <strong>
+                              {new Date(user.boosted_until).toLocaleDateString("fr-FR", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              })}
+                            </strong>
+                          </span>
+                        )}.
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                    <CheckCircle2 size={13} />
+                    Visibilité Maximale Active
+                  </span>
+                </div>
+              ) : (
+                <div className="driver-boost-banner">
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+                    <span className="driver-boost-pill">
+                      <Sparkles size={12} />
+                      Offre Conducteur Privilège • 3 Mois
+                    </span>
+                    <span className="text-xs font-semibold text-slate-400">
+                      Propulsé par TruckMatch
+                    </span>
+                  </div>
+
+                  <h2 className="text-lg md:text-xl font-extrabold text-white tracking-tight mt-1 mb-1.5">
+                    Boostez votre profil en 1ère position des recruteurs
+                  </h2>
+                  <p className="text-xs md:text-sm text-slate-300 leading-relaxed max-w-2xl">
+                    Démarquez-vous instantanément face aux autres chauffeurs, obtenez le badge <strong>Candidat Premium</strong> et le label <strong>Candidat Fiable</strong> pour attirer les meilleures offres en direct.
+                  </p>
+
+                  <div className="driver-boost-features-grid">
+                    <div className="driver-boost-feature-item">
+                      <div className="driver-boost-feature-icon amber">
+                        <Award size={18} />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-white">1er de Liste Garanti</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          Positionné tout en haut des recherches des exploitants de votre secteur.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="driver-boost-feature-item">
+                      <div className="driver-boost-feature-icon emerald">
+                        <Star size={18} className="fill-emerald-400" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-white">Badge Candidat Premium</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          Un insigne distinctif doré affiché sur votre carte candidat et votre CV.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="driver-boost-feature-item">
+                      <div className="driver-boost-feature-icon sky">
+                        <ShieldCheck size={18} />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-white">Label Candidat Fiable</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          Permis et documents certifiés prioritaires, inspirant une confiance immédiate.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="driver-boost-feature-item">
+                      <div className="driver-boost-feature-icon purple">
+                        <Zap size={18} />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-white">Contact Direct Prioritaire</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          Vos coordonnées sont suggérées dès qu&apos;une tournée ou un CDI se libère.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="driver-boost-cta-bar">
+                    <div className="driver-boost-price-tag">
+                      <span className="driver-boost-price-amount">4,99 €</span>
+                      <span className="driver-boost-price-period">pour 3 mois complets (soit 1,66 €/mois)</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setBoostModalOpen(true)}
+                      className="driver-boost-btn"
+                    >
+                      <Zap size={16} />
+                      <span>Activer mon Boost Visibilité (4,99 €)</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Carte Statut de mise en relation directe */}
               <div className="portal-panel-card border-sky">
                 <div className="portal-panel-card-header">
@@ -1869,6 +2041,104 @@ export default function CandidatePortalPage() {
               >
                 Compris, fermer
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ACTIVATION BOOST CANDIDAT (4.99 € / 3 MOIS) */}
+      {boostModalOpen && (
+        <div className="driver-boost-modal-backdrop" onClick={() => !boostLoading && setBoostModalOpen(false)}>
+          <div className="driver-boost-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                  <Zap size={18} />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-white">Activer le Boost Candidat</h3>
+                  <p className="text-xs text-slate-400">Visibilité n°1 pendant 90 jours consécutifs</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => !boostLoading && setBoostModalOpen(false)}
+                className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white flex items-center justify-center"
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            <div className="p-6 flex flex-col gap-5">
+              {boostSuccessMsg ? (
+                <div className="p-4 rounded-xl bg-emerald-950/60 border border-emerald-600/60 text-center">
+                  <CheckCircle2 size={36} className="text-emerald-400 mx-auto mb-2" />
+                  <h4 className="text-base font-bold text-white mb-1">Boost Activé avec Succès !</h4>
+                  <p className="text-xs text-slate-300">{boostSuccessMsg}</p>
+                </div>
+              ) : (
+                <>
+                  <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
+                      <span className="text-xs text-slate-400 font-semibold">Formule choisie</span>
+                      <span className="text-xs font-bold text-amber-400">Pack Visibilité 3 Mois</span>
+                    </div>
+
+                    <ul className="flex flex-col gap-2 text-xs text-slate-300 mb-3">
+                      <li className="flex items-center gap-2">
+                        <Check size={13} className="text-emerald-400 flex-shrink-0" />
+                        <span>Remontée en <strong>1ère position</strong> des recherches transporteurs</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check size={13} className="text-emerald-400 flex-shrink-0" />
+                        <span>Badge <strong>Candidat Premium</strong> distinctif</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check size={13} className="text-emerald-400 flex-shrink-0" />
+                        <span>Label <strong>Candidat Fiable &amp; Certifié</strong></span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check size={13} className="text-emerald-400 flex-shrink-0" />
+                        <span>Durée : <strong>90 jours</strong> sans engagement récurrent</span>
+                      </li>
+                    </ul>
+
+                    <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-sm">
+                      <span className="text-white font-bold">Total TTC à régler</span>
+                      <span className="text-xl font-extrabold text-amber-400">4,99 €</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-sky-950/30 border border-sky-800/40 text-xs text-slate-300">
+                    <CreditCard size={18} className="text-sky-400 flex-shrink-0" />
+                    <span>Paiement 100% sécurisé par carte bancaire. Aucun prélèvement automatique ultérieur.</span>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      disabled={boostLoading}
+                      onClick={() => setBoostModalOpen(false)}
+                      className="cockpit-btn cockpit-btn-secondary"
+                      style={{ padding: "0.6rem 1rem", fontSize: "0.82rem" }}
+                    >
+                      Annuler
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={boostLoading}
+                      onClick={handleActivateBoost}
+                      className="driver-boost-btn"
+                      style={{ padding: "0.65rem 1.4rem", fontSize: "0.85rem" }}
+                    >
+                      {boostLoading ? <Loader2 size={15} className="animate-spin" /> : <Zap size={15} />}
+                      <span>{boostLoading ? "Activation en cours..." : "Confirmer et Activer (4,99 €)"}</span>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

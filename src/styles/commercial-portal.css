@@ -1016,3 +1016,198 @@
   background: #0e1c2e;
   transform: translateY(-2px);
 }
+
+/* ==========================================================================
+   BANDEAU & MODAL BOOST VISIBILITÉ CANDIDAT (4.99 € / 3 MOIS)
+   ========================================================================== */
+
+.driver-boost-banner {
+  position: relative;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.09) 0%, rgba(16, 185, 129, 0.06) 50%, #091321 100%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 16px;
+  padding: 1.5rem 1.75rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 25px rgba(245, 158, 11, 0.08);
+  overflow: hidden;
+}
+
+.driver-boost-banner::before {
+  content: "";
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.driver-boost-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.driver-boost-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+  margin: 1.25rem 0;
+}
+
+.driver-boost-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  background: rgba(6, 13, 23, 0.7);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.driver-boost-feature-item:hover {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(10, 20, 35, 0.9);
+}
+
+.driver-boost-feature-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.driver-boost-feature-icon.amber {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.driver-boost-feature-icon.emerald {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.driver-boost-feature-icon.sky {
+  background: rgba(14, 165, 233, 0.2);
+  color: #38bdf8;
+}
+
+.driver-boost-feature-icon.purple {
+  background: rgba(168, 85, 247, 0.2);
+  color: #c084fc;
+}
+
+.driver-boost-cta-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.driver-boost-price-tag {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.driver-boost-price-amount {
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: #fbbf24;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.driver-boost-price-period {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.driver-boost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.6rem;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #040911;
+  font-size: 0.88rem;
+  font-weight: 900;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35);
+  transition: all 0.2s ease;
+  letter-spacing: -0.01em;
+}
+
+.driver-boost-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.5);
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+/* Carte Boost Actif */
+.driver-boost-active-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.4rem;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.12) 0%, rgba(245, 158, 11, 0.1) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: 14px;
+}
+
+/* Modal d'activation Boost */
+.driver-boost-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 14, 0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.driver-boost-modal-card {
+  width: 100%;
+  max-width: 520px;
+  background: #091321;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 18px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  animation: modalFadeIn 0.25s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
