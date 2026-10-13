@@ -5,14 +5,33 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { MAIN_NAV } from "@/lib/constants/navigation";
-import { Menu, X, ArrowRight, UserPlus, LogIn } from "lucide-react";
+import {
+  Menu,
+  X,
+  ArrowRight,
+  UserPlus,
+  LogIn,
+  LayoutDashboard,
+  LogOut,
+  Building2,
+  Truck,
+  ShieldCheck,
+} from "lucide-react";
 import { LoginModal } from "@/components/auth/LoginModal";
 import { FacebookIcon, TelegramIcon } from "@/components/ui/SocialIcons";
+
+interface AuthUser {
+  id?: string;
+  email?: string;
+  role?: "admin" | "company" | "driver";
+  name?: string;
+}
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -22,6 +41,70 @@ export function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Détection instantanée de la session connectée (localStorage + API HttpOnly)
+  useEffect(() => {
+    const checkLocal = () => {
+      try {
+        const raw = localStorage.getItem("tm_user");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.role) {
+            setUser(parsed);
+          }
+        } else {
+          setUser(null);
+        }
+      } catch {
+        setUser(null);
+      }
+    };
+
+    checkLocal();
+
+    // Confirmation officielle de la session par le cookie HttpOnly
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.authenticated && data.user) {
+          setUser(data.user);
+          try {
+            localStorage.setItem("tm_user", JSON.stringify(data.user));
+          } catch {}
+        } else if (data?.authenticated === false) {
+          setUser(null);
+          try {
+            localStorage.removeItem("tm_user");
+          } catch {}
+        }
+      })
+      .catch(() => {});
+
+    // Écouter les connexions / déconnexions en temps réel
+    const onAuthChanged = () => {
+      checkLocal();
+    };
+    window.addEventListener("tm_auth_changed", onAuthChanged);
+    window.addEventListener("storage", onAuthChanged);
+
+    return () => {
+      window.removeEventListener("tm_auth_changed", onAuthChanged);
+      window.removeEventListener("storage", onAuthChanged);
+    };
+  }, []);
+
+  // Déconnexion utilisateur
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {}
+    try {
+      localStorage.removeItem("tm_user");
+    } catch {}
+    setUser(null);
+    window.dispatchEvent(new Event("tm_auth_changed"));
+    window.location.href = "/";
+  };
 
   // Menu mobile : fermeture par Échap et blocage du scroll de la page
   useEffect(() => {
@@ -37,6 +120,21 @@ export function Header() {
       document.body.style.overflow = previousOverflow;
     };
   }, [mobileMenuOpen]);
+
+  // Destination du dashboard selon le rôle connecté
+  const dashboardUrl =
+    user?.role === "company"
+      ? "/espace-entreprise"
+      : user?.role === "admin"
+      ? "/espace-admin"
+      : "/espace-candidat";
+
+  const DashboardIcon =
+    user?.role === "company"
+      ? Building2
+      : user?.role === "admin"
+      ? ShieldCheck
+      : Truck;
 
   return (
     <>
@@ -87,19 +185,66 @@ export function Header() {
               <FacebookIcon size={18} />
             </a>
 
-            <button
-              type="button"
-              onClick={() => setLoginModalOpen(true)}
-              className="header-btn-login-pro"
-              aria-label="Ouvrir la connexion"
-            >
-              <LogIn size={15} />
-              <span>Connexion</span>
-            </button>
-            <Link href="/inscription?type=candidat" className="header-btn-driver-pro">
-              <UserPlus size={15} />
-              <span>Créer mon profil</span>
-            </Link>
+            {user ? (
+              /* ======================================================= */
+              /* ÉTAT CONNECTÉ : Bouton direct vers le dashboard          */
+              /* ======================================================= */
+              <>
+                <Link
+                  href={dashboardUrl}
+                  className="header-btn-driver-pro"
+                  style={{
+                    background: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)",
+                    boxShadow: "0 4px 14px rgba(2, 132, 199, 0.35)",
+                    fontWeight: 800,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  }}
+                  aria-label="Accéder à mon dashboard"
+                >
+                  <DashboardIcon size={16} />
+                  <span>Accéder à mon dashboard</span>
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="header-btn-login-pro"
+                  title="Se déconnecter de votre compte"
+                  style={{
+                    padding: "0.55rem 0.85rem",
+                    color: "#64748b",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.35rem",
+                  }}
+                  aria-label="Déconnexion"
+                >
+                  <LogOut size={15} />
+                  <span className="hidden xl:inline">Déconnexion</span>
+                </button>
+              </>
+            ) : (
+              /* ======================================================= */
+              /* ÉTAT NON-CONNECTÉ : Connexion & Création de profil       */
+              /* ======================================================= */
+              <>
+                <button
+                  type="button"
+                  onClick={() => setLoginModalOpen(true)}
+                  className="header-btn-login-pro"
+                  aria-label="Ouvrir la connexion"
+                >
+                  <LogIn size={15} />
+                  <span>Connexion</span>
+                </button>
+                <Link href="/inscription?type=candidat" className="header-btn-driver-pro">
+                  <UserPlus size={15} />
+                  <span>Créer mon profil</span>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Bouton Mobile Menu */}
@@ -138,25 +283,59 @@ export function Header() {
               </ul>
 
               <div className="mobile-menu-cta">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setLoginModalOpen(true);
-                  }}
-                  className="header-btn-login-pro w-full justify-center"
-                >
-                  <LogIn size={16} />
-                  <span>Connexion</span>
-                </button>
-                <Link
-                  href="/inscription?type=candidat"
-                  className="header-btn-driver-pro w-full"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <UserPlus size={16} />
-                  <span>Créer mon profil Chauffeur (Gratuit)</span>
-                </Link>
+                {user ? (
+                  <>
+                    <Link
+                      href={dashboardUrl}
+                      className="header-btn-driver-pro w-full justify-center"
+                      style={{
+                        background: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)",
+                        fontWeight: 800,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <DashboardIcon size={16} />
+                      <span>Accéder à mon dashboard</span>
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleLogout();
+                      }}
+                      className="header-btn-login-pro w-full justify-center"
+                    >
+                      <LogOut size={16} />
+                      <span>Déconnexion</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setLoginModalOpen(true);
+                      }}
+                      className="header-btn-login-pro w-full justify-center"
+                    >
+                      <LogIn size={16} />
+                      <span>Connexion</span>
+                    </button>
+                    <Link
+                      href="/inscription?type=candidat"
+                      className="header-btn-driver-pro w-full"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <UserPlus size={16} />
+                      <span>Créer mon profil Chauffeur (Gratuit)</span>
+                    </Link>
+                  </>
+                )}
 
                 {/* Réseaux sociaux mobile */}
                 <div className="flex items-center justify-center gap-3 pt-3 border-t border-slate-800">

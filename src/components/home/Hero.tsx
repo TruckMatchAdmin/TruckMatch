@@ -1,9 +1,37 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Truck, ShieldCheck, CheckCircle2, Star } from "lucide-react";
+import { ArrowRight, Truck, ShieldCheck, CheckCircle2, Star, LayoutDashboard } from "lucide-react";
 
 export function Hero() {
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("tm_user");
+      if (raw) {
+        setUser(JSON.parse(raw));
+      }
+    } catch {}
+
+    const onAuthChanged = () => {
+      try {
+        const raw = localStorage.getItem("tm_user");
+        setUser(raw ? JSON.parse(raw) : null);
+      } catch {
+        setUser(null);
+      }
+    };
+    window.addEventListener("tm_auth_changed", onAuthChanged);
+    window.addEventListener("storage", onAuthChanged);
+    return () => {
+      window.removeEventListener("tm_auth_changed", onAuthChanged);
+      window.removeEventListener("storage", onAuthChanged);
+    };
+  }, []);
+
   const seoPills = [
     { label: "Chauffeur SPL Régional", href: "/chauffeurs/spl" },
     { label: "SPL Grand Routier", href: "/chauffeurs/spl" },
@@ -59,17 +87,29 @@ export function Hero() {
             <ul className="hero-action-list">
               <li>
                 <CheckCircle2 size={16} className="hero-check-icon" />
-                <span>Offres directes en CDI, CDD, Tractions & Saisonnier</span>
+                <span>Offres directes en CDI, CDD, Tractions &amp; Saisonnier</span>
               </li>
               <li>
                 <CheckCircle2 size={16} className="hero-check-icon" />
                 <span>Soyez contacté directement par les patrons sans intermédiaire</span>
               </li>
             </ul>
-            <Link href="/inscription?type=candidat" className="btn btn-primary btn-lg hero-card-btn">
-              <span>Créer mon profil Chauffeur</span>
-              <ArrowRight size={18} />
-            </Link>
+            {user?.role === "driver" ? (
+              <Link href="/espace-candidat" className="btn btn-primary btn-lg hero-card-btn">
+                <span>Accéder à mon espace Chauffeur</span>
+                <ArrowRight size={18} />
+              </Link>
+            ) : user?.role === "admin" ? (
+              <Link href="/espace-admin" className="btn btn-primary btn-lg hero-card-btn">
+                <span>Accéder au Cockpit Administrateur</span>
+                <ArrowRight size={18} />
+              </Link>
+            ) : (
+              <Link href="/inscription?type=candidat" className="btn btn-primary btn-lg hero-card-btn">
+                <span>Créer mon profil Chauffeur</span>
+                <ArrowRight size={18} />
+              </Link>
+            )}
           </div>
 
           {/* Carte Entreprise / Transporteur */}
@@ -94,10 +134,22 @@ export function Hero() {
                 <span>Permis et certifications vérifiés (SPL, PL, VUL, FIMO)</span>
               </li>
             </ul>
-            <Link href="/entreprises" className="btn btn-secondary btn-lg hero-card-btn">
-              <span>Publier ou Recruter un Chauffeur</span>
-              <ArrowRight size={18} />
-            </Link>
+            {user?.role === "company" ? (
+              <Link href="/espace-entreprise" className="btn btn-secondary btn-lg hero-card-btn">
+                <span>Accéder à mon espace Recruteur</span>
+                <ArrowRight size={18} />
+              </Link>
+            ) : user?.role === "admin" ? (
+              <Link href="/espace-admin" className="btn btn-secondary btn-lg hero-card-btn">
+                <span>Superviser les Recrutements</span>
+                <ArrowRight size={18} />
+              </Link>
+            ) : (
+              <Link href="/entreprises" className="btn btn-secondary btn-lg hero-card-btn">
+                <span>Publier ou Recruter un Chauffeur</span>
+                <ArrowRight size={18} />
+              </Link>
+            )}
           </div>
         </div>
 
@@ -109,43 +161,6 @@ export function Hero() {
               {p.label}
             </Link>
           ))}
-        </div>
-
-        {/* Visuel Photoréaliste Camion Centré en Grand Format */}
-        <div className="hero-visual-centered">
-          <div className="hero-image-wrapper-centered">
-            <Image
-              src="/images/hero-home.png"
-              alt="Camion Scania TruckMatch moderne sur autoroute au lever du soleil"
-              width={1120}
-              height={420}
-              priority
-              className="hero-main-img-centered"
-            />
-          </div>
-
-          {/* Bandeau de Chiffres Clés / Réassurance sous le camion */}
-          <div className="hero-stats-strip">
-            <div className="hero-stat-box">
-              <div className="hero-stat-number">+1 850</div>
-              <div className="hero-stat-label">Chauffeurs Référencés</div>
-            </div>
-            <div className="hero-stat-separator" />
-            <div className="hero-stat-box">
-              <div className="hero-stat-number">&lt; 48h</div>
-              <div className="hero-stat-label">Délai Moyen de Contact</div>
-            </div>
-            <div className="hero-stat-separator" />
-            <div className="hero-stat-box">
-              <div className="hero-stat-number">0 €</div>
-              <div className="hero-stat-label">Commission d'Agence</div>
-            </div>
-            <div className="hero-stat-separator" />
-            <div className="hero-stat-box">
-              <div className="hero-stat-number">100%</div>
-              <div className="hero-stat-label">Profils & Permis Vérifiés</div>
-            </div>
-          </div>
         </div>
       </div>
     </section>

@@ -57,6 +57,7 @@ export async function POST(request: Request) {
     const response = NextResponse.json({
       success: true,
       role: "admin",
+      user: adminUser,
       redirectUrl: "/espace-admin",
       message: "Authentification à deux facteurs validée avec succès.",
     });

@@ -85,6 +85,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
       // Connexion directe réussie (conducteur ou entreprise)
       if (typeof window !== "undefined" && data.user) {
         localStorage.setItem("tm_user", JSON.stringify(data.user));
+        window.dispatchEvent(new Event("tm_auth_changed"));
       }
 
       handleClose();
@@ -112,6 +113,16 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
       const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Code de vérification invalide.");
+      }
+
+      if (typeof window !== "undefined") {
+        const adminUser = data.user || {
+          role: "admin",
+          email: "jobs@truckmatch.fr",
+          name: "Administrateur TruckMatch",
+        };
+        localStorage.setItem("tm_user", JSON.stringify(adminUser));
+        window.dispatchEvent(new Event("tm_auth_changed"));
       }
 
       handleClose();
