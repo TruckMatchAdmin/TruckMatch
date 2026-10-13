@@ -42,7 +42,7 @@ export function AvailableDriversSection() {
         const { data, error } = await supabase
           .from("drivers")
           .select("*")
-          .or("status.eq.approved,is_approved.eq.true")
+          .neq("status", "rejected")
           .order("created_at", { ascending: false })
           .limit(10);
 

@@ -139,8 +139,9 @@ export async function POST(request: Request) {
           availability: availability || "immediate",
           resume_url: resumeUrl || null,
           resume_name: resumeName || null,
-          status: "pending",
-          is_approved: false,
+          status: "approved",
+          is_approved: true,
+          approved_at: new Date().toISOString(),
         },
       ]).select();
 
