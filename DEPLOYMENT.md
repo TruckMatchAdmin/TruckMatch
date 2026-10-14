@@ -14,7 +14,7 @@ Ce document détaille l'installation et la mise en production de **TruckMatch** 
 * **Node.js** : `v20.20.2`
 * **Port dédié TruckMatch** : `3005`
 * **Processus PM2 dédié** : `truckmatch`
-* **Dossier d'installation dédié** : `/home/ubuntu/truckmatch`
+* **Dossier d'installation dédié** : `/var/www/truckmatch`
 
 ---
 
@@ -134,7 +134,11 @@ sudo certbot --nginx -d truckmatch.fr -d www.truckmatch.fr
 
 ### Déploiement d'une nouvelle version :
 ```bash
-cd /home/ubuntu/truckmatch
+# En local ou via npm run deploy :
+npm run deploy
+
+# Ou manuellement sur le serveur :
+cd /var/www/truckmatch
 git pull origin main
 npm install
 npm run build
@@ -143,7 +147,7 @@ pm2 restart truckmatch
 
 ### Procédure de Rollback :
 ```bash
-cd /home/ubuntu/truckmatch
+cd /var/www/truckmatch
 git checkout <commit_id_précédent>
 npm run build
 pm2 restart truckmatch

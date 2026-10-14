@@ -38,6 +38,8 @@ import {
   Star,
   CreditCard,
   X,
+  Menu,
+  ArrowLeft,
   Loader2,
 } from "lucide-react";
 
@@ -57,6 +59,7 @@ interface JobOffer {
 export default function CandidatePortalPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "overview" | "permits" | "jobs" | "documents" | "messages" | "settings"
   >("overview");
@@ -336,15 +339,65 @@ export default function CandidatePortalPage() {
   return (
     <div className="portal-cockpit-screen">
       {/* ============================================================== */}
-      {/* 1. SIDEBAR GAUCHE (MENU À GAUCHE)                              */}
+      {/* 0. TOPBAR MOBILE EXCLUSIVE                                     */}
       {/* ============================================================== */}
-      <aside className="portal-sidebar-left">
-        {/* Brand / Logo */}
-        <div className="portal-sidebar-brand">
+      <div className="portal-mobile-topbar">
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="portal-mobile-menu-btn"
+          aria-label={mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+        >
+          {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+
+        <div className="portal-mobile-brand">
           <Link href="/" className="brand-title">
             Truck<span>Match</span>
           </Link>
-          <span className="portal-role-tag tag-candidat">Conducteur Pro</span>
+          <span className="portal-role-tag tag-candidat">Chauffeur</span>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setBoostModalOpen(true)}
+          className="portal-mobile-quick-boost-btn"
+          title="Booster mon profil"
+        >
+          <Zap size={14} />
+          <span>Boost</span>
+        </button>
+      </div>
+
+      {/* Backdrop sombre mobile quand le menu est ouvert */}
+      {mobileMenuOpen && (
+        <div
+          className="portal-mobile-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-label="Fermer le menu"
+        />
+      )}
+
+      {/* ============================================================== */}
+      {/* 1. SIDEBAR GAUCHE (MENU À GAUCHE OU DRAWER MOBILE)             */}
+      {/* ============================================================== */}
+      <aside className={`portal-sidebar-left ${mobileMenuOpen ? "mobile-open" : ""}`}>
+        {/* Brand / Logo */}
+        <div className="portal-sidebar-brand">
+          <Link href="/" className="brand-title" onClick={() => setMobileMenuOpen(false)}>
+            Truck<span>Match</span>
+          </Link>
+          <div className="flex items-center gap-1.5">
+            <span className="portal-role-tag tag-candidat">Conducteur Pro</span>
+            <button
+              type="button"
+              className="portal-sidebar-close-btn"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Fermer le menu"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Carte Identité Chauffeur */}
@@ -410,7 +463,7 @@ export default function CandidatePortalPage() {
 
           <button
             type="button"
-            onClick={() => setActiveTab("overview")}
+            onClick={() => { setActiveTab("overview"); setMobileMenuOpen(false); }}
             className={`portal-nav-btn ${activeTab === "overview" ? "active" : ""}`}
           >
             <LayoutDashboard className="nav-icon" />
@@ -419,7 +472,7 @@ export default function CandidatePortalPage() {
 
           <button
             type="button"
-            onClick={() => setActiveTab("permits")}
+            onClick={() => { setActiveTab("permits"); setMobileMenuOpen(false); }}
             className={`portal-nav-btn ${activeTab === "permits" ? "active" : ""}`}
           >
             <Award className="nav-icon" />
@@ -429,7 +482,7 @@ export default function CandidatePortalPage() {
 
           <button
             type="button"
-            onClick={() => setActiveTab("jobs")}
+            onClick={() => { setActiveTab("jobs"); setMobileMenuOpen(false); }}
             className={`portal-nav-btn ${activeTab === "jobs" ? "active" : ""}`}
           >
             <Briefcase className="nav-icon" />
@@ -439,7 +492,7 @@ export default function CandidatePortalPage() {
 
           <button
             type="button"
-            onClick={() => setActiveTab("documents")}
+            onClick={() => { setActiveTab("documents"); setMobileMenuOpen(false); }}
             className={`portal-nav-btn ${activeTab === "documents" ? "active" : ""}`}
           >
             <FileText className="nav-icon" />
@@ -448,7 +501,7 @@ export default function CandidatePortalPage() {
 
           <button
             type="button"
-            onClick={() => setActiveTab("messages")}
+            onClick={() => { setActiveTab("messages"); setMobileMenuOpen(false); }}
             className={`portal-nav-btn ${activeTab === "messages" ? "active" : ""}`}
           >
             <MessageSquare className="nav-icon" />
@@ -458,7 +511,7 @@ export default function CandidatePortalPage() {
 
           <button
             type="button"
-            onClick={() => setActiveTab("settings")}
+            onClick={() => { setActiveTab("settings"); setMobileMenuOpen(false); }}
             className={`portal-nav-btn ${activeTab === "settings" ? "active" : ""}`}
           >
             <Compass className="nav-icon" />
@@ -468,7 +521,7 @@ export default function CandidatePortalPage() {
 
         {/* Footer Sidebar */}
         <div className="portal-sidebar-footer">
-          <Link href="/" className="portal-footer-link">
+          <Link href="/" className="portal-footer-link" onClick={() => setMobileMenuOpen(false)}>
             <ExternalLink size={13} />
             <span>Consulter le site public</span>
           </Link>
@@ -1268,20 +1321,10 @@ export default function CandidatePortalPage() {
           {/* ONGLET 5 : MESSAGERIE DIRECTE                                   */}
           {/* ============================================================== */}
           {activeTab === "messages" && (
-            <div style={{ display: "flex", gap: "1rem", height: "calc(100vh - 135px)", minHeight: "460px" }}>
+            <div className="portal-chat-layout">
               {/* Liste recruteurs */}
-              <div
-                style={{
-                  width: "280px",
-                  background: "#08111e",
-                  border: "1px solid #142339",
-                  borderRadius: "10px",
-                  display: "flex",
-                  flexDirection: "column",
-                  overflow: "hidden",
-                }}
-              >
-                <div style={{ padding: "0.85rem 1rem", borderBottom: "1px solid #142339", background: "#060d17" }}>
+              <div className={`portal-chat-sidebar ${activeRecruiterId ? "chat-mobile-hidden" : ""}`}>
+                <div className="portal-chat-sidebar-header">
                   <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#ffffff" }}>
                     Échanges Directs ({recruiters.length})
                   </div>
@@ -1364,17 +1407,7 @@ export default function CandidatePortalPage() {
               </div>
 
               {/* Zone discussion */}
-              <div
-                style={{
-                  flex: 1,
-                  background: "#08111e",
-                  border: "1px solid #142339",
-                  borderRadius: "10px",
-                  display: "flex",
-                  flexDirection: "column",
-                  overflow: "hidden",
-                }}
-              >
+              <div className={`portal-chat-main ${!activeRecruiterId ? "chat-mobile-hidden" : ""}`}>
                 {recruiters.length === 0 || !activeRecruiterId ? (
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#94a3b8", padding: "2rem" }}>
                     <MessageSquare size={38} style={{ color: "#38bdf8", opacity: 0.5, marginBottom: "0.85rem" }} />
@@ -1390,25 +1423,37 @@ export default function CandidatePortalPage() {
                     {/* En-tête discussion */}
                     <div
                       style={{
-                        padding: "0.85rem 1.25rem",
+                        padding: "0.75rem 1rem",
                         borderBottom: "1px solid #142339",
                         background: "#060d17",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
+                        gap: "0.75rem",
                       }}
                     >
-                      <div>
-                        <div style={{ fontSize: "0.9rem", fontWeight: 800, color: "#ffffff" }}>
-                          {recruiters.find((r) => r.id === activeRecruiterId)?.name}
-                        </div>
-                        <div style={{ fontSize: "0.74rem", color: "#34d399", display: "flex", alignItems: "center", gap: "0.3rem" }}>
-                          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#34d399" }} />
-                          <span>Exploitant de transport vérifié (SIRET actif)</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", minWidth: 0 }}>
+                        <button
+                          type="button"
+                          className="chat-mobile-back-btn"
+                          onClick={() => setActiveRecruiterId("")}
+                          aria-label="Retour à la liste"
+                        >
+                          <ArrowLeft size={16} />
+                          <span>Discussions</span>
+                        </button>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {recruiters.find((r) => r.id === activeRecruiterId)?.name}
+                          </div>
+                          <div style={{ fontSize: "0.72rem", color: "#34d399", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399" }} />
+                            <span>Transporteur vérifié</span>
+                          </div>
                         </div>
                       </div>
 
-                      <span className="permit-badge-pro permit-valid">
+                      <span className="permit-badge-pro permit-valid chat-badge-hide-mobile">
                         Direct • 0% Commission
                       </span>
                     </div>
@@ -2143,6 +2188,64 @@ export default function CandidatePortalPage() {
           </div>
         </div>
       )}
+
+      {/* ============================================================== */}
+      {/* 3. BARRE DE NAVIGATION BASSE 100% MOBILE ERGONOMIQUE            */}
+      {/* ============================================================== */}
+      <nav className="portal-mobile-bottom-nav" aria-label="Navigation mobile principale">
+        <button
+          type="button"
+          onClick={() => { setActiveTab("overview"); setMobileMenuOpen(false); }}
+          className={`portal-bottom-nav-item ${activeTab === "overview" ? "active" : ""}`}
+        >
+          <LayoutDashboard size={20} />
+          <span>Cockpit</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => { setActiveTab("permits"); setMobileMenuOpen(false); }}
+          className={`portal-bottom-nav-item ${activeTab === "permits" ? "active" : ""}`}
+        >
+          <Award size={20} />
+          <span>Permis</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => { setActiveTab("jobs"); setMobileMenuOpen(false); }}
+          className={`portal-bottom-nav-item ${activeTab === "jobs" ? "active" : ""}`}
+        >
+          <div style={{ position: "relative", display: "inline-flex" }}>
+            <Briefcase size={20} />
+            {jobOffers.length > 0 && (
+              <span className="portal-bottom-badge">{jobOffers.length}</span>
+            )}
+          </div>
+          <span>Offres</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => { setActiveTab("documents"); setMobileMenuOpen(false); }}
+          className={`portal-bottom-nav-item ${activeTab === "documents" ? "active" : ""}`}
+        >
+          <FileText size={20} />
+          <span>CV & Docs</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => { setActiveTab("messages"); setMobileMenuOpen(false); }}
+          className={`portal-bottom-nav-item ${activeTab === "messages" ? "active" : ""}`}
+        >
+          <div style={{ position: "relative", display: "inline-flex" }}>
+            <MessageSquare size={20} />
+            <span className="portal-bottom-badge">1</span>
+          </div>
+          <span>Messages</span>
+        </button>
+      </nav>
     </div>
   );
 }

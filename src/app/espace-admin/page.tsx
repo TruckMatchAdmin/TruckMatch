@@ -46,6 +46,7 @@ import {
   Briefcase,
   AlertCircle,
   KeyRound,
+  Menu,
 } from "lucide-react";
 import { AdminCommercialModule } from "@/components/admin/AdminCommercialModule";
 
@@ -68,6 +69,7 @@ interface ChatMessage {
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
+  const [adminMobileMenuOpen, setAdminMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -796,13 +798,24 @@ export default function AdminDashboardPage() {
             <span className="admin-brand-pill">Cockpit Pro</span>
           </div>
 
-          <div className="admin-tier-upper-actions">
+          {/* Bouton mobile menu burger */}
+          <button
+            type="button"
+            className="admin-mobile-menu-btn"
+            onClick={() => setAdminMobileMenuOpen(!adminMobileMenuOpen)}
+            aria-label={adminMobileMenuOpen ? "Fermer les accès" : "Ouvrir les accès"}
+          >
+            {adminMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+
+          <div className={`admin-tier-upper-actions ${adminMobileMenuOpen ? "mobile-open" : ""}`}>
             <Link
               href="/espace-candidat"
               target="_blank"
               rel="noopener noreferrer"
               className="admin-public-link"
               title="Accéder au portail Espace Candidat (vue chauffeur)"
+              onClick={() => setAdminMobileMenuOpen(false)}
             >
               <Truck size={13} className="text-sky-400" />
               <span>Espace Candidat</span>
@@ -815,6 +828,7 @@ export default function AdminDashboardPage() {
               rel="noopener noreferrer"
               className="admin-public-link"
               title="Accéder au portail Espace Entreprise (vue recruteur)"
+              onClick={() => setAdminMobileMenuOpen(false)}
             >
               <Building2 size={13} className="text-emerald-400" />
               <span>Espace Entreprise</span>
@@ -827,6 +841,7 @@ export default function AdminDashboardPage() {
               rel="noopener noreferrer"
               className="admin-public-link"
               title="Ouvrir le site public"
+              onClick={() => setAdminMobileMenuOpen(false)}
             >
               <span>Site public</span>
               <ExternalLink size={11} className="text-slate-400" />

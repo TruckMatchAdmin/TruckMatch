@@ -1632,3 +1632,71 @@
   }
 }
 
+/* ==========================================================================
+   ADAPTATION MOBILE COMMERCIAL & FACTURATION ENTREPRISE (< 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .commercial-dark-container {
+    padding: 0.95rem 0.85rem calc(var(--portal-bottom-bar-height) + 1.5rem) !important;
+  }
+
+  .commercial-dark-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.85rem !important;
+    padding-bottom: 1rem !important;
+  }
+
+  .commercial-dark-title-wrap h1 {
+    font-size: 1.25rem !important;
+  }
+
+  .commercial-balance-pill {
+    width: 100% !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+  }
+
+  .commercial-tabs-bar {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex-wrap: nowrap !important;
+    gap: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    scrollbar-width: none !important;
+  }
+
+  .commercial-tabs-bar::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .commercial-tabs-bar button,
+  .commercial-tab-btn {
+    flex-shrink: 0 !important;
+    padding: 0.5rem 0.85rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  .commercial-plans-grid,
+  .commercial-packs-grid,
+  .commercial-pricing-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .commercial-plan-card {
+    padding: 1.15rem !important;
+    border-radius: 14px !important;
+  }
+
+  .driver-boost-modal-backdrop {
+    padding: 0.5rem !important;
+  }
+
+  .driver-boost-modal-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 14px !important;
+  }
+}
+

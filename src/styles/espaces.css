@@ -5995,3 +5995,594 @@ select.portal-form-input option {
   max-width: 100% !important;
 }
 
+/* ==========================================================================
+   MODULE 100% ULTRA COMPATIBLE MOBILE — ESPACE CANDIDAT, ENTREPRISE & ADMIN
+   ========================================================================== */
+
+:root {
+  --portal-bottom-bar-height: 64px;
+}
+
+/* Topbar Mobile (Candidat & Entreprise) */
+.portal-mobile-topbar {
+  display: none;
+}
+
+.portal-sidebar-close-btn {
+  display: none;
+}
+
+.portal-mobile-bottom-nav {
+  display: none;
+}
+
+.chat-mobile-back-btn {
+  display: none;
+}
+
+.admin-mobile-menu-btn {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------
+   1. ADAPTATION GLOBALE DES ÉCRANS SUR SMARTPHONE & TABLETTE (< 1024px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  html:has(.portal-cockpit-screen),
+  body:has(.portal-cockpit-screen),
+  html:has(.company-cockpit-wrapper),
+  body:has(.company-cockpit-wrapper),
+  html:has(.admin-cockpit-screen),
+  body:has(.admin-cockpit-screen),
+  html:has(.espace-standalone-root),
+  body:has(.espace-standalone-root) {
+    height: 100% !important;
+    min-height: 100dvh !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .espace-standalone-root,
+  .portal-cockpit-screen,
+  .company-cockpit-wrapper {
+    height: 100% !important;
+    min-height: 100dvh !important;
+    max-height: none !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    flex-direction: column !important;
+    position: relative !important;
+  }
+
+  /* Header Topbar Mobile Spécifique */
+  .portal-mobile-topbar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    height: 56px !important;
+    min-height: 56px !important;
+    padding: 0 1rem !important;
+    background: #070e1a !important;
+    border-bottom: 1px solid #142136 !important;
+    position: sticky !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 100 !important;
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.45) !important;
+  }
+
+  .portal-mobile-menu-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    border-radius: 9px !important;
+    background: #0c1728 !important;
+    border: 1px solid #1a2a44 !important;
+    color: #e2e8f0 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .portal-mobile-menu-btn:active {
+    transform: scale(0.93) !important;
+    background: #14233a !important;
+  }
+
+  .portal-mobile-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.55rem !important;
+  }
+
+  .portal-mobile-brand .brand-title {
+    font-size: 1.15rem !important;
+    font-weight: 900 !important;
+    color: #ffffff !important;
+    text-decoration: none !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  .portal-mobile-brand .brand-title span {
+    color: #38bdf8 !important;
+  }
+
+  .portal-mobile-quick-boost-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    padding: 0.4rem 0.75rem !important;
+    border-radius: 8px !important;
+    font-size: 0.76rem !important;
+    font-weight: 800 !important;
+    background: rgba(56, 189, 248, 0.15) !important;
+    color: #38bdf8 !important;
+    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+    cursor: pointer !important;
+    transition: all 0.18s ease !important;
+  }
+
+  .portal-mobile-quick-boost-btn:active {
+    transform: scale(0.94) !important;
+  }
+
+  /* Backdrop sombre Mobile */
+  .portal-mobile-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0, 0, 0, 0.75) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    z-index: 1050 !important;
+    animation: portalFadeIn 0.2s ease-out !important;
+  }
+
+  @keyframes portalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Sidebar Drawer Mobile (Off-Canvas) */
+  .portal-sidebar-left {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: min(320px, 86vw) !important;
+    min-width: 0 !important;
+    max-width: 86vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    z-index: 1100 !important;
+    transform: translateX(-105%) !important;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    background: #070e1a !important;
+    box-shadow: none !important;
+    border-right: 1px solid #142136 !important;
+  }
+
+  .portal-sidebar-left.mobile-open {
+    transform: translateX(0) !important;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.85) !important;
+  }
+
+  .portal-sidebar-close-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 7px !important;
+    background: #0f1a2a !important;
+    border: 1px solid #1a2a44 !important;
+    color: #94a3b8 !important;
+    cursor: pointer !important;
+  }
+
+  .portal-sidebar-close-btn:active {
+    background: #1e293b !important;
+    color: #ffffff !important;
+  }
+
+  /* Barre Basse Mobile Ergonomique (100% Pouce) */
+  .portal-mobile-bottom-nav {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-around !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: var(--portal-bottom-bar-height) !important;
+    background: rgba(7, 14, 26, 0.96) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-top: 1px solid #16253c !important;
+    z-index: 950 !important;
+    padding: 0 0.4rem !important;
+    padding-bottom: env(safe-area-inset-bottom, 2px) !important;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  .portal-bottom-nav-item {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    height: 100% !important;
+    color: #94a3b8 !important;
+    background: transparent !important;
+    border: none !important;
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    padding: 4px 2px !important;
+    touch-action: manipulation !important;
+  }
+
+  .portal-bottom-nav-item:active {
+    transform: scale(0.92) !important;
+  }
+
+  .portal-bottom-nav-item.active {
+    color: #38bdf8 !important;
+    font-weight: 800 !important;
+  }
+
+  .portal-bottom-nav-item.active-emerald {
+    color: #34d399 !important;
+    font-weight: 800 !important;
+  }
+
+  .portal-bottom-badge {
+    position: absolute !important;
+    top: -5px !important;
+    right: -10px !important;
+    font-size: 0.6rem !important;
+    font-weight: 900 !important;
+    background: #0284c7 !important;
+    color: #ffffff !important;
+    padding: 0.5px 5px !important;
+    border-radius: 9999px !important;
+    min-width: 16px !important;
+    text-align: center !important;
+    border: 1.5px solid #070e1a !important;
+  }
+
+  /* Zone Contenu Principale */
+  .portal-main-area {
+    width: 100% !important;
+    max-width: 100vw !important;
+    height: auto !important;
+    min-height: calc(100dvh - 56px) !important;
+    flex: 1 !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .portal-main-topbar {
+    height: auto !important;
+    min-height: 44px !important;
+    padding: 0.65rem 1rem !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+
+  .portal-topbar-page-title {
+    font-size: 0.86rem !important;
+    line-height: 1.3 !important;
+  }
+
+  .portal-main-content-scroll {
+    padding: 0.95rem 0.85rem calc(var(--portal-bottom-bar-height) + 1.25rem) !important;
+    height: auto !important;
+    overflow-y: visible !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Cartes et Formulaires en pleine largeur */
+  .portal-panel-card {
+    padding: 1rem !important;
+    border-radius: 10px !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .driver-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.65rem !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. ADAPTATION COCKPIT ADMIN MOBILE & TABLETTE
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .admin-two-tier-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+  }
+
+  .admin-tier-upper {
+    height: 50px !important;
+    padding: 0 1rem !important;
+    position: relative !important;
+  }
+
+  .admin-mobile-menu-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 8px !important;
+    background: #0d1726 !important;
+    border: 1px solid #1c2e47 !important;
+    color: #ffffff !important;
+    cursor: pointer !important;
+  }
+
+  .admin-tier-upper-actions {
+    display: none !important;
+    position: absolute !important;
+    top: 50px !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: #070d17 !important;
+    border-bottom: 1px solid #1a273c !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 1rem !important;
+    gap: 0.65rem !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75) !important;
+    z-index: 999 !important;
+  }
+
+  .admin-tier-upper-actions.mobile-open {
+    display: flex !important;
+  }
+
+  .admin-tier-upper-actions .admin-public-link {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    padding: 0.65rem 0.85rem !important;
+    font-size: 0.82rem !important;
+    border-radius: 8px !important;
+    background: #0d1726 !important;
+    border: 1px solid #18283f !important;
+  }
+
+  .admin-tier-upper-actions .admin-user-badge {
+    width: 100% !important;
+    padding: 0.6rem 0.85rem !important;
+    background: #0b1320 !important;
+    border-radius: 8px !important;
+    font-size: 0.78rem !important;
+  }
+
+  .admin-tier-upper-actions .btn-admin-logout {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 0.7rem !important;
+    border-radius: 8px !important;
+  }
+
+  /* Étage 2 : Onglets Admin avec défilement tactile fluide */
+  .admin-tier-lower {
+    height: 48px !important;
+    padding: 0 0.75rem !important;
+    gap: 0.4rem !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .admin-tier-nav-item {
+    padding: 0.35rem 0.75rem !important;
+    font-size: 0.78rem !important;
+    flex-shrink: 0 !important;
+    border-radius: 6px !important;
+  }
+}
+
+/* Fin du verrouillage desktop overflow: hidden sur l'Admin */
+@media (max-width: 1024px) {
+  .admin-cockpit-screen {
+    height: auto !important;
+    min-height: 100dvh !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  .dashboard-cockpit-view,
+  .candidates-cockpit-view,
+  .companies-cockpit-view,
+  .jobs-cockpit-view,
+  .stats-cockpit-view,
+  .revenue-cockpit-view,
+  .support-cockpit-view,
+  .company-cockpit-main {
+    height: auto !important;
+    min-height: calc(100dvh - 96px) !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
+    padding: 0.95rem 0.85rem 3rem !important;
+  }
+
+  .dashboard-cockpit-grid,
+  .support-cockpit-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .candidates-cockpit-header,
+  .candidates-header-block {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+
+  .candidates-header-row-1,
+  .candidates-header-row-2 {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.65rem !important;
+  }
+
+  .candidates-header-actions {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+
+  .candidates-header-actions button,
+  .candidates-header-actions .cockpit-btn {
+    flex: 1 1 auto !important;
+    min-height: 40px !important;
+    justify-content: center !important;
+  }
+
+  /* Tableaux Admin : défilement horizontal fluide */
+  .admin-cockpit-screen table,
+  .candidates-cockpit-view table,
+  .companies-cockpit-view table,
+  .jobs-cockpit-view table {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 8px !important;
+  }
+
+  .admin-cockpit-screen th,
+  .admin-cockpit-screen td,
+  .candidates-cockpit-view th,
+  .candidates-cockpit-view td {
+    white-space: nowrap !important;
+    padding: 0.6rem 0.75rem !important;
+    font-size: 0.78rem !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. TCHAT RESPONSIVE & MODALES SMARTPHONE (< 768px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  /* Tchat Candidat */
+  .portal-chat-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    height: calc(100dvh - 185px) !important;
+    min-height: 420px !important;
+    position: relative !important;
+  }
+
+  .portal-chat-sidebar {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 10px !important;
+    background: #08111e !important;
+    border: 1px solid #142339 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .portal-chat-sidebar-header {
+    padding: 0.85rem 1rem !important;
+    border-bottom: 1px solid #142339 !important;
+    background: #060d17 !important;
+  }
+
+  .portal-chat-main {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 10px !important;
+    background: #08111e !important;
+    border: 1px solid #142339 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  .chat-mobile-hidden {
+    display: none !important;
+  }
+
+  .chat-mobile-back-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    padding: 0.35rem 0.65rem !important;
+    border-radius: 6px !important;
+    background: #0d1a2d !important;
+    border: 1px solid #192a43 !important;
+    color: #38bdf8 !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+  }
+
+  .chat-badge-hide-mobile {
+    display: none !important;
+  }
+
+  /* KPIs Smartphone */
+  .driver-kpi-grid,
+  .admin-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.55rem !important;
+  }
+
+  /* Tailles d'inputs sans zoom auto sur iOS */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  select,
+  textarea {
+    font-size: 16px !important;
+    border-radius: 8px !important;
+  }
+
+  /* Modales : Pleine largeur optimisée pouce */
+  .admin-modal-backdrop,
+  .driver-unlock-modal-backdrop {
+    padding: 0.4rem !important;
+  }
+
+  .admin-modal-box,
+  .driver-unlock-modal,
+  .job-modal-box,
+  .portal-modal-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 94dvh !important;
+    margin: 0 !important;
+    border-radius: 12px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .driver-kpi-grid,
+  .admin-kpi-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+

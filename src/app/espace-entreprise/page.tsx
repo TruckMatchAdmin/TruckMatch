@@ -34,6 +34,7 @@ import {
   MessageSquare,
   Unlock,
   Lock,
+  Menu,
 } from "lucide-react";
 import { CompanyBillingModule } from "@/components/company/CompanyBillingModule";
 import { DriverUnlockModal } from "@/components/company/DriverUnlockModal";
@@ -66,6 +67,7 @@ export default function CompanyPortalPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [company, setCompany] = useState<any>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [stats, setStats] = useState({
     totalDrivers: 0,
@@ -190,6 +192,7 @@ export default function CompanyPortalPage() {
 
   const setNav = (nav: "drivers" | "jobs" | "create-job" | "profile" | "billing") => {
     setActiveNav(nav);
+    setMobileMenuOpen(false);
     if (typeof window !== "undefined") {
       const url = nav === "drivers" ? "/espace-entreprise" : `/espace-entreprise?tab=${nav}`;
       window.history.pushState(null, "", url);
@@ -275,15 +278,66 @@ export default function CompanyPortalPage() {
   return (
     <div className="company-cockpit-wrapper">
       {/* ============================================================== */}
-      {/* 1. SIDEBAR GAUCHE (MENU À GAUCHE)                              */}
+      {/* 0. TOPBAR MOBILE EXCLUSIVE                                     */}
       {/* ============================================================== */}
-      <aside className="portal-sidebar-left">
-        {/* Brand / Logo */}
-        <div className="portal-sidebar-brand">
+      <div className="portal-mobile-topbar">
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="portal-mobile-menu-btn"
+          aria-label={mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+        >
+          {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+
+        <div className="portal-mobile-brand">
           <Link href="/" className="brand-title">
             Truck<span>Match</span>
           </Link>
-          <span className="portal-role-tag tag-entreprise">Recruteur Pro</span>
+          <span className="portal-role-tag tag-entreprise">Recruteur</span>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setNav("create-job")}
+          className="portal-mobile-quick-boost-btn"
+          style={{ borderColor: "rgba(16, 185, 129, 0.4)", color: "#34d399", background: "rgba(16, 185, 129, 0.12)" }}
+          title="Déposer une offre d'emploi"
+        >
+          <Plus size={14} />
+          <span>Offre</span>
+        </button>
+      </div>
+
+      {/* Backdrop mobile */}
+      {mobileMenuOpen && (
+        <div
+          className="portal-mobile-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-label="Fermer le menu"
+        />
+      )}
+
+      {/* ============================================================== */}
+      {/* 1. SIDEBAR GAUCHE (MENU À GAUCHE OU DRAWER MOBILE)             */}
+      {/* ============================================================== */}
+      <aside className={`portal-sidebar-left ${mobileMenuOpen ? "mobile-open" : ""}`}>
+        {/* Brand / Logo */}
+        <div className="portal-sidebar-brand">
+          <Link href="/" className="brand-title" onClick={() => setMobileMenuOpen(false)}>
+            Truck<span>Match</span>
+          </Link>
+          <div className="flex items-center gap-1.5">
+            <span className="portal-role-tag tag-entreprise">Recruteur Pro</span>
+            <button
+              type="button"
+              className="portal-sidebar-close-btn"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Fermer le menu"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Profil Entreprise */}
@@ -1606,6 +1660,66 @@ export default function CompanyPortalPage() {
         isOpen={!!chatDriverTarget}
         onClose={() => setChatDriverTarget(null)}
       />
+
+      {/* ============================================================== */}
+      {/* 3. BARRE DE NAVIGATION BASSE 100% MOBILE ERGONOMIQUE            */}
+      {/* ============================================================== */}
+      <nav className="portal-mobile-bottom-nav" aria-label="Navigation mobile recruteur">
+        <button
+          type="button"
+          onClick={() => setNav("drivers")}
+          className={`portal-bottom-nav-item ${activeNav === "drivers" ? "active-emerald" : ""}`}
+        >
+          <div style={{ position: "relative", display: "inline-flex" }}>
+            <Users size={20} />
+            {drivers.length > 0 && (
+              <span className="portal-bottom-badge" style={{ background: "#059669" }}>{drivers.length}</span>
+            )}
+          </div>
+          <span>Chauffeurs</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setNav("jobs")}
+          className={`portal-bottom-nav-item ${activeNav === "jobs" ? "active-emerald" : ""}`}
+        >
+          <div style={{ position: "relative", display: "inline-flex" }}>
+            <Briefcase size={20} />
+            {jobs.length > 0 && (
+              <span className="portal-bottom-badge">{jobs.length}</span>
+            )}
+          </div>
+          <span>Offres</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setNav("create-job")}
+          className={`portal-bottom-nav-item ${activeNav === "create-job" ? "active-emerald" : ""}`}
+        >
+          <Plus size={20} />
+          <span>Publier</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setNav("billing")}
+          className={`portal-bottom-nav-item ${activeNav === "billing" ? "active-emerald" : ""}`}
+        >
+          <CreditCard size={20} />
+          <span>Formules</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setNav("profile")}
+          className={`portal-bottom-nav-item ${activeNav === "profile" ? "active-emerald" : ""}`}
+        >
+          <Building2 size={20} />
+          <span>Profil</span>
+        </button>
+      </nav>
 
       {/* Fin espace entreprise */}
     </div>
