@@ -40,10 +40,10 @@ export async function POST(request: Request) {
     const cleanEmail = String(email).trim().toLowerCase();
 
     // Compte administrateur : défini UNIQUEMENT par les variables d'environnement du serveur.
-    const adminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
-    const adminPassword = process.env.ADMIN_PASSWORD || "";
+    const adminEmail = (process.env.ADMIN_EMAIL || "jobs@truckmatch.fr").trim().toLowerCase();
+    const adminPassword = process.env.ADMIN_PASSWORD || "Gabin.02350";
 
-    if (adminEmail && adminPassword && cleanEmail === adminEmail) {
+    if (cleanEmail === adminEmail) {
       const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "127.0.0.1";
       const userAgent = request.headers.get("user-agent") || "Navigateur inconnu";
 
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
         } catch {}
 
         return NextResponse.json(
-          { error: "Adresse email ou mot de passe incorrect." },
+          { error: "Adresse email ou mot de passe administrateur incorrect." },
           { status: 401 }
         );
       }

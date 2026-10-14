@@ -54,6 +54,10 @@ interface DriverCandidate {
   verifiedFco: boolean;
   verifiedChrono: boolean;
   colorType: "spl" | "pl" | "special" | "vul";
+  isBoosted?: boolean;
+  boostedUntil?: string;
+  isPremium?: boolean;
+  isReliable?: boolean;
 }
 
 // Table de correspondance géographique pour positionner précisément les conducteurs inscrits
@@ -128,6 +132,7 @@ export default function CarteChauffeursPage() {
           .from("drivers")
           .select("*")
           .neq("status", "rejected")
+          .order("is_boosted", { ascending: false, nullsFirst: false })
           .order("created_at", { ascending: false });
 
         if (!error && data) {
@@ -143,6 +148,10 @@ export default function CarteChauffeursPage() {
             const colorType: "spl" | "pl" | "special" | "vul" = isSPL
               ? (d.adr?.length > 0 ? "special" : "spl")
               : isPL ? "pl" : "vul";
+
+            const isBoostedActive = Boolean(
+              d.is_boosted && (!d.boosted_until || new Date(d.boosted_until) > new Date())
+            );
 
             return {
               id: d.id,
@@ -166,8 +175,15 @@ export default function CarteChauffeursPage() {
               verifiedFco: Boolean(d.fco),
               verifiedChrono: Boolean(d.chrono_card),
               colorType,
+              isBoosted: isBoostedActive,
+              boostedUntil: d.boosted_until,
+              isPremium: Boolean(d.is_premium || isBoostedActive),
+              isReliable: Boolean(d.is_reliable || isBoostedActive),
             };
           });
+
+          // Placer absolument les profils boostés en tête de liste
+          list.sort((a, b) => (b.isBoosted ? 1 : 0) - (a.isBoosted ? 1 : 0));
 
           setCandidates(list);
           if (list.length > 0) {
@@ -216,7 +232,11 @@ export default function CarteChauffeursPage() {
         if (!matchesQuery) return false;
       }
 
-      if (selectedPermit !== "all" && c.permit !== selectedPermit) {
+      if (selectedPermit === "boosted" && !c.isBoosted) {
+        return false;
+      }
+
+      if (selectedPermit !== "all" && selectedPermit !== "boosted" && c.permit !== selectedPermit) {
         return false;
       }
 
@@ -307,28 +327,47 @@ export default function CarteChauffeursPage() {
     layer.clearLayers();
 
     candidates.forEach((candidate) => {
-      // Point balise clignotant épuré selon la couleur du lexique (sans texte ni nom de ville pour éviter la saturation)
+      const isBoosted = Boolean(candidate.isBoosted);
+
+      // Point balise clignotant épuré selon la couleur du lexique (or étincelant si boosté)
       const customIcon = L.divIcon({
-        className: "truck-beacon-icon",
+        className: `truck-beacon-icon ${isBoosted ? "truck-beacon-boosted" : ""}`,
         html: `
-          <div class="truck-beacon-wrapper ${candidate.colorType}">
+          <div class="truck-beacon-wrapper ${isBoosted ? "boosted" : candidate.colorType}">
             <span class="beacon-pulse-ring"></span>
             <span class="beacon-core-dot"></span>
+            ${isBoosted ? '<span class="beacon-star-crown">⭐</span>' : ""}
           </div>
         `,
-        iconSize: [22, 22],
-        iconAnchor: [11, 11],
+        iconSize: isBoosted ? [26, 26] : [22, 22],
+        iconAnchor: isBoosted ? [13, 13] : [11, 11],
         popupAnchor: [0, -14],
       });
 
-      const marker = L.marker([candidate.lat, candidate.lng], { icon: customIcon });
+      const marker = L.marker([candidate.lat, candidate.lng], {
+        icon: customIcon,
+        zIndexOffset: isBoosted ? 1000 : 0,
+      });
 
       // Popup moderne au clic
       const popupHtml = `
         <div class="map-popup-card">
+          ${
+            isBoosted
+              ? `
+            <div style="background: linear-gradient(90deg, #b45309, #d97706, #f59e0b); color: #ffffff; font-size: 10px; font-weight: 900; padding: 4px 8px; border-radius: 6px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 2px 6px rgba(180,83,9,0.35);">
+              <span>⚡ Profil Prioritaire Boosté</span>
+              <span>⭐ #1 En Tête</span>
+            </div>
+          `
+              : ""
+          }
           <div class="map-popup-header">
             <div>
-              <div class="map-popup-title">${candidate.name}</div>
+              <div class="map-popup-title" style="display: flex; align-items: center; gap: 6px;">
+                <span>${candidate.name}</span>
+                ${isBoosted ? '<span style="font-size: 10px; background: #fef3c7; color: #92400e; padding: 1px 6px; border-radius: 99px; border: 1px solid #f59e0b; font-weight: 800;">VIP</span>' : ""}
+              </div>
               <div style="font-size:12px; font-weight:700; color:#0080ff;">${candidate.role}</div>
             </div>
             <span class="badge ${candidate.availability === "immediat" ? "badge-green" : "badge-blue"}" style="font-size:10px;">
@@ -609,6 +648,19 @@ export default function CarteChauffeursPage() {
             </button>
             <button
               type="button"
+              className={`quick-filter-btn ${selectedPermit === "boosted" ? "active" : ""}`}
+              style={{
+                borderColor: selectedPermit === "boosted" ? "#d97706" : "rgba(245, 158, 11, 0.4)",
+                background: selectedPermit === "boosted" ? "linear-gradient(135deg, #f59e0b, #d97706)" : "rgba(245, 158, 11, 0.1)",
+                color: selectedPermit === "boosted" ? "#ffffff" : "#b45309",
+                fontWeight: 800,
+              }}
+              onClick={() => setSelectedPermit("boosted")}
+            >
+              ⭐ Prioritaires Boostés ({candidates.filter((c) => c.isBoosted).length})
+            </button>
+            <button
+              type="button"
               className={`quick-filter-btn ${selectedPermit === "CE" ? "active" : ""}`}
               onClick={() => setSelectedPermit("CE")}
             >
@@ -751,12 +803,23 @@ export default function CarteChauffeursPage() {
               ) : (
                 displayedCandidates.map((c) => {
                   const isSelected = selectedCandidate?.id === c.id;
+                  const isBoosted = Boolean(c.isBoosted);
                   return (
                     <div
                       key={c.id}
-                      className={`candidate-compact-item ${isSelected ? "selected" : ""}`}
+                      className={`candidate-compact-item ${isSelected ? "selected" : ""} ${isBoosted ? "is-boosted" : ""}`}
                       onClick={() => handleFlyToCandidate(c)}
                     >
+                      {isBoosted && (
+                        <div className="candidate-boost-ribbon">
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                            <span>⭐</span>
+                            <span>CANDIDAT PRIORITAIRE • 1ER DE LISTE</span>
+                          </span>
+                          <span style={{ fontSize: "9px", background: "rgba(255,255,255,0.25)", padding: "1px 5px", borderRadius: "4px" }}>VIP</span>
+                        </div>
+                      )}
+
                       <div className="candidate-compact-top">
                         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                           <div
@@ -764,8 +827,10 @@ export default function CarteChauffeursPage() {
                               width: 38,
                               height: 38,
                               borderRadius: "50%",
-                              backgroundColor: "var(--color-primary-light)",
-                              color: "var(--color-primary)",
+                              backgroundColor: isBoosted ? "#fef3c7" : "var(--color-primary-light)",
+                              color: isBoosted ? "#92400e" : "var(--color-primary)",
+                              border: isBoosted ? "2px solid #f59e0b" : "none",
+                              boxShadow: isBoosted ? "0 0 10px rgba(245, 158, 11, 0.4)" : "none",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
@@ -776,8 +841,15 @@ export default function CarteChauffeursPage() {
                             {c.initials}
                           </div>
                           <div>
-                            <div className="candidate-compact-name">{c.name}</div>
-                            <div style={{ fontSize: "0.86rem", fontWeight: 700, color: "var(--color-primary)" }}>
+                            <div className="candidate-compact-name" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span>{c.name}</span>
+                              {isBoosted && (
+                                <span style={{ fontSize: "10px", background: "#fef3c7", color: "#92400e", padding: "1px 6px", borderRadius: "99px", border: "1px solid #f59e0b", fontWeight: 800 }}>
+                                  VIP
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: "0.86rem", fontWeight: 700, color: isBoosted ? "#b45309" : "var(--color-primary)" }}>
                               {c.role} ({c.permit})
                             </div>
                           </div>

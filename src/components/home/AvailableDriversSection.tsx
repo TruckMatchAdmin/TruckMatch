@@ -15,6 +15,8 @@ import {
   Navigation,
   Clock,
   Sparkles,
+  Zap,
+  Crown,
 } from "lucide-react";
 
 interface HomeDriver {
@@ -30,6 +32,9 @@ interface HomeDriver {
   specialties: string[];
   bio?: string;
   is_verified?: boolean;
+  is_boosted?: boolean;
+  is_premium?: boolean;
+  is_reliable?: boolean;
 }
 
 export function AvailableDriversSection() {
@@ -43,30 +48,43 @@ export function AvailableDriversSection() {
           .from("drivers")
           .select("*")
           .neq("status", "rejected")
+          .order("is_boosted", { ascending: false, nullsFirst: false })
           .order("created_at", { ascending: false })
           .limit(10);
 
         if (!error && data && data.length > 0) {
-          const dbDrivers: HomeDriver[] = data.map((d: any) => ({
-            id: d.id,
-            initials: `${(d.first_name || "C")[0]}${(d.last_name || "D")[0]}`.toUpperCase(),
-            name: `${d.first_name || "Chauffeur"} ${(d.last_name || "").slice(0, 1)}.`,
-            role: d.permits?.includes("CE")
-              ? "Conducteur Routier SPL"
-              : d.permits?.includes("C")
-              ? "Chauffeur Distribution PL"
-              : "Conducteur Professionnel",
-            permit: d.permits?.[0] || "CE",
-            city: d.city || "France",
-            department: d.postal_code?.slice(0, 2) || "Région",
-            availability: d.availability === "immediate" ? "Immédiat" : "Sous 48h",
-            experienceYears: parseInt(d.experience_years) || (d.experience === "5+" ? 7 : d.experience === "3-5" ? 4 : 2),
-            specialties: Array.isArray(d.specialties) && d.specialties.length > 0
-              ? d.specialties
-              : ["FCO Valide", "Carte Chrono", "Ponctuel"],
-            bio: d.bio || "Conducteur qualifié disponible pour missions de transport.",
-            is_verified: true,
-          }));
+          const dbDrivers: HomeDriver[] = data.map((d: any) => {
+            const isBoostedActive = Boolean(
+              d.is_boosted && (!d.boosted_until || new Date(d.boosted_until) > new Date())
+            );
+
+            return {
+              id: d.id,
+              initials: `${(d.first_name || "C")[0]}${(d.last_name || "D")[0]}`.toUpperCase(),
+              name: `${d.first_name || "Chauffeur"} ${(d.last_name || "").slice(0, 1)}.`,
+              role: d.permits?.includes("CE")
+                ? "Conducteur Routier SPL"
+                : d.permits?.includes("C")
+                ? "Chauffeur Distribution PL"
+                : "Conducteur Professionnel",
+              permit: d.permits?.[0] || "CE",
+              city: d.city || "France",
+              department: d.postal_code?.slice(0, 2) || "Région",
+              availability: d.availability === "immediate" ? "Immédiat" : "Sous 48h",
+              experienceYears: parseInt(d.experience_years) || (d.experience === "5+" ? 7 : d.experience === "3-5" ? 4 : 2),
+              specialties: Array.isArray(d.specialties) && d.specialties.length > 0
+                ? d.specialties
+                : ["FCO Valide", "Carte Chrono", "Ponctuel"],
+              bio: d.bio || "Conducteur qualifié disponible pour missions de transport.",
+              is_verified: true,
+              is_boosted: isBoostedActive,
+              is_premium: Boolean(d.is_premium || isBoostedActive),
+              is_reliable: Boolean(d.is_reliable || isBoostedActive),
+            };
+          });
+
+          // Trier les conducteurs boostés en toute première position
+          dbDrivers.sort((a, b) => (b.is_boosted ? 1 : 0) - (a.is_boosted ? 1 : 0));
 
           setDrivers(dbDrivers);
         } else {
@@ -148,18 +166,37 @@ export function AvailableDriversSection() {
         ) : (
           <div className="drivers-showcase-grid">
           {drivers.map((driver) => (
-            <div key={driver.id} className="driver-showcase-card">
+            <div
+              key={driver.id}
+              className={`driver-showcase-card ${driver.is_boosted ? "is-boosted" : ""}`}
+            >
+              {driver.is_boosted && (
+                <div className="driver-boosted-ribbon">
+                  <div className="flex items-center gap-1.5">
+                    <Zap size={12} className="text-amber-300 fill-amber-300 animate-bounce" />
+                    <span className="font-extrabold tracking-wide">CANDIDAT PRIORITAIRE • 1ER DE LISTE</span>
+                  </div>
+                  <Crown size={13} className="text-amber-200 shrink-0" />
+                </div>
+              )}
+
               <div className="driver-showcase-card-top">
                 <div className="driver-avatar-box">
-                  <div className="driver-avatar-circle-sm">
+                  <div className={`driver-avatar-circle-sm ${driver.is_boosted ? "boosted-avatar" : ""}`}>
                     {driver.initials}
                   </div>
-                  <span className="driver-online-dot" title="Profil Actif" />
+                  <span className={`driver-online-dot ${driver.is_boosted ? "boosted-dot" : ""}`} title="Profil Actif & Disponible" />
                 </div>
 
                 <div className="driver-identity-meta">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <h3 className="driver-showcase-name">{driver.name}</h3>
+                    {driver.is_boosted && (
+                      <span className="badge-boost-vip-pill" title="Profil Recommandé VIP">
+                        <Sparkles size={10} />
+                        <span>VIP</span>
+                      </span>
+                    )}
                     <span className="badge-permit-pill">
                       {driver.permit}
                     </span>
@@ -167,7 +204,7 @@ export function AvailableDriversSection() {
                   <p className="driver-showcase-role">{driver.role}</p>
                 </div>
 
-                <span className="badge-avail-pill">
+                <span className={`badge-avail-pill ${driver.is_boosted ? "badge-avail-boosted" : ""}`}>
                   <span className="avail-pulse-dot" />
                   <span>{driver.availability}</span>
                 </span>

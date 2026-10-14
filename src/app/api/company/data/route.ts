@@ -33,17 +33,25 @@ export async function GET(request: Request) {
       .from("drivers")
       .select("*")
       .neq("status", "rejected")
+      .order("is_boosted", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false });
 
     if (driverErr) {
       console.error("Company data drivers error:", driverErr);
     }
 
-    const driversList = (drivers || []).map((d: any) => {
-      const copy = { ...d };
-      for (const f of PRIVATE_DRIVER_FIELDS) delete copy[f];
-      return copy;
-    });
+    const now = new Date();
+    const driversList = (drivers || [])
+      .map((d: any) => {
+        const copy = { ...d };
+        for (const f of PRIVATE_DRIVER_FIELDS) delete copy[f];
+        // Flag actif de boost
+        copy.is_boosted_active = Boolean(
+          d.is_boosted && (!d.boosted_until || new Date(d.boosted_until) > now)
+        );
+        return copy;
+      })
+      .sort((a: any, b: any) => (b.is_boosted_active ? 1 : 0) - (a.is_boosted_active ? 1 : 0));
 
     // 4. Uniquement les offres de CETTE entreprise
     let companyJobs: any[] = [];
@@ -58,6 +66,7 @@ export async function GET(request: Request) {
 
     const stats = {
       totalDrivers: driversList.length,
+      boostedDrivers: driversList.filter((d: any) => d.is_boosted_active).length,
       ceDrivers: driversList.filter((d: any) => d.permits?.includes("CE")).length,
       cDrivers: driversList.filter((d: any) => d.permits?.includes("C")).length,
       withResume: driversList.filter((d: any) => d.resume_url).length,

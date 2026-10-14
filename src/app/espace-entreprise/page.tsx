@@ -61,6 +61,11 @@ interface Driver {
   experience_years?: string;
   bio?: string;
   created_at: string;
+  is_boosted?: boolean;
+  boosted_until?: string;
+  is_boosted_active?: boolean;
+  is_reliable?: boolean;
+  is_premium?: boolean;
 }
 
 export default function CompanyPortalPage() {
@@ -71,6 +76,7 @@ export default function CompanyPortalPage() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [stats, setStats] = useState({
     totalDrivers: 0,
+    boostedDrivers: 0,
     ceDrivers: 0,
     cDrivers: 0,
     withResume: 0,
@@ -78,7 +84,7 @@ export default function CompanyPortalPage() {
   });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "ce" | "c" | "immediate" | "resume" | "adr">("all");
+  const [filterType, setFilterType] = useState<"all" | "boosted" | "ce" | "c" | "immediate" | "resume" | "adr">("all");
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [activeNav, setActiveNav] = useState<"drivers" | "jobs" | "create-job" | "profile" | "billing">("drivers");
   const [jobs, setJobs] = useState<any[]>([]);
@@ -257,6 +263,7 @@ export default function CompanyPortalPage() {
 
   // Filtrage conducteurs
   const filteredDrivers = drivers.filter((d) => {
+    if (filterType === "boosted" && !d.is_boosted_active && !d.is_boosted) return false;
     if (filterType === "ce" && !d.permits?.includes("CE")) return false;
     if (filterType === "c" && !d.permits?.includes("C")) return false;
     if (filterType === "immediate" && d.availability !== "immediate") return false;
@@ -1106,6 +1113,19 @@ export default function CompanyPortalPage() {
               </button>
               <button
                 type="button"
+                onClick={() => setFilterType("boosted")}
+                className={`candidates-filter-pill ${filterType === "boosted" ? "active" : ""}`}
+                style={{
+                  background: filterType === "boosted" ? "linear-gradient(135deg, #f59e0b, #d97706)" : "rgba(245, 158, 11, 0.12)",
+                  borderColor: filterType === "boosted" ? "#f59e0b" : "rgba(245, 158, 11, 0.4)",
+                  color: filterType === "boosted" ? "#ffffff" : "#fbbf24",
+                  fontWeight: 800,
+                }}
+              >
+                ⭐ Profils Prioritaires Boostés ({stats.boostedDrivers || drivers.filter((d) => d.is_boosted_active || d.is_boosted).length})
+              </button>
+              <button
+                type="button"
                 onClick={() => setFilterType("ce")}
                 className={`candidates-filter-pill ${filterType === "ce" ? "active" : ""}`}
               >
@@ -1220,11 +1240,27 @@ export default function CompanyPortalPage() {
               <tbody>
                 {filteredDrivers.map((d) => {
                   const isUnlocked = unlockedDriverIds.includes(d.id);
+                  const isBoosted = Boolean(d.is_boosted_active || d.is_boosted);
                   return (
-                    <tr key={d.id}>
+                    <tr
+                      key={d.id}
+                      style={{
+                        background: isBoosted ? "linear-gradient(90deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.02) 100%)" : undefined,
+                        borderLeft: isBoosted ? "3px solid #f59e0b" : undefined,
+                      }}
+                    >
                       <td>
-                        <div className="font-bold text-white text-sm tracking-tight mb-1 flex items-center gap-1.5">
+                        <div className="font-bold text-white text-sm tracking-tight mb-1 flex items-center gap-1.5 flex-wrap">
                           <span>{d.first_name} {d.last_name}</span>
+                          {isBoosted && (
+                            <span
+                              className="text-[10px] bg-amber-950 text-amber-300 px-2 py-0.5 rounded-full font-extrabold border border-amber-500/60 flex items-center gap-1 shadow-sm"
+                              title="Candidat Prioritaire Boosté • En 1ère position des recherches"
+                            >
+                              <Sparkles size={10} className="text-amber-400" />
+                              <span>BOOSTÉ • 1ER DE LISTE</span>
+                            </span>
+                          )}
                           {isUnlocked && (
                             <span className="text-[10px] bg-emerald-950 text-emerald-400 px-1.5 py-0.5 rounded font-extrabold border border-emerald-800" title="Profil débloqué avec succès">
                               ✓ Débloqué
@@ -1232,9 +1268,15 @@ export default function CompanyPortalPage() {
                           )}
                         </div>
                         <div className="text-xs text-slate-400">
-                          {d.birth_date
-                            ? `Né(e) le ${new Date(d.birth_date).toLocaleDateString("fr-FR")}`
-                            : "Conducteur Professionnel"}
+                          {isBoosted ? (
+                            <span className="text-amber-400 font-bold text-[11px] flex items-center gap-1">
+                              ⚡ Profil Recommandé &amp; En Tête de Liste
+                            </span>
+                          ) : d.birth_date ? (
+                            `Né(e) le ${new Date(d.birth_date).toLocaleDateString("fr-FR")}`
+                          ) : (
+                            "Conducteur Professionnel"
+                          )}
                         </div>
                       </td>
                       <td>
