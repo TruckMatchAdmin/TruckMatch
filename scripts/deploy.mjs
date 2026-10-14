@@ -6,7 +6,15 @@ const REMOTE_DIR = "/var/www/truckmatch";
 console.log("🚀 Début du déploiement vers le VPS OVH (TruckMatch)...");
 
 try {
-  console.log("📦 1. Push des commits locaux vers origin/main...");
+  console.log("📦 1. Vérification et commit des modifications locales...");
+  try {
+    execSync("git add -A", { stdio: "inherit" });
+    execSync('git commit -m "chore: auto-deploy update"', { stdio: "inherit" });
+  } catch {
+    // Rien à committer
+  }
+
+  console.log("⬆️  2. Push des commits locaux vers origin/main...");
   execSync("git push origin main", { stdio: "inherit" });
 
   console.log("🌐 2. Connexion SSH et mise à jour sur le serveur...");
