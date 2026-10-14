@@ -254,9 +254,11 @@
   border: 2px solid #f59e0b !important;
   background: linear-gradient(180deg, #fffdf5 0%, #ffffff 35%) !important;
   box-shadow: 0 8px 30px rgba(245, 158, 11, 0.22), 0 0 0 1px rgba(245, 158, 11, 0.15) !important;
-  padding-top: 2.25rem !important;
+  padding-top: 2.35rem !important;
   position: relative !important;
   overflow: hidden !important;
+  min-height: auto !important;
+  flex-shrink: 0 !important;
 }
 
 .driver-showcase-card.is-boosted:hover {
