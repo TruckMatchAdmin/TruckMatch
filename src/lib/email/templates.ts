@@ -6,7 +6,14 @@
 export interface EmailTrackingPayload {
   trackingId: string;
   recipientEmail: string;
-  emailType: "welcome_driver" | "welcome_company" | "payment_subscription" | "payment_driver_boost" | "support_message_notification";
+  emailType:
+    | "welcome_driver"
+    | "welcome_company"
+    | "payment_subscription"
+    | "payment_driver_boost"
+    | "support_message_notification"
+    | "candidate_application"
+    | "candidate_application_receipt";
   subject: string;
   sentAt: string;
 }
@@ -526,4 +533,198 @@ export function renderNewSupportMessageEmail({
     html: getEmailLayout({ title: subject, preheader, contentHtml, trackingToken }),
   };
 }
+
+/**
+ * 6. Email de présentation de candidature transmis à l'entreprise / recruteur
+ */
+export function renderCandidateApplicationEmail({
+  companyName,
+  jobTitle,
+  candidateName,
+  candidateEmail,
+  candidatePhone,
+  candidateCity,
+  permits = [],
+  fimo = false,
+  fco = false,
+  chronoCard = false,
+  experience = "",
+  message = "",
+  resumeUrl,
+  trackingToken,
+}: {
+  companyName: string;
+  jobTitle: string;
+  candidateName: string;
+  candidateEmail: string;
+  candidatePhone: string;
+  candidateCity?: string;
+  permits?: string[];
+  fimo?: boolean;
+  fco?: boolean;
+  chronoCard?: boolean;
+  experience?: string;
+  message?: string;
+  resumeUrl?: string;
+  trackingToken: string;
+}): { subject: string; html: string } {
+  const cleanName = candidateName ? candidateName.trim() : "Un conducteur routier";
+  const permitBadges = permits.length > 0 ? permits.join(", ") : "Non spécifié";
+  const subject = `🚚 Candidature Chauffeur : ${cleanName} (${permitBadges}) pour ${jobTitle}`;
+  const preheader = `Nouvelle candidature qualifiée transmise via TruckMatch pour votre offre ${jobTitle}`;
+
+  const cleanMessage = message ? message.trim() : "";
+
+  const contentHtml = `
+    <div class="tag-pill" style="background-color:#ecfdf5; color:#047857; border:1px solid #a7f3d0;">
+      ✨ NOUVELLE CANDIDATURE TRUCKMATCH
+    </div>
+
+    <h1 style="font-size:22px; font-weight:800; color:#0f172a; margin:0 0 14px 0; line-height:1.3;">
+      Nouvelle candidature pour : <span style="color:#0284c7;">${jobTitle}</span>
+    </h1>
+
+    <p style="margin:0 0 18px 0; font-size:15px; color:#334155; line-height:1.5;">
+      Bonjour <strong>${companyName}</strong>,<br>
+      Un conducteur routier disponible vient de postuler directement à votre opportunité via la plateforme <strong>TruckMatch</strong>. Voici la synthèse de son profil :
+    </p>
+
+    <!-- Fiche Conducteur Qualifiée -->
+    <div style="background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:20px; margin:20px 0;">
+      <table style="width:100%; border-collapse:collapse;">
+        <tr>
+          <td style="padding:6px 0; font-size:13px; color:#64748b; width:130px;">Candidat :</td>
+          <td style="padding:6px 0; font-size:15px; font-weight:700; color:#0f172a;">${cleanName}</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0; font-size:13px; color:#64748b;">Localisation :</td>
+          <td style="padding:6px 0; font-size:14px; font-weight:600; color:#1e293b;">${candidateCity || "France"}</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0; font-size:13px; color:#64748b;">Permis détenus :</td>
+          <td style="padding:6px 0; font-size:14px; font-weight:700; color:#0284c7;">${permitBadges}</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0; font-size:13px; color:#64748b;">Expérience :</td>
+          <td style="padding:6px 0; font-size:14px; font-weight:600; color:#1e293b;">${experience || "Expérimenté"}</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0; font-size:13px; color:#64748b;">Conformité FIMO/FCO :</td>
+          <td style="padding:6px 0; font-size:14px; font-weight:600; color:#059669;">
+            ${fimo || fco ? "✅ FIMO/FCO Marchandises à jour" : "À vérifier lors de l'entretien"}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0; font-size:13px; color:#64748b;">Carte conducteur :</td>
+          <td style="padding:6px 0; font-size:14px; font-weight:600; color:#059669;">
+            ${chronoCard ? "✅ Carte chrononumérique valide" : "À vérifier"}
+          </td>
+        </tr>
+      </table>
+
+      ${cleanMessage ? `
+      <div style="margin-top:16px; padding-top:14px; border-top:1px dashed #cbd5e1;">
+        <div style="font-size:12px; font-weight:700; color:#475569; text-transform:uppercase; margin-bottom:6px;">Mot du candidat :</div>
+        <div style="font-size:14px; color:#1e293b; font-style:italic; line-height:1.5;">"${cleanMessage}"</div>
+      </div>
+      ` : ""}
+    </div>
+
+    <!-- Contact Direct Rapide -->
+    <div style="background-color:#f0fdf4; border:1px solid #86efac; border-radius:10px; padding:18px 20px; margin:20px 0; text-align:center;">
+      <p style="margin:0 0 12px 0; font-size:14px; font-weight:700; color:#166534;">
+        📞 Contact direct avec le candidat :
+      </p>
+      <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap; text-align:center;">
+        <a href="tel:${candidatePhone}" style="padding:12px 24px; font-size:15px; font-weight:800; background-color:#16a34a; color:#ffffff !important; border-radius:8px; text-decoration:none; display:inline-block; margin:4px;">
+          Appeler : ${candidatePhone}
+        </a>
+        <a href="mailto:${candidateEmail}?subject=Suite à votre candidature TruckMatch - ${encodeURIComponent(jobTitle)}" style="padding:12px 24px; font-size:15px; font-weight:800; background-color:#0284c7; color:#ffffff !important; border-radius:8px; text-decoration:none; display:inline-block; margin:4px;">
+          Répondre par email (${candidateEmail})
+        </a>
+      </div>
+      ${resumeUrl ? `
+      <div style="margin-top:14px;">
+        <a href="${resumeUrl}" target="_blank" style="font-size:13px; font-weight:700; color:#0369a1; text-decoration:underline;">
+          📄 Télécharger le CV du conducteur
+        </a>
+      </div>
+      ` : ""}
+    </div>
+
+    <!-- Présentation TruckMatch -->
+    <div class="highlight-card" style="background-color:#f8fafc; border:1px solid #cbd5e1; margin-top:24px;">
+      <div style="font-size:13px; color:#475569; line-height:1.5;">
+        🚛 <strong>Transmis gratuitement par TruckMatch :</strong> La plateforme française dédiée au recrutement et à la mise en relation directe des professionnels du transport routier. Recrutez vos prochains conducteurs qualifiés sur <a href="${SITE_URL}" style="color:#0284c7; font-weight:700;">truckmatch.fr</a>.
+      </div>
+    </div>
+  `;
+
+  return {
+    subject,
+    html: getEmailLayout({ title: subject, preheader, contentHtml, trackingToken }),
+  };
+}
+
+/**
+ * 7. Email d'accusé de réception pour le candidat
+ */
+export function renderCandidateApplicationReceiptEmail({
+  candidateName,
+  jobTitle,
+  companyName,
+  destinationEmail,
+  trackingToken,
+}: {
+  candidateName: string;
+  jobTitle: string;
+  companyName: string;
+  destinationEmail?: string;
+  trackingToken: string;
+}): { subject: string; html: string } {
+  const cleanName = candidateName ? candidateName.trim() : "Conducteur";
+  const subject = `✅ Candidature transmise avec succès à ${companyName}`;
+  const preheader = `Votre candidature pour le poste de ${jobTitle} a bien été remise à ${companyName}`;
+
+  const contentHtml = `
+    <div class="tag-pill" style="background-color:#ecfdf5; color:#047857; border:1px solid #a7f3d0;">
+      ✅ CANDIDATURE CONFIRMÉE
+    </div>
+
+    <h1 style="font-size:22px; font-weight:800; color:#0f172a; margin:0 0 16px 0; line-height:1.3;">
+      Bravo ${cleanName}, votre candidature est envoyée !
+    </h1>
+
+    <p style="margin:0 0 16px 0; font-size:15px; color:#334155; line-height:1.5;">
+      Votre profil et vos coordonnées ont été transmis avec succès au service recrutement de <strong>${companyName}</strong> pour l'offre :
+    </p>
+
+    <div style="background-color:#f8fafc; border-left:4px solid #10b981; border-radius:6px; padding:14px 18px; margin:18px 0;">
+      <div style="font-size:15px; font-weight:700; color:#0f172a;">${jobTitle}</div>
+      <div style="font-size:13px; color:#64748b; margin-top:4px;">Entreprise : ${companyName}</div>
+    </div>
+
+    <p style="margin:0 0 16px 0; font-size:14px; color:#475569; line-height:1.5;">
+      Le recruteur dispose désormais de votre numéro de téléphone et de votre synthèse de compétences. Si votre profil correspond aux tournées prévues, il vous contactera directement par téléphone ou email.
+    </p>
+
+    <div style="text-align:center; margin:26px 0;">
+      <a href="${SITE_URL}/espace-candidat" class="cta-btn" target="_blank" style="padding:14px 32px; font-size:15px; font-weight:800; background-color:#10b981; color:#ffffff !important; border-radius:8px; text-decoration:none; display:inline-block;">
+        Accéder à mon espace candidat →
+      </a>
+    </div>
+
+    <div class="highlight-card" style="background-color:#f0fdf4; border:1px solid #bbf7d0; margin-top:20px;">
+      <div style="font-size:13px; color:#166534; line-height:1.5;">
+        💡 <strong>Conseil TruckMatch :</strong> Gardez votre téléphone à portée de main durant les jours ouvrés et vérifiez que votre répondeur est accueillant pour maximiser vos chances d'embauche !
+      </div>
+    </div>
+  `;
+
+  return {
+    subject,
+    html: getEmailLayout({ title: subject, preheader, contentHtml, trackingToken }),
+  };
+}
+
 

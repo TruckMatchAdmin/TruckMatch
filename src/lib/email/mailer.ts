@@ -8,6 +8,8 @@ import {
   renderPaymentCompanyEmail,
   renderPaymentDriverBoostEmail,
   renderNewSupportMessageEmail,
+  renderCandidateApplicationEmail,
+  renderCandidateApplicationReceiptEmail,
   EmailTrackingPayload,
 } from "./templates";
 
@@ -349,6 +351,118 @@ export async function sendNewSupportMessageToDriverEmail({
   });
 }
 
+/**
+ * 6. Envoi de la candidature du chauffeur directement à l'entreprise / recruteur
+ */
+export async function sendCandidateApplicationEmail({
+  to,
+  companyName,
+  jobTitle,
+  candidateName,
+  candidateEmail,
+  candidatePhone,
+  candidateCity,
+  permits = [],
+  fimo = false,
+  fco = false,
+  chronoCard = false,
+  experience = "",
+  message = "",
+  resumeUrl,
+}: {
+  to: string;
+  companyName: string;
+  jobTitle: string;
+  candidateName: string;
+  candidateEmail: string;
+  candidatePhone: string;
+  candidateCity?: string;
+  permits?: string[];
+  fimo?: boolean;
+  fco?: boolean;
+  chronoCard?: boolean;
+  experience?: string;
+  message?: string;
+  resumeUrl?: string;
+}) {
+  const trackingId = `app_ent_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const trackingToken = createTrackingToken({
+    trackingId,
+    recipientEmail: to,
+    emailType: "candidate_application",
+    subject: `Candidature TruckMatch : ${candidateName} pour ${jobTitle}`,
+    sentAt: new Date().toISOString(),
+  });
+
+  const { subject, html } = renderCandidateApplicationEmail({
+    companyName,
+    jobTitle,
+    candidateName,
+    candidateEmail,
+    candidatePhone,
+    candidateCity,
+    permits,
+    fimo,
+    fco,
+    chronoCard,
+    experience,
+    message,
+    resumeUrl,
+    trackingToken,
+  });
+
+  return sendTrackedEmail({
+    to,
+    subject,
+    html,
+    emailType: "candidate_application",
+    recipientType: "company",
+    metadata: { companyName, jobTitle, candidateName, candidateEmail, candidatePhone },
+  });
+}
+
+/**
+ * 7. Envoi de l'accusé de réception au candidat
+ */
+export async function sendCandidateApplicationReceiptEmail({
+  to,
+  candidateName,
+  jobTitle,
+  companyName,
+  destinationEmail,
+}: {
+  to: string;
+  candidateName: string;
+  jobTitle: string;
+  companyName: string;
+  destinationEmail?: string;
+}) {
+  const trackingId = `app_drv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const trackingToken = createTrackingToken({
+    trackingId,
+    recipientEmail: to,
+    emailType: "candidate_application_receipt",
+    subject: `Candidature confirmée pour ${jobTitle}`,
+    sentAt: new Date().toISOString(),
+  });
+
+  const { subject, html } = renderCandidateApplicationReceiptEmail({
+    candidateName,
+    jobTitle,
+    companyName,
+    destinationEmail,
+    trackingToken,
+  });
+
+  return sendTrackedEmail({
+    to,
+    subject,
+    html,
+    emailType: "candidate_application_receipt",
+    recipientType: "driver",
+    metadata: { jobTitle, companyName, destinationEmail },
+  });
+}
 
 /**
  * Vérifier la connexion SMTP

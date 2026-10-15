@@ -21,7 +21,9 @@ import {
   UserCheck,
   Building2,
   Calendar,
+  Send,
 } from "lucide-react";
+import ApplyJobModal, { ApplyModalJobData } from "@/components/jobs/ApplyJobModal";
 
 export default function OffresEmploiPage() {
   const [dbJobs, setDbJobs] = useState<JobOffer[]>([]);
@@ -29,6 +31,7 @@ export default function OffresEmploiPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedContract, setSelectedContract] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedJobForApply, setSelectedJobForApply] = useState<ApplyModalJobData | null>(null);
 
   const seoTags = [
     { label: "Chauffeur SPL Régional CDI", href: "/chauffeurs/spl" },
@@ -89,6 +92,8 @@ export default function OffresEmploiPage() {
       j.contract_type,
       ...(Array.isArray(j.requirements) ? j.requirements.slice(0, 2) : []),
     ].filter(Boolean),
+    apply_url: j.apply_url,
+    contact_email: j.contact_email,
   }));
 
   const filteredJobs = allAvailableOffers.filter((j) => {
@@ -341,10 +346,24 @@ export default function OffresEmploiPage() {
                     </div>
 
                     <div className="job-actions-wrap">
-                      <Link href={`/contact?job=${encodeURIComponent(job.title)}`} className="btn btn-primary btn-sm">
-                        <span>Postuler en direct</span>
-                        <ArrowRight size={14} />
-                      </Link>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedJobForApply({
+                            id: job.id,
+                            title: job.title,
+                            company_name: job.company,
+                            location_city: job.city,
+                            location_department: job.dept,
+                            category: job.category,
+                            apply_url: job.apply_url,
+                          })
+                        }
+                        className="btn btn-primary btn-sm flex items-center gap-1.5"
+                      >
+                        <Send size={13} />
+                        <span>Postuler avec TruckMatch</span>
+                      </button>
                       <Link href={`/contact?job=${encodeURIComponent(job.title)}`} className="btn btn-outline btn-sm">
                         <span>Demander des infos</span>
                       </Link>
@@ -437,6 +456,13 @@ export default function OffresEmploiPage() {
           </div>
         </div>
       </section>
+
+      {/* Modale de Candidature Directe TruckMatch */}
+      <ApplyJobModal
+        job={selectedJobForApply}
+        isOpen={!!selectedJobForApply}
+        onClose={() => setSelectedJobForApply(null)}
+      />
     </div>
   );
 }
