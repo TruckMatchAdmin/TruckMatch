@@ -27,7 +27,9 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: `Synchronisation réussie : ${result.inserted} nouvelles offres ajoutées, ${result.updated} actualisées. Total actif : ${result.total} offres.`,
-      ...result,
+      inserted: result.inserted,
+      updated: result.updated,
+      total: result.total,
     });
   } catch (err: any) {
     console.error("[API Jobs Sync] Erreur:", err);
