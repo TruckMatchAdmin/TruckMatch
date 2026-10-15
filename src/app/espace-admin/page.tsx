@@ -98,6 +98,8 @@ export default function AdminDashboardPage() {
   const [drivers, setDrivers] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [jobs, setJobs] = useState<any[]>([]);
+  const [syncJobsLoading, setSyncJobsLoading] = useState(false);
+  const [syncJobsSuccess, setSyncJobsSuccess] = useState<string | null>(null);
   const [selectedJobPreview, setSelectedJobPreview] = useState<any | null>(null);
   const [jobSearch, setJobSearch] = useState("");
   const [jobFilter, setJobFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
@@ -786,6 +788,26 @@ export default function AdminDashboardPage() {
         );
       }
       window.open("/espace-entreprise", "_blank");
+    }
+  };
+
+  const handleSyncJobs = async () => {
+    setSyncJobsLoading(true);
+    setSyncJobsSuccess(null);
+    try {
+      const res = await fetch("/api/admin/jobs/sync", { method: "POST" });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setSyncJobsSuccess(json.message);
+        await loadData();
+        setTimeout(() => setSyncJobsSuccess(null), 5000);
+      } else {
+        alert(json.error || "Erreur de synchronisation des offres");
+      }
+    } catch (err: any) {
+      alert("Erreur réseau: " + err.message);
+    } finally {
+      setSyncJobsLoading(false);
     }
   };
 
@@ -2453,6 +2475,17 @@ export default function AdminDashboardPage() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                onClick={handleSyncJobs}
+                disabled={syncJobsLoading || loading}
+                className="cockpit-btn cockpit-btn-sky cockpit-btn-sm"
+                title="Importer des offres qualifiées de chauffeurs routiers par département (France Travail & Partenaires)"
+              >
+                <Download size={13} className={syncJobsLoading ? "animate-bounce" : ""} />
+                <span>{syncJobsLoading ? "Importation en cours..." : "Importer / Sync Offres France Travail"}</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={loadData}
                 disabled={loading}
                 className="cockpit-btn cockpit-btn-secondary cockpit-btn-sm"
@@ -2462,6 +2495,27 @@ export default function AdminDashboardPage() {
               </button>
             </div>
           </div>
+
+          {syncJobsSuccess && (
+            <div
+              style={{
+                background: "rgba(16, 185, 129, 0.15)",
+                border: "1px solid rgba(16, 185, 129, 0.3)",
+                color: "#34d399",
+                padding: "0.6rem 1rem",
+                borderRadius: "8px",
+                fontSize: "0.8rem",
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                marginBottom: "1rem",
+              }}
+            >
+              <CheckCircle2 size={16} />
+              <span>{syncJobsSuccess}</span>
+            </div>
+          )}
 
           {/* KPI Cards Offres */}
           <div className="grid grid-cols-4 gap-3 mb-4">
