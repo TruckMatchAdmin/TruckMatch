@@ -113,9 +113,11 @@ export default function CandidatePortalPage() {
   const [appliedJobs, setAppliedJobs] = useState<string[]>([]);
   const [applyModalJob, setApplyModalJob] = useState<JobOffer | null>(null);
 
-  // Tchat direct recruteurs (réel)
-  const [activeRecruiterId, setActiveRecruiterId] = useState<string>("");
+  // Tchat direct & Support TruckMatch (réel Supabase)
+  const [activeRecruiterId, setActiveRecruiterId] = useState<string>("truckmatch_support");
   const [chatInput, setChatInput] = useState("");
+  const [supportMessages, setSupportMessages] = useState<any[]>([]);
+  const [supportUnreadCount, setSupportUnreadCount] = useState<number>(0);
   const [chatMessages, setChatMessages] = useState<
     Record<string, { id: string; sender: "recruiter" | "me"; text: string; time: string }[]>
   >({});
@@ -217,6 +219,53 @@ export default function CandidatePortalPage() {
     }
   };
 
+  const loadSupportChat = async (markRead = false) => {
+    try {
+      const res = await fetch(`/api/chat/support?mark_read=${markRead}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setSupportMessages(data.messages || []);
+          if (markRead) {
+            setSupportUnreadCount(0);
+          } else {
+            setSupportUnreadCount(data.unreadCount || 0);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Erreur chargement support chat candidat:", err);
+    }
+  };
+
+  // Détection du paramètre URL ?tab=messages envoyé par email
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (tabParam && ["overview", "permits", "jobs", "documents", "messages", "settings"].includes(tabParam)) {
+        setActiveTab(tabParam as any);
+      }
+    }
+  }, []);
+
+  // Synchronisation des messages support
+  useEffect(() => {
+    if (activeTab === "messages") {
+      loadSupportChat(true);
+      const interval = setInterval(() => {
+        loadSupportChat(true);
+      }, 10000);
+      return () => clearInterval(interval);
+    } else {
+      loadSupportChat(false);
+      const interval = setInterval(() => {
+        loadSupportChat(false);
+      }, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab]);
+
   useEffect(() => {
     loadCandidateData();
   }, []);
@@ -293,23 +342,52 @@ export default function CandidatePortalPage() {
     setApplyModalJob(job);
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
 
-    const newMsg = {
-      id: `m-${Date.now()}`,
-      sender: "me" as const,
-      text: chatInput.trim(),
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-
-    setChatMessages((prev) => ({
-      ...prev,
-      [activeRecruiterId]: [...(prev[activeRecruiterId] || []), newMsg],
-    }));
-
+    const text = chatInput.trim();
     setChatInput("");
+
+    if (activeRecruiterId === "truckmatch_support" || !activeRecruiterId) {
+      const optimisticMsg = {
+        id: `temp-${Date.now()}`,
+        sender_type: "candidate",
+        message: text,
+        created_at: new Date().toISOString(),
+      };
+      setSupportMessages((prev) => [...prev, optimisticMsg]);
+
+      try {
+        const res = await fetch("/api/chat/support", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.message) {
+            setSupportMessages((prev) =>
+              prev.map((m) => (m.id === optimisticMsg.id ? json.message : m))
+            );
+          }
+        }
+      } catch (err) {
+        console.error("Erreur envoi message candidat:", err);
+      }
+    } else {
+      const newMsg = {
+        id: `m-${Date.now()}`,
+        sender: "me" as const,
+        text,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      setChatMessages((prev) => ({
+        ...prev,
+        [activeRecruiterId]: [...(prev[activeRecruiterId] || []), newMsg],
+      }));
+    }
   };
 
   // Filtrage offres
@@ -505,8 +583,12 @@ export default function CandidatePortalPage() {
             className={`portal-nav-btn ${activeTab === "messages" ? "active" : ""}`}
           >
             <MessageSquare className="nav-icon" />
-            <span className="nav-title">Messagerie Recruteurs</span>
-            <span className="nav-badge">1</span>
+            <span className="nav-title">Messagerie & Support</span>
+            {supportUnreadCount > 0 && (
+              <span className="nav-badge animate-pulse" style={{ background: "#0284c7" }}>
+                {supportUnreadCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -1322,105 +1404,319 @@ export default function CandidatePortalPage() {
           {/* ============================================================== */}
           {activeTab === "messages" && (
             <div className="portal-chat-layout">
-              {/* Liste recruteurs */}
+              {/* Liste des discussions */}
               <div className={`portal-chat-sidebar ${activeRecruiterId ? "chat-mobile-hidden" : ""}`}>
                 <div className="portal-chat-sidebar-header">
                   <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#ffffff" }}>
-                    Échanges Directs ({recruiters.length})
+                    Messagerie Directe ({1 + recruiters.length})
                   </div>
                   <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: "0.15rem" }}>
-                    Sans intermédiaire
+                    Support officiel & recruteurs vérifiés
                   </div>
                 </div>
 
                 <div style={{ flex: 1, overflowY: "auto", padding: "0.5rem" }}>
-                  {recruiters.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: "2rem 1rem", color: "#94a3b8", fontSize: "0.8rem" }}>
-                      <MessageSquare size={26} style={{ margin: "0 auto 0.6rem", opacity: 0.4 }} />
-                      <p style={{ fontWeight: 600, color: "#cbd5e1" }}>Aucun échange direct</p>
-                      <p style={{ fontSize: "0.72rem", color: "#64748b", marginTop: "0.25rem" }}>
-                        Les transporteurs intéressés par votre profil apparaîtront ici.
-                      </p>
+                  {/* Fil 1 : Support Officiel TruckMatch (Toujours disponible) */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveRecruiterId("truckmatch_support")}
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem",
+                      borderRadius: "8px",
+                      textAlign: "left",
+                      background: activeRecruiterId === "truckmatch_support" ? "rgba(2, 132, 199, 0.15)" : "#0b1522",
+                      border: activeRecruiterId === "truckmatch_support" ? "1px solid #0284c7" : "1px solid #14243a",
+                      marginBottom: "0.45rem",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.65rem",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
+                        background: "linear-gradient(135deg, #0284c7, #0369a1)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#ffffff",
+                        fontSize: "0.85rem",
+                        fontWeight: 900,
+                        boxShadow: "0 2px 8px rgba(2, 132, 199, 0.3)",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Truck size={18} />
                     </div>
-                  ) : (
-                    recruiters.map((r) => (
-                      <button
-                        key={r.id}
-                        type="button"
-                        onClick={() => setActiveRecruiterId(r.id)}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                        <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          Support TruckMatch
+                        </span>
+                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399", flexShrink: 0 }} title="En ligne" />
+                      </div>
+                      <div style={{ fontSize: "0.71rem", color: "#38bdf8", marginTop: "0.1rem" }}>
+                        Équipe Exploitation & Aide
+                      </div>
+                    </div>
+                    {supportUnreadCount > 0 && (
+                      <span
                         style={{
-                          width: "100%",
-                          padding: "0.75rem",
-                          borderRadius: "8px",
-                          textAlign: "left",
-                          background: activeRecruiterId === r.id ? "#0d1b2e" : "transparent",
-                          border: activeRecruiterId === r.id ? "1px solid #38bdf8" : "1px solid transparent",
-                          marginBottom: "0.35rem",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.65rem",
+                          background: "#0284c7",
+                          color: "#ffffff",
+                          fontSize: "0.65rem",
+                          fontWeight: 800,
+                          padding: "0.15rem 0.45rem",
+                          borderRadius: "9999px",
+                          boxShadow: "0 0 10px rgba(2, 132, 199, 0.6)",
                         }}
                       >
-                        <div
+                        {supportUnreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Fils supplémentaires : Recruteurs éventuels */}
+                  {recruiters.map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => setActiveRecruiterId(r.id)}
+                      style={{
+                        width: "100%",
+                        padding: "0.75rem",
+                        borderRadius: "8px",
+                        textAlign: "left",
+                        background: activeRecruiterId === r.id ? "#0d1b2e" : "transparent",
+                        border: activeRecruiterId === r.id ? "1px solid #38bdf8" : "1px solid #14243a",
+                        marginBottom: "0.35rem",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.65rem",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: "50%",
+                          background: "#1e293b",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#94a3b8",
+                          fontSize: "0.75rem",
+                          fontWeight: 800,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {r.name.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {r.name}
+                        </div>
+                        <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: "0.1rem" }}>
+                          {r.city}
+                        </div>
+                      </div>
+                      {r.unread > 0 && (
+                        <span
                           style={{
-                            width: 34,
-                            height: 34,
-                            borderRadius: "50%",
                             background: "#0284c7",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
                             color: "#ffffff",
-                            fontSize: "0.75rem",
+                            fontSize: "0.65rem",
                             fontWeight: 800,
+                            padding: "0.1rem 0.4rem",
+                            borderRadius: "9999px",
                           }}
                         >
-                          {r.name.slice(0, 2).toUpperCase()}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                            {r.name}
-                          </div>
-                          <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: "0.1rem" }}>
-                            {r.city}
-                          </div>
-                        </div>
-                        {r.unread > 0 && (
-                          <span
-                            style={{
-                              background: "#0284c7",
-                              color: "#ffffff",
-                              fontSize: "0.65rem",
-                              fontWeight: 800,
-                              padding: "0.1rem 0.4rem",
-                              borderRadius: "9999px",
-                            }}
-                          >
-                            {r.unread}
-                          </span>
-                        )}
-                      </button>
-                    ))
-                  )}
+                          {r.unread}
+                        </span>
+                      )}
+                    </button>
+                  ))}
                 </div>
               </div>
 
               {/* Zone discussion */}
               <div className={`portal-chat-main ${!activeRecruiterId ? "chat-mobile-hidden" : ""}`}>
-                {recruiters.length === 0 || !activeRecruiterId ? (
+                {!activeRecruiterId ? (
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#94a3b8", padding: "2rem" }}>
                     <MessageSquare size={38} style={{ color: "#38bdf8", opacity: 0.5, marginBottom: "0.85rem" }} />
                     <h4 style={{ color: "#ffffff", fontWeight: 700, fontSize: "0.95rem", marginBottom: "0.35rem" }}>
-                      Messagerie directe avec les transporteurs
+                      Sélectionnez une discussion
                     </h4>
                     <p style={{ maxWidth: 380, textAlign: "center", fontSize: "0.82rem", color: "#64748b", lineHeight: 1.5 }}>
-                      Vos coordonnées directes et vos disponibilités sont enregistrées dans la base TruckMatch. Dès qu'un transporteur vous contacte pour une tournée, l'échange s'affichera directement ici.
+                      Échangez en direct et en toute confidentialité avec le support TruckMatch ou les exploitants de transport.
                     </p>
                   </div>
+                ) : activeRecruiterId === "truckmatch_support" ? (
+                  <>
+                    {/* En-tête Discussion Support TruckMatch */}
+                    <div
+                      style={{
+                        padding: "0.75rem 1rem",
+                        borderBottom: "1px solid #142339",
+                        background: "#060d17",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "0.75rem",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", minWidth: 0 }}>
+                        <button
+                          type="button"
+                          className="chat-mobile-back-btn"
+                          onClick={() => setActiveRecruiterId("")}
+                          aria-label="Retour à la liste"
+                        >
+                          <ArrowLeft size={16} />
+                          <span>Discussions</span>
+                        </button>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "#ffffff", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                            <span>Support Officiel TruckMatch</span>
+                            <span className="permit-badge-pro permit-valid" style={{ padding: "0.1rem 0.4rem", fontSize: "0.68rem" }}>
+                              Officiel
+                            </span>
+                          </div>
+                          <div style={{ fontSize: "0.72rem", color: "#34d399", display: "flex", alignItems: "center", gap: "0.3rem", marginTop: "0.1rem" }}>
+                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399" }} />
+                            <span>Équipe d'exploitation connectée</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <span className="permit-badge-pro permit-valid chat-badge-hide-mobile">
+                        Assistance 7j/7 • Réponse Rapide
+                      </span>
+                    </div>
+
+                    {/* Zone des messages Support */}
+                    <div style={{ flex: 1, overflowY: "auto", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+                      {/* Message de bienvenue si aucun échange */}
+                      {supportMessages.length === 0 ? (
+                        <div style={{ textAlign: "center", margin: "auto", maxWidth: 420, padding: "2rem 1rem" }}>
+                          <div
+                            style={{
+                              width: 52,
+                              height: 52,
+                              borderRadius: "50%",
+                              background: "rgba(2, 132, 199, 0.15)",
+                              border: "1px solid rgba(2, 132, 199, 0.3)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "#38bdf8",
+                              margin: "0 auto 1rem",
+                            }}
+                          >
+                            <Truck size={24} />
+                          </div>
+                          <h4 style={{ color: "#ffffff", fontWeight: 800, fontSize: "0.95rem", marginBottom: "0.4rem" }}>
+                            Bienvenue sur votre messagerie directe !
+                          </h4>
+                          <p style={{ fontSize: "0.82rem", color: "#94a3b8", lineHeight: 1.5 }}>
+                            Notre équipe d'exploitation est à votre écoute pour vous conseiller, valider vos permis ou vous orienter vers les meilleures tournées.
+                          </p>
+                        </div>
+                      ) : (
+                        supportMessages.map((msg) => {
+                          const isAdmin = msg.sender_type === "admin";
+                          const formattedTime = msg.created_at
+                            ? new Date(msg.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+                            : "";
+                          return (
+                            <div
+                              key={msg.id}
+                              style={{
+                                alignSelf: isAdmin ? "flex-start" : "flex-end",
+                                maxWidth: "75%",
+                                background: isAdmin ? "#0d1b2e" : "linear-gradient(135deg, #0284c7, #0369a1)",
+                                border: isAdmin ? "1px solid #192d47" : "1px solid #38bdf8",
+                                padding: "0.75rem 1rem",
+                                borderRadius: isAdmin ? "12px 12px 12px 2px" : "12px 12px 2px 12px",
+                                color: "#ffffff",
+                                fontSize: "0.84rem",
+                                lineHeight: 1.45,
+                                boxShadow: isAdmin ? "none" : "0 2px 8px rgba(2, 132, 199, 0.2)",
+                              }}
+                            >
+                              {isAdmin && (
+                                <div style={{ fontSize: "0.7rem", fontWeight: 800, color: "#38bdf8", marginBottom: "0.25rem", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                                  <ShieldCheck size={12} />
+                                  <span>Support TruckMatch</span>
+                                </div>
+                              )}
+                              <div style={{ whiteSpace: "pre-wrap" }}>{msg.message}</div>
+                              <div
+                                style={{
+                                  fontSize: "0.68rem",
+                                  color: isAdmin ? "#94a3b8" : "rgba(255,255,255,0.75)",
+                                  textAlign: "right",
+                                  marginTop: "0.3rem",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "flex-end",
+                                  gap: "0.25rem",
+                                }}
+                              >
+                                <span>{formattedTime}</span>
+                                {!isAdmin && <Check size={11} />}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    {/* Champ d'envoi Support */}
+                    <form
+                      onSubmit={handleSendMessage}
+                      style={{
+                        padding: "0.85rem 1.25rem",
+                        borderTop: "1px solid #142339",
+                        background: "#060d17",
+                        display: "flex",
+                        gap: "0.65rem",
+                      }}
+                    >
+                      <input
+                        type="text"
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        placeholder="Écrivez votre message à l'équipe Support TruckMatch..."
+                        style={{
+                          flex: 1,
+                          background: "#0d1b2e",
+                          border: "1px solid #192d47",
+                          borderRadius: "8px",
+                          padding: "0.65rem 1rem",
+                          color: "#ffffff",
+                          fontSize: "0.85rem",
+                        }}
+                      />
+                      <button
+                        type="submit"
+                        className="btn btn-primary btn-sm"
+                        style={{ padding: "0.65rem 1.25rem", borderRadius: "8px" }}
+                      >
+                        <Send size={15} />
+                        <span>Envoyer</span>
+                      </button>
+                    </form>
+                  </>
                 ) : (
                   <>
-                    {/* En-tête discussion */}
+                    {/* En-tête discussion Recruteur */}
                     <div
                       style={{
                         padding: "0.75rem 1rem",
@@ -1458,7 +1754,7 @@ export default function CandidatePortalPage() {
                       </span>
                     </div>
 
-                    {/* Messages */}
+                    {/* Messages Recruteur */}
                     <div style={{ flex: 1, overflowY: "auto", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
                       {(chatMessages[activeRecruiterId] || []).map((msg) => (
                         <div
@@ -1490,7 +1786,7 @@ export default function CandidatePortalPage() {
                       ))}
                     </div>
 
-                    {/* Champ d'envoi */}
+                    {/* Champ d'envoi Recruteur */}
                     <form
                       onSubmit={handleSendMessage}
                       style={{
@@ -2241,7 +2537,9 @@ export default function CandidatePortalPage() {
         >
           <div style={{ position: "relative", display: "inline-flex" }}>
             <MessageSquare size={20} />
-            <span className="portal-bottom-badge">1</span>
+            {supportUnreadCount > 0 && (
+              <span className="portal-bottom-badge animate-pulse">{supportUnreadCount}</span>
+            )}
           </div>
           <span>Messages</span>
         </button>

@@ -6,7 +6,7 @@
 export interface EmailTrackingPayload {
   trackingId: string;
   recipientEmail: string;
-  emailType: "welcome_driver" | "welcome_company" | "payment_subscription" | "payment_driver_boost";
+  emailType: "welcome_driver" | "welcome_company" | "payment_subscription" | "payment_driver_boost" | "support_message_notification";
   subject: string;
   sentAt: string;
 }
@@ -457,3 +457,73 @@ export function renderPaymentDriverBoostEmail({
     html: getEmailLayout({ title: subject, preheader, contentHtml, trackingToken }),
   };
 }
+
+/**
+ * 5. Notification Candidat : Nouveau message reçu dans son espace candidat
+ */
+export function renderNewSupportMessageEmail({
+  driverName,
+  messagePreview,
+  senderName = "L'équipe Support TruckMatch",
+  trackingToken,
+}: {
+  driverName: string;
+  messagePreview: string;
+  senderName?: string;
+  trackingToken: string;
+}): { subject: string; html: string } {
+  const name = driverName ? driverName.trim() : "Conducteur";
+  const subject = `💬 Nouveau message de TruckMatch sur votre espace candidat`;
+  const preheader = `${senderName} vous a envoyé un nouveau message dans votre espace personnel.`;
+
+  // Tronquer proprement le preview s'il est très long
+  const cleanPreview = messagePreview.length > 280
+    ? messagePreview.substring(0, 277) + "..."
+    : messagePreview;
+
+  const contentHtml = `
+    <div class="tag-pill" style="background-color:#e0f2fe; color:#0369a1;">
+      💬 SUPPORT & EXPLOITATION TRUCKMATCH
+    </div>
+
+    <h1 style="font-size:22px; font-weight:800; color:#0f172a; margin:0 0 16px 0; line-height:1.3;">
+      Bonjour ${name}, vous avez reçu un nouveau message !
+    </h1>
+
+    <p style="margin:0 0 16px 0; font-size:15px; color:#334155;">
+      <strong>${senderName}</strong> vient de vous écrire directement dans votre espace candidat TruckMatch :
+    </p>
+
+    <!-- Message Quoted Card -->
+    <div style="background-color:#f8fafc; border-left:4px solid #0284c7; border-top:1px solid #e2e8f0; border-right:1px solid #e2e8f0; border-bottom:1px solid #e2e8f0; border-radius:8px; padding:18px 20px; margin:20px 0;">
+      <div style="font-size:12px; font-weight:700; color:#0284c7; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+        ✉️ Message reçu :
+      </div>
+      <div style="font-size:15px; color:#1e293b; line-height:1.6; white-space:pre-wrap; font-style:italic;">
+        "${cleanPreview}"
+      </div>
+    </div>
+
+    <p style="margin:0 0 20px 0; font-size:14px; color:#64748b;">
+      Vous pouvez consulter l'historique complet et répondre directement depuis votre cockpit chauffeur en un clic.
+    </p>
+
+    <div style="text-align:center; margin:26px 0;">
+      <a href="${SITE_URL}/espace-candidat?tab=messages" class="cta-btn" target="_blank" style="padding:14px 32px; font-size:15px; font-weight:800; background-color:#0284c7; color:#ffffff !important; border-radius:8px; text-decoration:none; display:inline-block; box-shadow:0 4px 12px rgba(2, 132, 199, 0.25);">
+        Accéder à ma messagerie & Répondre →
+      </a>
+    </div>
+
+    <div class="highlight-card" style="background-color:#f0fdf4; border:1px solid #bbf7d0; margin-top:24px;">
+      <div style="font-size:13px; color:#166534; line-height:1.5;">
+        🔒 <strong>Échanges 100% sécurisés :</strong> Vos échanges sont confidentiels et archivés directement sur votre espace TruckMatch sans divulgation de vos coordonnées personnelles non consenties.
+      </div>
+    </div>
+  `;
+
+  return {
+    subject,
+    html: getEmailLayout({ title: subject, preheader, contentHtml, trackingToken }),
+  };
+}
+

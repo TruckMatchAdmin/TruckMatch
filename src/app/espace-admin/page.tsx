@@ -64,7 +64,29 @@ interface ChatMessage {
   sender: "admin" | "recipient";
   text: string;
   time: string;
+  is_read?: boolean;
+  read_at?: string | null;
+  created_at?: string;
+  sender_type?: string;
 }
+
+function formatReadReceipt(readAt: string | null | undefined): string {
+  if (!readAt) return "";
+  try {
+    const d = new Date(readAt);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    const timeStr = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    if (isToday) {
+      return `à ${timeStr}`;
+    }
+    const dateStr = d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+    return `le ${dateStr} à ${timeStr}`;
+  } catch {
+    return "";
+  }
+}
+
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -313,6 +335,85 @@ export default function AdminDashboardPage() {
       }
     }
   }, []);
+
+  const loadAdminSupportChat = async (recipientId?: string) => {
+    try {
+      const cleanRecId = recipientId ? recipientId.replace(/^cand-/, "").replace(/^comp-/, "") : "";
+      const url = cleanRecId
+        ? `/api/chat/support?recipient_id=${cleanRecId}&mark_read_by_admin=true`
+        : `/api/chat/support`;
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const json = await res.json();
+      if (!json.success || !json.messages) return;
+
+      if (cleanRecId) {
+        const mapped: ChatMessage[] = json.messages.map((m: any) => ({
+          id: m.id,
+          sender: m.sender_type === "admin" ? "admin" : "recipient",
+          text: m.message,
+          time: m.created_at
+            ? new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+            : "Récemment",
+          is_read: m.is_read,
+          read_at: m.read_at,
+          created_at: m.created_at,
+          sender_type: m.sender_type,
+        }));
+        setChatMessages((prev) => ({
+          ...prev,
+          [cleanRecId]: mapped,
+          [`cand-${cleanRecId}`]: mapped,
+          [`comp-${cleanRecId}`]: mapped,
+        }));
+      } else {
+        // Regrouper tous les messages récents par conversation
+        const grouped: Record<string, ChatMessage[]> = {};
+        for (const m of json.messages) {
+          const key = m.recipient_type === "candidate" ? `cand-${m.recipient_id}` : `comp-${m.recipient_id}`;
+          if (!grouped[key]) grouped[key] = [];
+          grouped[key].push({
+            id: m.id,
+            sender: m.sender_type === "admin" ? "admin" : "recipient",
+            text: m.message,
+            time: m.created_at
+              ? new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+              : "Récemment",
+            is_read: m.is_read,
+            read_at: m.read_at,
+            created_at: m.created_at,
+            sender_type: m.sender_type,
+          });
+        }
+        for (const k in grouped) {
+          grouped[k].sort((a, b) => (a.created_at || "").localeCompare(b.created_at || ""));
+        }
+        setChatMessages((prev) => ({
+          ...prev,
+          ...grouped,
+        }));
+      }
+    } catch (err) {
+      console.error("Erreur chargement support chat admin:", err);
+    }
+  };
+
+  // Chargement et synchronisation du chat support en temps réel
+  useEffect(() => {
+    if (activeTab === "support") {
+      loadAdminSupportChat();
+      if (activeRecipient) {
+        loadAdminSupportChat(activeRecipient.raw?.id || activeRecipient.id);
+      }
+      const interval = setInterval(() => {
+        loadAdminSupportChat();
+        if (activeRecipient) {
+          loadAdminSupportChat(activeRecipient.raw?.id || activeRecipient.id);
+        }
+      }, 8000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, activeRecipient?.id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -688,74 +789,118 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleSendMessage = (customText?: string) => {
+  const handleSendMessage = async (customText?: string) => {
     const textToSend = customText || messageInput.trim();
     if (!textToSend || !activeRecipient) return;
 
     const recipientId = activeRecipient.id;
+    const rawId = activeRecipient.raw?.id || activeRecipient.id.replace(/^cand-/, "").replace(/^comp-/, "");
     const now = new Date();
     const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
+    const tempId = `temp-${Date.now()}`;
     const newMsg: ChatMessage = {
-      id: String(Date.now()),
+      id: tempId,
       sender: "admin",
       text: textToSend,
       time: timeStr,
+      is_read: false,
+      read_at: null,
+      created_at: now.toISOString(),
+      sender_type: "admin",
     };
 
     setChatMessages((prev) => {
-      const currentList = prev[recipientId] || [
-        {
-          id: `init-${recipientId}`,
-          sender: "recipient",
-          text:
-            activeRecipient.type === "candidat"
-              ? `Bonjour l'équipe TruckMatch ! Je viens de compléter mon profil de chauffeur routier.`
-              : `Bonjour, nous recherchons actuellement des conducteurs SPL et PL sur notre secteur.`,
-          time: "10:15",
-        },
-      ];
-      const updated = {
+      const currentList = prev[recipientId] || prev[rawId] || [];
+      const updatedList = [...currentList, newMsg];
+      const next = {
         ...prev,
-        [recipientId]: [...currentList, newMsg],
+        [recipientId]: updatedList,
+        [rawId]: updatedList,
+        [`cand-${rawId}`]: updatedList,
+        [`comp-${rawId}`]: updatedList,
       };
       if (typeof window !== "undefined") {
-        localStorage.setItem("tm_admin_chats", JSON.stringify(updated));
+        localStorage.setItem("tm_admin_chats", JSON.stringify(next));
       }
-      return updated;
+      return next;
     });
 
     setMessageInput("");
+
+    try {
+      const res = await fetch("/api/chat/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipient_id: rawId,
+          recipient_type: activeRecipient.type === "candidat" ? "candidate" : "company",
+          message: textToSend,
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.message) {
+          setChatMessages((prev) => {
+            const list = prev[recipientId] || [];
+            const mapped = list.map((m) => (m.id === tempId ? { ...m, id: json.message.id } : m));
+            return {
+              ...prev,
+              [recipientId]: mapped,
+              [rawId]: mapped,
+              [`cand-${rawId}`]: mapped,
+              [`comp-${rawId}`]: mapped,
+            };
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Erreur envoi message admin:", err);
+    }
   };
 
-  // Discussions tchat
+  // Discussions tchat avec suivi des statuts Vu / Non lu et alertes email
   const chatThreads = [
-    ...drivers.map((d) => ({
-      id: `cand-${d.id}`,
-      name: `${d.first_name} ${d.last_name}`,
-      type: "candidat" as const,
-      phone: d.phone,
-      email: d.email,
-      city: `${d.postal_code || ""} ${d.city || ""}`.trim(),
-      raw: d,
-      lastMsg:
-        chatMessages[`cand-${d.id}`]?.slice(-1)[0]?.text ||
-        "Profil chauffeur enregistré dans Supabase",
-      time: chatMessages[`cand-${d.id}`]?.slice(-1)[0]?.time || "Récemment",
-    })),
-    ...companies.map((c) => ({
-      id: `comp-${c.id}`,
-      name: c.company_name,
-      type: "entreprise" as const,
-      phone: c.phone,
-      email: c.email,
-      city: `${c.postal_code || ""} ${c.city || ""}`.trim(),
-      raw: c,
-      lastMsg:
-        chatMessages[`comp-${c.id}`]?.slice(-1)[0]?.text ||
-        "Compte transporteur vérifié (SIRET)",
-      time: chatMessages[`comp-${c.id}`]?.slice(-1)[0]?.time || "Récemment",
-    })),
+    ...drivers.map((d) => {
+      const threadMsgs = chatMessages[`cand-${d.id}`] || chatMessages[d.id] || [];
+      const last = threadMsgs.slice(-1)[0];
+      const hasUnreadFromDriver = threadMsgs.some((m) => m.sender === "recipient" && !m.is_read);
+      return {
+        id: `cand-${d.id}`,
+        name: `${d.first_name} ${d.last_name}`,
+        type: "candidat" as const,
+        phone: d.phone,
+        email: d.email,
+        city: `${d.postal_code || ""} ${d.city || ""}`.trim(),
+        raw: d,
+        lastMsg: last?.text || "Profil chauffeur enregistré dans Supabase",
+        time: last?.time || "Récemment",
+        lastSender: last?.sender,
+        lastIsRead: last?.is_read,
+        lastReadAt: last?.read_at,
+        hasUnread: hasUnreadFromDriver,
+      };
+    }),
+    ...companies.map((c) => {
+      const threadMsgs = chatMessages[`comp-${c.id}`] || chatMessages[c.id] || [];
+      const last = threadMsgs.slice(-1)[0];
+      const hasUnreadFromComp = threadMsgs.some((m) => m.sender === "recipient" && !m.is_read);
+      return {
+        id: `comp-${c.id}`,
+        name: c.company_name,
+        type: "entreprise" as const,
+        phone: c.phone,
+        email: c.email,
+        city: `${c.postal_code || ""} ${c.city || ""}`.trim(),
+        raw: c,
+        lastMsg: last?.text || "Compte transporteur vérifié (SIRET)",
+        time: last?.time || "Récemment",
+        lastSender: last?.sender,
+        lastIsRead: last?.is_read,
+        lastReadAt: last?.read_at,
+        hasUnread: hasUnreadFromComp,
+      };
+    }),
   ].filter((t) => {
     if (chatRecipientFilter === "candidats" && t.type !== "candidat") return false;
     if (chatRecipientFilter === "entreprises" && t.type !== "entreprise") return false;
@@ -770,17 +915,10 @@ export default function AdminDashboardPage() {
   });
 
   const activeConversationMessages = activeRecipient
-    ? chatMessages[activeRecipient.id] || [
-        {
-          id: `init-${activeRecipient.id}`,
-          sender: "recipient",
-          text:
-            activeRecipient.type === "candidat"
-              ? `Bonjour l'équipe TruckMatch ! Mon profil et mes permis sont bien renseignés, je suis prêt pour de nouvelles tournées.`
-              : `Bonjour, nous recherchons activement des chauffeurs régionaux. Comment optimiser notre visibilité ?`,
-          time: "10:15",
-        },
-      ]
+    ? chatMessages[activeRecipient.id] ||
+      chatMessages[activeRecipient.raw?.id] ||
+      chatMessages[activeRecipient.id.replace(/^cand-/, "").replace(/^comp-/, "")] ||
+      []
     : [];
 
   return (
@@ -3047,7 +3185,7 @@ export default function AdminDashboardPage() {
                         <button
                           key={thread.id}
                           type="button"
-                          onClick={() =>
+                          onClick={() => {
                             setActiveRecipient({
                               id: thread.id,
                               name: thread.name,
@@ -3056,8 +3194,9 @@ export default function AdminDashboardPage() {
                               email: thread.email,
                               city: thread.city,
                               raw: thread.raw,
-                            })
-                          }
+                            });
+                            loadAdminSupportChat(thread.raw?.id || thread.id);
+                          }}
                           className={`support-thread-item ${isSelected ? "active" : ""}`}
                         >
                           <div className={`support-thread-avatar ${thread.type}`}>
@@ -3095,9 +3234,32 @@ export default function AdminDashboardPage() {
                               )}
                             </div>
 
-                            <p className="support-thread-lastmsg" title={thread.lastMsg}>
-                              {thread.lastMsg}
-                            </p>
+                            <div className="flex items-center justify-between gap-1 mt-0.5">
+                              <p className="support-thread-lastmsg truncate flex-1" title={thread.lastMsg}>
+                                {thread.lastMsg}
+                              </p>
+                              {thread.hasUnread ? (
+                                <span className="text-[10px] font-bold text-sky-400 bg-sky-500/20 px-1.5 py-0.2 rounded border border-sky-500/30 shrink-0 animate-pulse">
+                                  Nouveau
+                                </span>
+                              ) : thread.lastSender === "admin" ? (
+                                thread.lastIsRead ? (
+                                  <span
+                                    className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/25 shrink-0 flex items-center gap-0.5"
+                                    title={thread.lastReadAt ? `Vu par le candidat ${formatReadReceipt(thread.lastReadAt)}` : "Vu par le candidat"}
+                                  >
+                                    ✓✓ Vu
+                                  </span>
+                                ) : (
+                                  <span
+                                    className="text-[10px] font-medium text-slate-400 bg-slate-800/80 px-1.5 py-0.2 rounded border border-slate-700 shrink-0"
+                                    title="Envoyé, pas encore ouvert par le candidat"
+                                  >
+                                    ✓ Envoyé
+                                  </span>
+                                )
+                              ) : null}
+                            </div>
                           </div>
                         </button>
                       );
@@ -3215,23 +3377,55 @@ export default function AdminDashboardPage() {
                         </span>
                       </div>
 
-                      {activeConversationMessages.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={`support-bubble-row ${msg.sender === "admin" ? "admin" : "recipient"}`}
-                        >
-                          <div className="support-msg-bubble">{msg.text}</div>
-                          <div className="support-bubble-meta">
-                            <span>{msg.time}</span>
-                            {msg.sender === "admin" && (
-                              <span className="text-sky-400 flex items-center gap-0.5">
-                                <Check size={11} />
-                                <Check size={11} className="-ml-1.5" />
-                              </span>
-                            )}
+                      {activeConversationMessages.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center my-auto py-12 px-4 text-center">
+                          <div className="w-12 h-12 rounded-full bg-slate-800/80 border border-slate-700/80 flex items-center justify-center text-slate-400 mb-3">
+                            <MessageSquareText size={22} className="text-sky-400" />
                           </div>
+                          <h4 className="text-sm font-bold text-white mb-1">
+                            Nouvelle discussion avec {activeRecipient.name}
+                          </h4>
+                          <p className="text-xs text-slate-400 max-w-md leading-relaxed">
+                            Écrivez un message ou cliquez sur une réponse rapide ci-dessous. Dès l'envoi, une notification email automatique sera envoyée au candidat.
+                          </p>
                         </div>
-                      ))}
+                      ) : (
+                        activeConversationMessages.map((msg) => (
+                          <div
+                            key={msg.id}
+                            className={`support-bubble-row ${msg.sender === "admin" ? "admin" : "recipient"}`}
+                          >
+                            <div className="support-msg-bubble">{msg.text}</div>
+                            <div className="support-bubble-meta">
+                              <span>{msg.time}</span>
+                              {msg.sender === "admin" && (
+                                msg.is_read ? (
+                                  <span
+                                    className="text-emerald-400 flex items-center gap-1 font-semibold text-[11px]"
+                                    title={msg.read_at ? `Vu le ${new Date(msg.read_at).toLocaleDateString("fr-FR")} à ${new Date(msg.read_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : "Vu par le candidat"}
+                                  >
+                                    <span className="flex items-center">
+                                      <Check size={12} className="text-emerald-400" />
+                                      <Check size={12} className="-ml-1.5 text-emerald-400" />
+                                    </span>
+                                    <span className="text-emerald-400 font-bold">
+                                      Vu {formatReadReceipt(msg.read_at)}
+                                    </span>
+                                  </span>
+                                ) : (
+                                  <span
+                                    className="text-slate-400 flex items-center gap-1 text-[11px]"
+                                    title="Message envoyé — Notification email transmise au candidat"
+                                  >
+                                    <Check size={12} className="text-slate-400" />
+                                    <span className="text-slate-400 font-medium">Envoyé (non lu)</span>
+                                  </span>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      )}
                       <div ref={messagesEndRef} />
                     </div>
 

@@ -7,6 +7,7 @@ import {
   renderWelcomeCompanyEmail,
   renderPaymentCompanyEmail,
   renderPaymentDriverBoostEmail,
+  renderNewSupportMessageEmail,
   EmailTrackingPayload,
 } from "./templates";
 
@@ -307,6 +308,47 @@ export async function sendPaymentDriverBoostEmail({
     metadata: { driverName, orderNumber, amountEur },
   });
 }
+
+/**
+ * 5. Envoi Notification Email d'un nouveau message reçu pour le candidat
+ */
+export async function sendNewSupportMessageToDriverEmail({
+  email,
+  driverName,
+  messagePreview,
+  senderName = "L'équipe Support TruckMatch",
+}: {
+  email: string;
+  driverName: string;
+  messagePreview: string;
+  senderName?: string;
+}) {
+  const trackingId = `msg_drv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const trackingToken = createTrackingToken({
+    trackingId,
+    recipientEmail: email,
+    emailType: "support_message_notification",
+    subject: `Nouveau message sur votre espace candidat TruckMatch`,
+    sentAt: new Date().toISOString(),
+  });
+
+  const { subject, html } = renderNewSupportMessageEmail({
+    driverName,
+    messagePreview,
+    senderName,
+    trackingToken,
+  });
+
+  return sendTrackedEmail({
+    to: email,
+    subject,
+    html,
+    emailType: "support_message_notification",
+    recipientType: "driver",
+    metadata: { driverName, messagePreviewSnippet: messagePreview.substring(0, 100) },
+  });
+}
+
 
 /**
  * Vérifier la connexion SMTP
