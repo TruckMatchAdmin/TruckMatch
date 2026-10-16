@@ -13,9 +13,9 @@ import {
   Phone,
   Mail,
   User,
-  FileText,
   Loader2,
   Award,
+  Sparkles,
 } from "lucide-react";
 
 export interface ApplyModalJobData {
@@ -46,8 +46,8 @@ export default function ApplyJobModal({ job, isOpen, onClose }: ApplyJobModalPro
   const [experience, setExperience] = useState("3 à 5 ans");
   const [message, setMessage] = useState("");
   const [resumeUrl, setResumeUrl] = useState("");
+  const [isPreFilled, setIsPreFilled] = useState(false);
 
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{
     success: boolean;
@@ -58,7 +58,7 @@ export default function ApplyJobModal({ job, isOpen, onClose }: ApplyJobModalPro
   } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Préremplissage automatique si le candidat est connecté
+  // Préremplissage intelligent et multi-sources
   useEffect(() => {
     if (!isOpen) {
       setResult(null);
@@ -66,9 +66,57 @@ export default function ApplyJobModal({ job, isOpen, onClose }: ApplyJobModalPro
       return;
     }
 
+    let prefilled = false;
+
+    // 1. Source 1 : Mémoire locale de la dernière candidature
+    try {
+      const savedLast = localStorage.getItem("tm_candidate_last_application");
+      if (savedLast) {
+        const d = JSON.parse(savedLast);
+        if (d.name) setCandidateName(d.name);
+        if (d.email) setCandidateEmail(d.email);
+        if (d.phone) setCandidatePhone(d.phone);
+        if (d.city) setCandidateCity(d.city);
+        if (Array.isArray(d.permits) && d.permits.length > 0) setPermits(d.permits);
+        if (typeof d.fimo === "boolean") setFimo(d.fimo);
+        if (typeof d.fco === "boolean") setFco(d.fco);
+        if (typeof d.chrono_card === "boolean") setChronoCard(d.chrono_card);
+        if (d.experience) setExperience(d.experience);
+        prefilled = true;
+      }
+    } catch (e) {
+      // Ignorer
+    }
+
+    // 2. Source 2 : Utilisateur connecté dans localStorage (tm_user)
+    try {
+      const rawUser = localStorage.getItem("tm_user");
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        if (u.name) setCandidateName(u.name);
+        if (u.email) setCandidateEmail(u.email);
+        if (u.phone) setCandidatePhone(u.phone);
+        if (u.city) setCandidateCity(u.city);
+        if (u.profile) {
+          if (u.profile.phone) setCandidatePhone(u.profile.phone);
+          if (u.profile.city) setCandidateCity(u.profile.city);
+          if (Array.isArray(u.profile.permits) && u.profile.permits.length > 0) {
+            setPermits(u.profile.permits);
+          }
+          if (typeof u.profile.fimo === "boolean") setFimo(u.profile.fimo);
+          if (typeof u.profile.fco === "boolean") setFco(u.profile.fco);
+          if (typeof u.profile.chrono_card === "boolean") setChronoCard(u.profile.chrono_card);
+          if (u.profile.experience) setExperience(u.profile.experience);
+        }
+        prefilled = true;
+      }
+    } catch (e) {
+      // Ignorer
+    }
+
+    // 3. Source 3 : Récupération asynchrone depuis Supabase API
     async function loadCandidateProfile() {
       try {
-        setLoading(true);
         const res = await fetch("/api/candidate/data");
         if (res.ok) {
           const json = await res.json();
@@ -85,13 +133,14 @@ export default function ApplyJobModal({ job, isOpen, onClose }: ApplyJobModalPro
             if (typeof d.chrono_card === "boolean") setChronoCard(d.chrono_card);
             if (d.experience) setExperience(d.experience);
             if (d.resume_url) setResumeUrl(d.resume_url);
+            setIsPreFilled(true);
+            return;
           }
         }
       } catch (err) {
-        // Mode invité / non connecté
-      } finally {
-        setLoading(false);
+        // Mode non connecté
       }
+      if (prefilled) setIsPreFilled(true);
     }
 
     loadCandidateProfile();
@@ -110,12 +159,33 @@ export default function ApplyJobModal({ job, isOpen, onClose }: ApplyJobModalPro
     setErrorMsg(null);
 
     if (!candidateName.trim() || !candidateEmail.trim() || !candidatePhone.trim()) {
-      setErrorMsg("Veuillez renseigner votre nom, téléphone et adresse email.");
+      setErrorMsg("Veuillez renseigner votre nom, téléphone direct et adresse email.");
       return;
     }
 
     try {
       setSubmitting(true);
+
+      // Sauvegarde locale pour pré-remplir les prochaines candidatures en 1 clic
+      try {
+        localStorage.setItem(
+          "tm_candidate_last_application",
+          JSON.stringify({
+            name: candidateName.trim(),
+            email: candidateEmail.trim(),
+            phone: candidatePhone.trim(),
+            city: candidateCity.trim(),
+            permits,
+            fimo,
+            fco,
+            chrono_card: chronoCard,
+            experience,
+          })
+        );
+      } catch (e) {
+        // Ignorer
+      }
+
       const res = await fetch("/api/jobs/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -152,187 +222,188 @@ export default function ApplyJobModal({ job, isOpen, onClose }: ApplyJobModalPro
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl max-h-[92vh] overflow-y-auto bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl text-slate-100 p-6 md:p-8">
+    <div className="apply-modal-overlay" onClick={onClose}>
+      <div
+        className="apply-modal-container"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
         {/* Bouton Fermer */}
         <button
+          type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 rounded-full transition-colors"
-          title="Fermer"
+          className="apply-modal-close"
+          aria-label="Fermer"
         >
-          <X size={20} />
+          <X size={18} />
         </button>
 
         {/* Vue de Succès */}
         {result ? (
-          <div className="text-center py-6 space-y-5 animate-in zoom-in-95 duration-200">
-            <div className="w-16 h-16 mx-auto rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
-              <CheckCircle2 size={36} />
+          <div className="apply-success-box">
+            <div className="apply-success-icon-wrap">
+              <CheckCircle2 size={34} />
             </div>
 
-            <div className="space-y-2">
-              <h3 className="text-2xl font-black text-white">
-                {result.emailSent ? "Candidature transmise par email !" : "Candidature pré-enregistrée !"}
-              </h3>
-              <p className="text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
-                {result.message}
-              </p>
-            </div>
+            <h3 className="apply-success-title">
+              {result.emailSent ? "Candidature transmise avec succès !" : "Dossier pré-rempli !"}
+            </h3>
+
+            <p className="apply-success-text">{result.message}</p>
 
             {result.emailSent && (
-              <div className="p-4 bg-emerald-950/40 border border-emerald-800/50 rounded-xl text-left text-xs text-emerald-200 space-y-1.5">
-                <p className="font-semibold text-emerald-300 flex items-center gap-1.5">
-                  <ShieldCheck size={16} />
-                  Email officiel TruckMatch envoyé au recruteur
+              <div className="apply-success-card-info">
+                <p style={{ fontWeight: 800, marginBottom: "0.35rem" }}>
+                  ✉️ Email officiel TruckMatch envoyé au recruteur
                 </p>
-                <p className="text-slate-300">
-                  Le service recrutement de <strong>{job.company_name}</strong> a reçu votre fiche conducteur, vos permis et votre numéro direct.
+                <p>
+                  Le service recrutement de <strong>{job.company_name}</strong> a reçu votre fiche conducteur, vos permis et votre numéro direct. Un accusé de réception vous a également été envoyé par email.
                 </p>
               </div>
             )}
 
             {result.redirectUrl && (
-              <div className="pt-2">
+              <div style={{ marginBottom: "1.25rem" }}>
                 <a
                   href={result.redirectUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-xl font-bold bg-sky-500 hover:bg-sky-400 text-white shadow-lg shadow-sky-500/25 transition-all text-sm"
+                  className="apply-btn-submit"
+                  style={{ textDecoration: "none", width: "100%" }}
                 >
-                  <span>Accéder à l'espace candidature de {job.company_name}</span>
+                  <span>Accéder à la plateforme de {job.company_name}</span>
                   <ExternalLink size={16} />
                 </a>
               </div>
             )}
 
-            <button
-              onClick={onClose}
-              className="w-full py-3 px-6 rounded-xl font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors text-sm"
-            >
+            <button type="button" onClick={onClose} className="apply-btn-cancel" style={{ width: "100%" }}>
               Fermer la fenêtre
             </button>
           </div>
         ) : (
           /* Formulaire de Candidature */
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit}>
             {/* Header de l'offre */}
-            <div className="border-b border-slate-800 pb-4">
-              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1">
-                <Briefcase size={14} />
+            <div className="apply-modal-header">
+              <div className="apply-modal-badge">
+                <Sparkles size={13} />
                 <span>Postuler avec TruckMatch</span>
               </div>
-              <h2 className="text-xl font-black text-white leading-tight mb-2">
-                {job.title}
-              </h2>
-              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
-                <span className="flex items-center gap-1 text-slate-200 font-medium">
-                  <Building2 size={13} className="text-sky-400" />
+              <h2 className="apply-modal-title">{job.title}</h2>
+              <div className="apply-modal-meta">
+                <span className="apply-modal-meta-item" style={{ color: "#0284c7" }}>
+                  <Building2 size={14} />
                   {job.company_name}
                 </span>
                 {(job.location_city || job.location_department) && (
-                  <span className="flex items-center gap-1">
-                    <MapPin size={13} className="text-emerald-400" />
+                  <span className="apply-modal-meta-item">
+                    <MapPin size={14} />
                     {job.location_city} {job.location_department ? `(${job.location_department})` : ""}
                   </span>
                 )}
               </div>
             </div>
 
+            {/* Badge de pré-remplissage automatique */}
+            {isPreFilled && (
+              <div className="apply-modal-prefill-pill">
+                <ShieldCheck size={14} />
+                <span>Vos coordonnées ont été pré-remplies automatiquement</span>
+              </div>
+            )}
+
             {errorMsg && (
-              <div className="p-3 bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-xl">
+              <div
+                style={{
+                  padding: "0.75rem 1rem",
+                  backgroundColor: "#fee2e2",
+                  border: "1px solid #fecaca",
+                  borderRadius: "10px",
+                  color: "#b91c1c",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  marginBottom: "1rem",
+                }}
+              >
                 {errorMsg}
               </div>
             )}
 
-            {/* Coordonnées Chauffeur */}
-            <div className="space-y-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Vos Coordonnées Directes
-              </p>
+            {/* Coordonnées */}
+            <div className="apply-form-section-title">Vos Coordonnées Directes</div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Nom & Prénom *
-                  </label>
-                  <div className="relative">
-                    <User size={15} className="absolute left-3 top-3 text-slate-500" />
-                    <input
-                      type="text"
-                      required
-                      value={candidateName}
-                      onChange={(e) => setCandidateName(e.target.value)}
-                      placeholder="Ex: Alexandre Laurent"
-                      className="w-full pl-9 pr-3 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Téléphone direct *
-                  </label>
-                  <div className="relative">
-                    <Phone size={15} className="absolute left-3 top-3 text-slate-500" />
-                    <input
-                      type="tel"
-                      required
-                      value={candidatePhone}
-                      onChange={(e) => setCandidatePhone(e.target.value)}
-                      placeholder="06 12 34 56 78"
-                      className="w-full pl-9 pr-3 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
+            <div className="apply-form-grid-2">
+              <div className="apply-form-group">
+                <label className="apply-form-label">Nom & Prénom *</label>
+                <div className="apply-input-wrap">
+                  <User size={16} className="apply-input-icon" />
+                  <input
+                    type="text"
+                    required
+                    value={candidateName}
+                    onChange={(e) => setCandidateName(e.target.value)}
+                    placeholder="Ex: Alexandre Laurent"
+                    className="apply-input"
+                  />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Adresse Email *
-                  </label>
-                  <div className="relative">
-                    <Mail size={15} className="absolute left-3 top-3 text-slate-500" />
-                    <input
-                      type="email"
-                      required
-                      value={candidateEmail}
-                      onChange={(e) => setCandidateEmail(e.target.value)}
-                      placeholder="alexandre@email.fr"
-                      className="w-full pl-9 pr-3 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
+              <div className="apply-form-group">
+                <label className="apply-form-label">Téléphone direct *</label>
+                <div className="apply-input-wrap">
+                  <Phone size={16} className="apply-input-icon" />
+                  <input
+                    type="tel"
+                    required
+                    value={candidatePhone}
+                    onChange={(e) => setCandidatePhone(e.target.value)}
+                    placeholder="06 12 34 56 78"
+                    className="apply-input"
+                  />
                 </div>
+              </div>
+            </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Ville ou Département
-                  </label>
-                  <div className="relative">
-                    <MapPin size={15} className="absolute left-3 top-3 text-slate-500" />
-                    <input
-                      type="text"
-                      value={candidateCity}
-                      onChange={(e) => setCandidateCity(e.target.value)}
-                      placeholder="Ex: Lyon (69)"
-                      className="w-full pl-9 pr-3 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
+            <div className="apply-form-grid-2">
+              <div className="apply-form-group">
+                <label className="apply-form-label">Adresse Email *</label>
+                <div className="apply-input-wrap">
+                  <Mail size={16} className="apply-input-icon" />
+                  <input
+                    type="email"
+                    required
+                    value={candidateEmail}
+                    onChange={(e) => setCandidateEmail(e.target.value)}
+                    placeholder="alexandre@email.fr"
+                    className="apply-input"
+                  />
+                </div>
+              </div>
+
+              <div className="apply-form-group">
+                <label className="apply-form-label">Ville ou Département</label>
+                <div className="apply-input-wrap">
+                  <MapPin size={16} className="apply-input-icon" />
+                  <input
+                    type="text"
+                    value={candidateCity}
+                    onChange={(e) => setCandidateCity(e.target.value)}
+                    placeholder="Ex: Lyon (69)"
+                    className="apply-input"
+                  />
                 </div>
               </div>
             </div>
 
             {/* Permis et Documents */}
-            <div className="space-y-3 pt-1">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Permis & Qualifications
-              </p>
+            <div style={{ marginTop: "0.5rem" }}>
+              <div className="apply-form-section-title">Permis & Qualifications</div>
 
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  Permis détenus
-                </label>
-                <div className="flex flex-wrap gap-2">
+              <div className="apply-form-group">
+                <label className="apply-form-label">Sélectionnez vos permis</label>
+                <div className="apply-permits-wrap">
                   {["CE", "C", "C1", "BE", "D", "ADR de base", "ADR Citerne"].map((p) => {
                     const active = permits.includes(p);
                     return (
@@ -340,11 +411,7 @@ export default function ApplyJobModal({ job, isOpen, onClose }: ApplyJobModalPro
                         key={p}
                         type="button"
                         onClick={() => togglePermit(p)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                          active
-                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-sm"
-                            : "bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200"
-                        }`}
+                        className={`apply-permit-pill ${active ? "active" : ""}`}
                       >
                         {active && "✓ "}Permis {p}
                       </button>
@@ -353,8 +420,8 @@ export default function ApplyJobModal({ job, isOpen, onClose }: ApplyJobModalPro
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-                <label className="flex items-center gap-2 p-2.5 bg-slate-800/60 border border-slate-700/80 rounded-xl cursor-pointer hover:bg-slate-800 transition-colors">
+              <div className="apply-checks-row">
+                <label className="apply-check-card">
                   <input
                     type="checkbox"
                     checked={fimo || fco}
@@ -362,26 +429,24 @@ export default function ApplyJobModal({ job, isOpen, onClose }: ApplyJobModalPro
                       setFimo(e.target.checked);
                       setFco(e.target.checked);
                     }}
-                    className="rounded text-emerald-500 focus:ring-0 bg-slate-900 border-slate-600"
                   />
-                  <span className="text-xs text-slate-200">FIMO / FCO à jour</span>
+                  <span className="apply-check-text">FIMO / FCO à jour</span>
                 </label>
 
-                <label className="flex items-center gap-2 p-2.5 bg-slate-800/60 border border-slate-700/80 rounded-xl cursor-pointer hover:bg-slate-800 transition-colors">
+                <label className="apply-check-card">
                   <input
                     type="checkbox"
                     checked={chronoCard}
                     onChange={(e) => setChronoCard(e.target.checked)}
-                    className="rounded text-emerald-500 focus:ring-0 bg-slate-900 border-slate-600"
                   />
-                  <span className="text-xs text-slate-200">Carte chrono valide</span>
+                  <span className="apply-check-text">Carte chrono valide</span>
                 </label>
 
                 <div>
                   <select
                     value={experience}
                     onChange={(e) => setExperience(e.target.value)}
-                    className="w-full py-2.5 px-3 bg-slate-800/90 border border-slate-700 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
+                    className="apply-select"
                   >
                     <option value="Débutant (< 1 an)">Débutant (&lt; 1 an)</option>
                     <option value="1 à 3 ans">1 à 3 ans d'expérience</option>
@@ -394,38 +459,28 @@ export default function ApplyJobModal({ job, isOpen, onClose }: ApplyJobModalPro
             </div>
 
             {/* Message optionnel */}
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                Message pour le recruteur (optionnel)
-              </label>
+            <div className="apply-form-group" style={{ marginTop: "0.5rem" }}>
+              <label className="apply-form-label">Message pour le recruteur (optionnel)</label>
               <textarea
                 rows={2}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Ex: Disponible immédiatement pour tournées régionales ou relais de nuit..."
-                className="w-full p-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                placeholder="Ex: Disponible immédiatement pour tournées régionales..."
+                className="apply-textarea"
               />
             </div>
 
             {/* Boutons d'action */}
-            <div className="pt-2 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={onClose}
-                className="py-3 px-5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors"
-              >
+            <div className="apply-actions-row">
+              <button type="button" onClick={onClose} className="apply-btn-cancel">
                 Annuler
               </button>
 
-              <button
-                type="submit"
-                disabled={submitting}
-                className="flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-bold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white shadow-lg shadow-emerald-500/20 transition-all text-sm disabled:opacity-50"
-              >
+              <button type="submit" disabled={submitting} className="apply-btn-submit">
                 {submitting ? (
                   <>
                     <Loader2 size={16} className="animate-spin" />
-                    <span>Transmission au recruteur en cours...</span>
+                    <span>Transmission au recruteur...</span>
                   </>
                 ) : (
                   <>
