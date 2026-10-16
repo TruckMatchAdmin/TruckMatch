@@ -379,22 +379,23 @@ export const VERIFIED_TRANSPORT_JOBS: TransportJobSeed[] = [
   },
 ];
 
-/**
- * Fonction d'ingestion et de synchronisation des offres dans Supabase
- */
-export async function syncTransportJobsToDatabase(): Promise<{
+export async function syncTransportJobsToDatabase(options: { purgeDeleted?: boolean } = { purgeDeleted: true }): Promise<{
   success: boolean;
   inserted: number;
   updated: number;
+  deactivated: number;
   total: number;
   error?: string;
 }> {
   try {
     let inserted = 0;
     let updated = 0;
+    let deactivated = 0;
 
+    const activeExternalIds = VERIFIED_TRANSPORT_JOBS.map((j) => j.external_id);
+
+    // 1. Insertion ou mise à jour des offres actives
     for (const job of VERIFIED_TRANSPORT_JOBS) {
-      // Vérifier si l'offre existe déjà par son external_id
       const { data: existing } = await supabaseAdmin
         .from("jobs")
         .select("id")
@@ -404,6 +405,7 @@ export async function syncTransportJobsToDatabase(): Promise<{
       const payload = {
         title: job.title,
         company_name: job.company_name,
+        contact_email: (job as any).contact_email || null,
         category: job.category,
         permit_required: job.permit_required,
         contract_type: job.contract_type,
@@ -418,12 +420,11 @@ export async function syncTransportJobsToDatabase(): Promise<{
         is_active: true,
         source: job.source,
         external_id: job.external_id,
-        apply_url: job.apply_url || "https://truckmatch.fr/connexion",
+        apply_url: job.apply_url || "https://truckmatch.fr/offres-emploi",
         updated_at: new Date().toISOString(),
       };
 
       if (existing?.id) {
-        // Mise à jour de l'offre existante
         const { error: updErr } = await supabaseAdmin
           .from("jobs")
           .update(payload)
@@ -431,7 +432,6 @@ export async function syncTransportJobsToDatabase(): Promise<{
 
         if (!updErr) updated++;
       } else {
-        // Insertion nouvelle offre
         const { error: insErr } = await supabaseAdmin
           .from("jobs")
           .insert([
@@ -446,7 +446,30 @@ export async function syncTransportJobsToDatabase(): Promise<{
       }
     }
 
-    // Récupérer le nombre total d'offres en base
+    // 2. Désactivation des offres externes supprimées ou expirées (purge automatique)
+    if (options.purgeDeleted !== false) {
+      const { data: externalJobs } = await supabaseAdmin
+        .from("jobs")
+        .select("id, external_id")
+        .not("external_id", "is", null)
+        .is("company_id", null)
+        .eq("is_active", true);
+
+      if (externalJobs && externalJobs.length > 0) {
+        for (const j of externalJobs) {
+          if (j.external_id && !activeExternalIds.includes(j.external_id)) {
+            const { error: deactErr } = await supabaseAdmin
+              .from("jobs")
+              .update({ is_active: false, updated_at: new Date().toISOString() })
+              .eq("id", j.id);
+
+            if (!deactErr) deactivated++;
+          }
+        }
+      }
+    }
+
+    // 3. Récupérer le nombre total d'offres en ligne
     const { count } = await supabaseAdmin
       .from("jobs")
       .select("*", { count: "exact", head: true })
@@ -457,6 +480,7 @@ export async function syncTransportJobsToDatabase(): Promise<{
       success: true,
       inserted,
       updated,
+      deactivated,
       total: count || 0,
     };
   } catch (err: any) {
@@ -465,6 +489,7 @@ export async function syncTransportJobsToDatabase(): Promise<{
       success: false,
       inserted: 0,
       updated: 0,
+      deactivated: 0,
       total: 0,
       error: err.message || "Erreur serveur",
     };
