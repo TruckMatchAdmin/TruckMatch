@@ -198,6 +198,130 @@ export async function POST(request: Request) {
       });
     }
 
+    // 4. Suppression définitive du compte candidat (Droit à l'oubli RGPD)
+    if (action === "delete_account") {
+      const email = session.email.toLowerCase().trim();
+
+      // 1. Récupérer le profil pour obtenir id, téléphone et URL du CV
+      const { data: driver } = await supabaseAdmin
+        .from("drivers")
+        .select("id, first_name, last_name, email, phone, resume_url")
+        .eq("email", email)
+        .maybeSingle();
+
+      const candidateName = driver
+        ? `${driver.first_name || ""} ${driver.last_name || ""}`.trim()
+        : session.name || "Chauffeur";
+      const candidatePhone = driver?.phone || "";
+
+      // 2. Supprimer le fichier CV de Supabase Storage s'il existe
+      if (driver?.resume_url) {
+        try {
+          const match = driver.resume_url.match(/\/resumes\/(.+)$/);
+          if (match && match[1]) {
+            const filePath = decodeURIComponent(match[1]);
+            await supabaseAdmin.storage.from("resumes").remove([filePath]);
+          }
+        } catch (storageErr) {
+          console.warn("[Delete Account] Supabase Storage delete warning:", storageErr);
+        }
+      }
+
+      // 3. Supprimer les candidatures associées (job_applications)
+      try {
+        await supabaseAdmin
+          .from("job_applications")
+          .delete()
+          .eq("candidate_email", email);
+
+        if (candidatePhone) {
+          await supabaseAdmin
+            .from("job_applications")
+            .delete()
+            .eq("candidate_phone", candidatePhone);
+        }
+      } catch (appErr) {
+        console.warn("[Delete Account] job_applications delete warning:", appErr);
+      }
+
+      // 4. Supprimer les messages et tickets de support associés
+      try {
+        await supabaseAdmin
+          .from("support_messages")
+          .delete()
+          .eq("sender_email", email);
+
+        await supabaseAdmin
+          .from("support_tickets")
+          .delete()
+          .eq("email", email);
+      } catch (supportErr) {
+        console.warn("[Delete Account] support delete warning:", supportErr);
+      }
+
+      // 5. Supprimer les commandes commerciales s'il en existe
+      if (driver?.id) {
+        try {
+          await supabaseAdmin
+            .from("commercial_orders")
+            .delete()
+            .eq("driver_id", driver.id);
+        } catch (orderErr) {
+          console.warn("[Delete Account] commercial_orders delete warning:", orderErr);
+        }
+      }
+
+      // 6. Supprimer la fiche chauffeur de la table public.drivers (retire immédiatement de la carte)
+      const { error: deleteDriverErr } = await supabaseAdmin
+        .from("drivers")
+        .delete()
+        .eq("email", email);
+
+      if (deleteDriverErr) {
+        console.error("[Delete Account] Error deleting driver record:", deleteDriverErr);
+        return NextResponse.json(
+          { error: "Erreur lors de la suppression du profil : " + deleteDriverErr.message },
+          { status: 500 }
+        );
+      }
+
+      // 7. Supprimer l'utilisateur de Supabase Auth (auth.users)
+      try {
+        const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers();
+        const authUser = authUsers?.users?.find(
+          (u) => u.email?.toLowerCase().trim() === email
+        );
+        if (authUser) {
+          await supabaseAdmin.auth.admin.deleteUser(authUser.id);
+        }
+      } catch (authErr) {
+        console.warn("[Delete Account] auth.users deletion warning:", authErr);
+      }
+
+      // 8. Notification Telegram pour l'administrateur
+      try {
+        const { sendTelegramMessage } = await import("@/lib/telegram/bot");
+        await sendTelegramMessage(
+          `🗑️ <b>COMPTE CANDIDAT SUPPRIMÉ (DROIT À L'OUBLI RGPD)</b>\n\n` +
+          `👤 <b>Nom :</b> ${candidateName}\n` +
+          `✉️ <b>Email :</b> ${email}\n` +
+          (candidatePhone ? `📞 <b>Téléphone :</b> <code>${candidatePhone}</code>\n` : "") +
+          `ℹ️ <i>Toutes les données (profil carte, CV, candidatures, support et compte d'accès) ont été définitivement purgées de Supabase.</i>`
+        );
+      } catch (tgErr) {
+        console.warn("[Delete Account] Telegram notification warning:", tgErr);
+      }
+
+      // 9. Réponse et révocation du cookie de session
+      const { SESSION_COOKIE } = await import("@/lib/auth/session");
+      const response = NextResponse.json({
+        success: true,
+        message: "Votre profil chauffeur et toutes vos données ont été définitivement supprimés.",
+      });
+      response.cookies.set(SESSION_COOKIE, "", { path: "/", maxAge: 0, httpOnly: true });
+      return response;
+    }
+
     return NextResponse.json({ error: "Action inconnue" }, { status: 400 });
   } catch (err: any) {
     console.error("Candidate actions error:", err);

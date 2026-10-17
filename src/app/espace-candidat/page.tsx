@@ -41,6 +41,7 @@ import {
   Menu,
   ArrowLeft,
   Loader2,
+  Trash2,
 } from "lucide-react";
 
 interface JobOffer {
@@ -130,6 +131,37 @@ export default function CandidatePortalPage() {
   const [boostModalOpen, setBoostModalOpen] = useState(false);
   const [boostLoading, setBoostLoading] = useState(false);
   const [boostSuccessMsg, setBoostSuccessMsg] = useState<string | null>(null);
+
+  // Suppression définitive du compte (Droit à l'oubli RGPD)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (!deleteConfirmed) return;
+    setDeleteLoading(true);
+    try {
+      const res = await fetch("/api/candidate/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete_account" }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Échec de la suppression du compte.");
+      }
+      try {
+        localStorage.removeItem("tm_user");
+        localStorage.removeItem("tm_candidate_last_application");
+      } catch (e) {}
+
+      alert("Votre compte et l'ensemble de vos données personnelles ont été définitivement supprimés.");
+      window.location.href = "/";
+    } catch (err: any) {
+      alert(err.message || "Erreur lors de la suppression.");
+      setDeleteLoading(false);
+    }
+  };
 
   const handleActivateBoost = async () => {
     setBoostLoading(true);
@@ -610,6 +642,14 @@ export default function CandidatePortalPage() {
           <button type="button" onClick={handleLogout} className="portal-footer-link logout-btn">
             <LogOut size={13} />
             <span>Déconnexion</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setDeleteModalOpen(true)}
+            className="portal-footer-link delete-account-btn"
+          >
+            <Trash2 size={13} />
+            <span>Supprimer mon compte</span>
           </button>
         </div>
       </aside>
@@ -2301,6 +2341,35 @@ export default function CandidatePortalPage() {
                     <span>Enregistrer mes coordonnées & mobilité</span>
                   </button>
                 </div>
+
+                {/* -------------------------------------------------------- */}
+                {/* ZONE DE DANGER : DROIT À L'OUBLI RGPD & SUPPRESSION     */}
+                {/* -------------------------------------------------------- */}
+                <div className="driver-danger-box">
+                  <div className="driver-danger-meta">
+                    <div className="driver-danger-icon-circle">
+                      <Trash2 size={22} />
+                    </div>
+                    <div>
+                      <div className="driver-danger-title">Droit à l'oubli • Suppression définitive du profil</div>
+                      <div className="driver-danger-text">
+                        Supprimez immédiatement votre profil de la carte des transporteurs, vos coordonnées, votre CV, vos candidatures et votre compte d'accès. Cette action est irréversible.
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeleteConfirmed(false);
+                      setDeleteModalOpen(true);
+                    }}
+                    className="driver-delete-cta-btn"
+                  >
+                    <Trash2 size={15} />
+                    <span>Supprimer définitivement mon profil</span>
+                  </button>
+                </div>
               </form>
             </div>
           )}
@@ -2544,6 +2613,76 @@ export default function CandidatePortalPage() {
           <span>Messages</span>
         </button>
       </nav>
+
+      {/* ============================================================== */}
+      {/* MODAL DE SUPPRESSION DÉFINITIVE DE COMPTE (RGPD)               */}
+      {/* ============================================================== */}
+      {deleteModalOpen && (
+        <div className="delete-account-modal-overlay" onClick={() => !deleteLoading && setDeleteModalOpen(false)}>
+          <div className="delete-account-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="delete-modal-header">
+              <div className="delete-modal-icon-badge">
+                <Trash2 size={24} />
+              </div>
+              <div>
+                <h3 className="delete-modal-title">Supprimer mon compte TruckMatch</h3>
+                <div style={{ fontSize: "0.82rem", color: "#64748b" }}>Action irréversible (Droit à l'oubli RGPD)</div>
+              </div>
+            </div>
+
+            <p style={{ fontSize: "0.9rem", color: "#334155", lineHeight: 1.5, margin: "0 0 1rem 0" }}>
+              Êtes-vous certain de vouloir supprimer votre profil chauffeur ? Toutes les données suivantes seront <strong>définitivement effacées</strong> de nos bases de données :
+            </p>
+
+            <ul className="delete-modal-list">
+              <li>❌ Retrait immédiat de la carte des transporteurs</li>
+              <li>❌ Suppression de votre téléphone, email et coordonnées</li>
+              <li>❌ Destruction complète de votre CV de nos serveurs</li>
+              <li>❌ Purge de votre historique de candidatures et messages</li>
+              <li>❌ Révocation de vos identifiants de connexion</li>
+            </ul>
+
+            <label style={{ display: "flex", alignItems: "flex-start", gap: "0.6rem", margin: "1.25rem 0", cursor: "pointer", fontSize: "0.85rem", color: "#475569" }}>
+              <input
+                type="checkbox"
+                checked={deleteConfirmed}
+                onChange={(e) => setDeleteConfirmed(e.target.checked)}
+                style={{ marginTop: "0.2rem", cursor: "pointer" }}
+              />
+              <span>Je confirme vouloir supprimer définitivement mon compte et comprends que je ne pourrai plus être contacté par les transporteurs.</span>
+            </label>
+
+            <div className="delete-modal-actions">
+              <button
+                type="button"
+                onClick={() => setDeleteModalOpen(false)}
+                disabled={deleteLoading}
+                className="btn-cancel-delete"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={!deleteConfirmed || deleteLoading}
+                className="btn-confirm-delete"
+              >
+                {deleteLoading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Suppression en cours...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    <span>Confirmer la suppression</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
