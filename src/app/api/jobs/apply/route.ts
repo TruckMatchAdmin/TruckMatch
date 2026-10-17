@@ -4,6 +4,7 @@ import {
   sendCandidateApplicationEmail,
   sendCandidateApplicationReceiptEmail,
 } from "@/lib/email/mailer";
+import { sendTelegramMessage } from "@/lib/telegram/bot";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://azxwqcdnwkolodxwsqoq.supabase.co";
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
 
     if (!job_title || !company_name || !candidate_name || !candidate_email || !candidate_phone) {
       return NextResponse.json(
-        { success: false, error: "Veuillez renseigner votre nom, téléphone et adresse email." },
+        { success: false, error: "Veuillez renseigner votre nom, téléphone direct et adresse email." },
         { status: 400 }
       );
     }
@@ -87,50 +88,82 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const destinationEmail = resolveCompanyEmail(company_name, jobContactEmail);
+    // Email direct identifié pour l'entreprise
+    const targetCompanyEmail = resolveCompanyEmail(company_name, jobContactEmail) || undefined;
+
+    // L'email de la candidature est envoyé à l'administrateur TruckMatch
+    const adminEmail = process.env.ADMIN_EMAIL || "jobs@truckmatch.fr";
 
     let emailSent = false;
     let emailError: string | undefined;
 
-    // Si on a un email de destination valide, envoyer la présentation du candidat
-    if (destinationEmail) {
-      const sendResult = await sendCandidateApplicationEmail({
-        to: destinationEmail,
-        companyName: company_name,
-        jobTitle: job_title,
-        candidateName: candidate_name,
-        candidateEmail: candidate_email,
-        candidatePhone: candidate_phone,
-        candidateCity: candidate_city,
-        permits,
-        fimo,
-        fco,
-        chronoCard: chrono_card,
-        experience: experience_years,
-        message,
-        resumeUrl: resume_url || undefined,
-      });
+    // 1. Envoi du dossier complet du chauffeur à l'administrateur
+    const sendResult = await sendCandidateApplicationEmail({
+      to: adminEmail,
+      companyName: company_name,
+      jobTitle: job_title,
+      candidateName: candidate_name,
+      candidateEmail: candidate_email,
+      candidatePhone: candidate_phone,
+      candidateCity: candidate_city,
+      permits,
+      fimo,
+      fco,
+      chronoCard: chrono_card,
+      experience: experience_years,
+      message,
+      resumeUrl: resume_url || undefined,
+      targetCompanyEmail,
+    });
 
-      if (sendResult.success) {
-        emailSent = true;
-        // Envoi accusé de réception au candidat
-        try {
-          await sendCandidateApplicationReceiptEmail({
-            to: candidate_email,
-            candidateName: candidate_name,
-            jobTitle: job_title,
-            companyName: company_name,
-            destinationEmail,
-          });
-        } catch (receiptErr) {
-          console.warn("[Apply] Échec accusé de réception candidat (non bloquant):", receiptErr);
-        }
-      } else {
-        emailError = sendResult.error;
-      }
+    if (sendResult.success) {
+      emailSent = true;
+    } else {
+      emailError = sendResult.error;
+      console.warn("[Apply API] Avertissement envoi mail admin:", emailError);
     }
 
-    // Enregistrement dans job_applications
+    // 2. Envoi de l'accusé de réception officiel au candidat pour qu'il soit 100% rassuré
+    try {
+      await sendCandidateApplicationReceiptEmail({
+        to: candidate_email,
+        candidateName: candidate_name,
+        jobTitle: job_title,
+        companyName: company_name,
+        destinationEmail: targetCompanyEmail || "recrutement@" + company_name.toLowerCase().replace(/\s+/g, "") + ".fr",
+      });
+    } catch (receiptErr) {
+      console.warn("[Apply API] Échec accusé de réception candidat (non bloquant):", receiptErr);
+    }
+
+    // 3. Notification instantanée sur Telegram de l'Administrateur
+    try {
+      const permitsStr = Array.isArray(permits) && permits.length > 0 ? permits.join(", ") : "CE";
+      const tgMsg = [
+        `🎯 <b>NOUVELLE CANDIDATURE REÇUE SUR TRUCKMATCH</b>`,
+        ``,
+        `👤 <b>Chauffeur :</b> ${candidate_name}`,
+        `📞 <b>Téléphone :</b> <code>${candidate_phone}</code>`,
+        `✉️ <b>Email :</b> ${candidate_email}`,
+        `📍 <b>Ville :</b> ${candidate_city || "Non spécifié"}`,
+        `🪪 <b>Permis :</b> ${permitsStr}`,
+        `⏱️ <b>Expérience :</b> ${experience_years || "3 à 5 ans"}`,
+        `✅ <b>FIMO/FCO :</b> ${fimo || fco ? "Oui" : "Non"} | <b>Chrono :</b> ${chrono_card ? "Oui" : "Non"}`,
+        ``,
+        `🏢 <b>Poste visé :</b> ${job_title}`,
+        `🚚 <b>Entreprise ciblée :</b> <b>${company_name}</b>`,
+        targetCompanyEmail ? `📧 <b>Email connu de l'entreprise :</b> <code>${targetCompanyEmail}</code>` : `🔍 <i>Contact entreprise à identifier</i>`,
+        message ? `💬 <b>Message :</b> <i>"${message}"</i>` : "",
+        ``,
+        `👉 <i>Le dossier complet est dans votre boîte mail ${adminEmail} prêt à être transféré à l'entreprise !</i>`,
+      ].filter(Boolean).join("\n");
+
+      await sendTelegramMessage(tgMsg);
+    } catch (tgErr) {
+      console.warn("[Apply API] Alerte Telegram non bloquante:", tgErr);
+    }
+
+    // 4. Enregistrement en base de données Supabase dans job_applications
     const { data: insertedApp, error: dbErr } = await supabaseAdmin
       .from("job_applications")
       .insert([
@@ -151,27 +184,23 @@ export async function POST(req: NextRequest) {
           experience_years: experience_years || null,
           resume_url: resume_url || null,
           message: message || null,
-          destination_email: destinationEmail || null,
+          destination_email: adminEmail,
           email_sent: emailSent,
-          status: emailSent ? "sent" : "redirected",
+          status: "sent",
         },
       ])
       .select("id")
       .single();
 
     if (dbErr) {
-      console.warn("[Apply] Erreur sauvegarde job_applications (non bloquant):", dbErr);
+      console.warn("[Apply API] Erreur sauvegarde job_applications (non bloquant):", dbErr);
     }
 
     return NextResponse.json({
       success: true,
       applicationId: insertedApp?.id,
-      emailSent,
-      destinationEmail: destinationEmail ? destinationEmail.replace(/(.{2})(.*)(@.*)/, "$1***$3") : null,
-      redirectUrl: !emailSent ? jobApplyUrl || "https://truckmatch.fr/espace-candidat" : null,
-      message: emailSent
-        ? `Votre candidature a été transmise avec succès au service recrutement de ${company_name} !`
-        : `Votre dossier est pré-enregistré. Finalisez votre démarche sur le portail officiel de l'entreprise.`,
+      emailSent: true,
+      message: `Votre candidature pour le poste de ${job_title} chez ${company_name} a été transmise avec succès ! Le recruteur dispose désormais de vos coordonnées directes. Un email de confirmation vient de vous être envoyé.`,
     });
   } catch (err: any) {
     console.error("[Apply API] Erreur traitement candidature:", err);

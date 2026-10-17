@@ -551,6 +551,7 @@ export function renderCandidateApplicationEmail({
   experience = "",
   message = "",
   resumeUrl,
+  targetCompanyEmail,
   trackingToken,
 }: {
   companyName: string;
@@ -566,35 +567,64 @@ export function renderCandidateApplicationEmail({
   experience?: string;
   message?: string;
   resumeUrl?: string;
+  targetCompanyEmail?: string;
   trackingToken: string;
 }): { subject: string; html: string } {
   const cleanName = candidateName ? candidateName.trim() : "Un conducteur routier";
   const permitBadges = permits.length > 0 ? permits.join(", ") : "Non spécifié";
-  const subject = `🚚 Candidature Chauffeur : ${cleanName} (${permitBadges}) pour ${jobTitle}`;
-  const preheader = `Nouvelle candidature qualifiée transmise via TruckMatch pour votre offre ${jobTitle}`;
+  const subject = `🚚 [Candidature Reçue] ${cleanName} (${permitBadges}) pour ${jobTitle} chez ${companyName}`;
+  const preheader = `Nouvelle candidature qualifiée reçue pour ${companyName} (${jobTitle})`;
 
   const cleanMessage = message ? message.trim() : "";
 
+  // Sujet et corps préformatés pour le transfert à l'entreprise
+  const forwardSubject = encodeURIComponent(`Candidature Chauffeur : ${cleanName} (${permitBadges}) - ${jobTitle}`);
+  const forwardBody = encodeURIComponent(
+    `Bonjour ${companyName},\n\n` +
+    `Un conducteur routier qualifié vient de postuler pour votre opportunité de ${jobTitle} via TruckMatch.fr :\n\n` +
+    `• Candidat : ${cleanName}\n` +
+    `• Téléphone : ${candidatePhone}\n` +
+    `• Email : ${candidateEmail}\n` +
+    `• Ville : ${candidateCity || "France"}\n` +
+    `• Permis : ${permitBadges}\n` +
+    `• Expérience : ${experience || "Expérimenté"}\n` +
+    `• FIMO / FCO : ${fimo || fco ? "À jour" : "Non spécifié"}\n` +
+    `• Carte chrono : ${chronoCard ? "Valide" : "Non spécifié"}\n\n` +
+    (cleanMessage ? `Message du candidat : "${cleanMessage}"\n\n` : "") +
+    (resumeUrl ? `CV consultable : ${resumeUrl}\n\n` : "") +
+    `Cordialement,\nL'équipe TruckMatch - Recrutement Transport Routier\nhttps://truckmatch.fr`
+  );
+
+  const forwardMailto = targetCompanyEmail
+    ? `mailto:${targetCompanyEmail}?subject=${forwardSubject}&body=${forwardBody}`
+    : `mailto:?subject=${forwardSubject}&body=${forwardBody}`;
+
   const contentHtml = `
     <div class="tag-pill" style="background-color:#ecfdf5; color:#047857; border:1px solid #a7f3d0;">
-      ✨ NOUVELLE CANDIDATURE TRUCKMATCH
+      🎯 CANDIDATURE CANDIDAT ENTRISTÉE
     </div>
 
-    <h1 style="font-size:22px; font-weight:800; color:#0f172a; margin:0 0 14px 0; line-height:1.3;">
-      Nouvelle candidature pour : <span style="color:#0284c7;">${jobTitle}</span>
+    <h1 style="font-size:22px; font-weight:800; color:#0f172a; margin:0 0 10px 0; line-height:1.3;">
+      Nouvelle candidature pour : <span style="color:#0284c7;">${companyName}</span>
     </h1>
+    <div style="font-size:15px; font-weight:700; color:#475569; margin-bottom:16px;">
+      Poste : ${jobTitle}
+    </div>
 
-    <p style="margin:0 0 18px 0; font-size:15px; color:#334155; line-height:1.5;">
-      Bonjour <strong>${companyName}</strong>,<br>
-      Un conducteur routier disponible vient de postuler directement à votre opportunité via la plateforme <strong>TruckMatch</strong>. Voici la synthèse de son profil :
-    </p>
-
-    <!-- Fiche Conducteur Qualifiée -->
+    <!-- Fiche Récapitulative Conducteur -->
     <div style="background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:20px; margin:20px 0;">
       <table style="width:100%; border-collapse:collapse;">
         <tr>
           <td style="padding:6px 0; font-size:13px; color:#64748b; width:130px;">Candidat :</td>
           <td style="padding:6px 0; font-size:15px; font-weight:700; color:#0f172a;">${cleanName}</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0; font-size:13px; color:#64748b;">Téléphone direct :</td>
+          <td style="padding:6px 0; font-size:15px; font-weight:700; color:#16a34a;">${candidatePhone}</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0; font-size:13px; color:#64748b;">Email candidat :</td>
+          <td style="padding:6px 0; font-size:14px; font-weight:600; color:#0284c7;">${candidateEmail}</td>
         </tr>
         <tr>
           <td style="padding:6px 0; font-size:13px; color:#64748b;">Localisation :</td>
@@ -611,36 +641,42 @@ export function renderCandidateApplicationEmail({
         <tr>
           <td style="padding:6px 0; font-size:13px; color:#64748b;">Conformité FIMO/FCO :</td>
           <td style="padding:6px 0; font-size:14px; font-weight:600; color:#059669;">
-            ${fimo || fco ? "✅ FIMO/FCO Marchandises à jour" : "À vérifier lors de l'entretien"}
+            ${fimo || fco ? "✅ FIMO/FCO Marchandises à jour" : "Non spécifié"}
           </td>
         </tr>
         <tr>
           <td style="padding:6px 0; font-size:13px; color:#64748b;">Carte conducteur :</td>
           <td style="padding:6px 0; font-size:14px; font-weight:600; color:#059669;">
-            ${chronoCard ? "✅ Carte chrononumérique valide" : "À vérifier"}
+            ${chronoCard ? "✅ Carte chrononumérique valide" : "Non spécifié"}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0; font-size:13px; color:#64748b;">Contact entreprise :</td>
+          <td style="padding:6px 0; font-size:13px; font-weight:600; color:#64748b;">
+            ${targetCompanyEmail ? targetCompanyEmail : "Recherche directe / patron à contacter"}
           </td>
         </tr>
       </table>
 
       ${cleanMessage ? `
       <div style="margin-top:16px; padding-top:14px; border-top:1px dashed #cbd5e1;">
-        <div style="font-size:12px; font-weight:700; color:#475569; text-transform:uppercase; margin-bottom:6px;">Mot du candidat :</div>
+        <div style="font-size:12px; font-weight:700; color:#475569; text-transform:uppercase; margin-bottom:6px;">Mot du chauffeur :</div>
         <div style="font-size:14px; color:#1e293b; font-style:italic; line-height:1.5;">"${cleanMessage}"</div>
       </div>
       ` : ""}
     </div>
 
-    <!-- Contact Direct Rapide -->
+    <!-- Actions Rapides pour l'Admin -->
     <div style="background-color:#f0fdf4; border:1px solid #86efac; border-radius:10px; padding:18px 20px; margin:20px 0; text-align:center;">
       <p style="margin:0 0 12px 0; font-size:14px; font-weight:700; color:#166534;">
-        📞 Contact direct avec le candidat :
+        ⚡ Actions rapides :
       </p>
-      <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap; text-align:center;">
-        <a href="tel:${candidatePhone}" style="padding:12px 24px; font-size:15px; font-weight:800; background-color:#16a34a; color:#ffffff !important; border-radius:8px; text-decoration:none; display:inline-block; margin:4px;">
-          Appeler : ${candidatePhone}
+      <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap; text-align:center;">
+        <a href="tel:${candidatePhone}" style="padding:11px 20px; font-size:14px; font-weight:800; background-color:#16a34a; color:#ffffff !important; border-radius:8px; text-decoration:none; display:inline-block; margin:4px;">
+          📞 Appeler le chauffeur
         </a>
-        <a href="mailto:${candidateEmail}?subject=Suite à votre candidature TruckMatch - ${encodeURIComponent(jobTitle)}" style="padding:12px 24px; font-size:15px; font-weight:800; background-color:#0284c7; color:#ffffff !important; border-radius:8px; text-decoration:none; display:inline-block; margin:4px;">
-          Répondre par email (${candidateEmail})
+        <a href="${forwardMailto}" style="padding:11px 20px; font-size:14px; font-weight:800; background-color:#0284c7; color:#ffffff !important; border-radius:8px; text-decoration:none; display:inline-block; margin:4px;">
+          🚀 Transférer à ${companyName}
         </a>
       </div>
       ${resumeUrl ? `
@@ -655,7 +691,7 @@ export function renderCandidateApplicationEmail({
     <!-- Présentation TruckMatch -->
     <div class="highlight-card" style="background-color:#f8fafc; border:1px solid #cbd5e1; margin-top:24px;">
       <div style="font-size:13px; color:#475569; line-height:1.5;">
-        🚛 <strong>Transmis gratuitement par TruckMatch :</strong> La plateforme française dédiée au recrutement et à la mise en relation directe des professionnels du transport routier. Recrutez vos prochains conducteurs qualifiés sur <a href="${SITE_URL}" style="color:#0284c7; font-weight:700;">truckmatch.fr</a>.
+        🚛 <strong>Transmis par TruckMatch.fr :</strong> Répondez au candidat ou transférez cette fiche directement à l'entreprise pour lui présenter ce chauffeur qualifié.
       </div>
     </div>
   `;

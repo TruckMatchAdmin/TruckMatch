@@ -369,6 +369,7 @@ export async function sendCandidateApplicationEmail({
   experience = "",
   message = "",
   resumeUrl,
+  targetCompanyEmail,
 }: {
   to: string;
   companyName: string;
@@ -384,6 +385,7 @@ export async function sendCandidateApplicationEmail({
   experience?: string;
   message?: string;
   resumeUrl?: string;
+  targetCompanyEmail?: string;
 }) {
   const trackingId = `app_ent_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const trackingToken = createTrackingToken({
@@ -408,6 +410,7 @@ export async function sendCandidateApplicationEmail({
     experience,
     message,
     resumeUrl,
+    targetCompanyEmail,
     trackingToken,
   });
 
